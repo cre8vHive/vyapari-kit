@@ -11,7 +11,7 @@ export const CTASection: React.FC<CTASectionProps> = ({
   title,
   buttonText,
   buttonLink,
-  illustrationUrl = 'wp-content/uploads/2023/12/Asset-025.png',
+  illustrationUrl = 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80',
 }) => {
   return (
     <div className="elementor-element elementor-element-15a0cc1 e-flex e-con-boxed e-con e-parent">

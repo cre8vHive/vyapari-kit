@@ -28,13 +28,13 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
       config: {
         sectionTitle: "All Categories",
         categories: [
-          { id: "1", name: "Business", slug: "business", iconUrl: "wp-content/uploads/2023/12/Asset-08.png" },
-          { id: "2", name: "Development", slug: "development", iconUrl: "wp-content/uploads/2023/12/Asset-09.png" },
-          { id: "3", name: "Language", slug: "language", iconUrl: "wp-content/uploads/2023/12/Asset-06-1.png" },
-          { id: "4", name: "Marketing", slug: "marketing", iconUrl: "wp-content/uploads/2023/12/Asset-07.png" },
-          { id: "5", name: "Finance", slug: "finance", iconUrl: "wp-content/uploads/2023/12/Asset-010.png" },
-          { id: "6", name: "Design", slug: "design", iconUrl: "wp-content/uploads/2023/12/Asset-011.png" },
-          { id: "7", name: "Photography", slug: "photography", iconUrl: "wp-content/uploads/2023/12/Asset-012.png" }
+          { id: "1", name: "Business", slug: "business", iconUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=96&q=80" },
+          { id: "2", name: "Development", slug: "development", iconUrl: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=96&q=80" },
+          { id: "3", name: "Language", slug: "language", iconUrl: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=96&q=80" },
+          { id: "4", name: "Marketing", slug: "marketing", iconUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=96&q=80" },
+          { id: "5", name: "Finance", slug: "finance", iconUrl: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=96&q=80" },
+          { id: "6", name: "Design", slug: "design", iconUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=96&q=80" },
+          { id: "7", name: "Photography", slug: "photography", iconUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=96&q=80" }
         ]
       }
     },
@@ -54,7 +54,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             price: 18.99,
             oldPrice: 30.99,
             rating: 4.8,
-            imageUrl: "wp-content/uploads/2023/12/upskilljpg-011.jpg"
+            imageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80"
           },
           {
             id: "2",
@@ -66,7 +66,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             price: 18.99,
             oldPrice: 20.99,
             rating: 4.8,
-            imageUrl: "wp-content/uploads/2023/12/upskilljpg-06.jpg"
+            imageUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80"
           },
           {
             id: "3",
@@ -78,7 +78,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             price: 17.99,
             oldPrice: 40.99,
             rating: 4.8,
-            imageUrl: "wp-content/uploads/2023/12/upskilljpg-012.jpg"
+            imageUrl: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80"
           }
         ]
       }
@@ -94,7 +94,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             name: "Sophia Morgan",
             role: "Customers",
             reviewText: "Incredible experience with Upskill. Expert-led courses equipped me with vital skills. Highly recommended investment.",
-            avatarUrl: "wp-content/uploads/2023/12/testimonial-img-03.jpg",
+            avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=96&q=80",
             rating: 5
           },
           {
@@ -102,7 +102,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             name: "Benjamin Reed",
             role: "Customers",
             reviewText: "Upskill's training exceeded expectations. Exceptional instructors, real-world focus. A pivotal step toward career advancement.",
-            avatarUrl: "wp-content/uploads/2023/12/testimonial-img-03.jpg",
+            avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=96&q=80",
             rating: 5
           },
           {
@@ -110,7 +110,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             name: "Olivia Carter",
             role: "Customers",
             reviewText: "Thrilled with Upskill's program. Invaluable knowledge, seamless delivery. Elevate your skills and future prospects confidently.",
-            avatarUrl: "wp-content/uploads/2023/12/testimonial-img-04.jpg",
+            avatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=96&q=80",
             rating: 5
           }
         ]
@@ -123,7 +123,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
         title: "Launch Your Career Journey through upskill.",
         buttonText: "Register Now",
         buttonLink: "/register",
-        illustrationUrl: "wp-content/uploads/2023/12/Asset-025.png"
+        illustrationUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80"
       }
     }
   ]

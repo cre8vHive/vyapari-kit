@@ -27,7 +27,7 @@ const MOCK_BLOGS: BlogItem[] = [
     excerpt: "Learn the core skills, design principles, and career pathways required to become a professional graphic designer in 2026.",
     publishDate: "December 28, 2023",
     authorName: "Onecontributor",
-    imageUrl: "../wp-content/uploads/2023/12/Blog-02.jpg",
+    imageUrl: "https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80",
     categoryName: "Design"
   },
   {
@@ -37,7 +37,7 @@ const MOCK_BLOGS: BlogItem[] = [
     excerpt: "Discover the step-by-step guide to adding video transitions, customizing durations, and optimizing video editing flow.",
     publishDate: "December 24, 2023",
     authorName: "Onecontributor",
-    imageUrl: "../wp-content/uploads/2023/12/Blog-08-300x200.jpg",
+    imageUrl: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80",
     categoryName: "Development"
   },
   {
@@ -47,7 +47,7 @@ const MOCK_BLOGS: BlogItem[] = [
     excerpt: "A complete walkthrough on generating stunning art using modern AI tools, prompt configurations, and style controls.",
     publishDate: "December 20, 2023",
     authorName: "Onecontributor",
-    imageUrl: "../wp-content/uploads/2023/12/Blog-07-300x200.jpg",
+    imageUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=600&q=80",
     categoryName: "Marketing"
   }
 ];

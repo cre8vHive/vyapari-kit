@@ -10,14 +10,14 @@ interface CategoryFilterItem {
 }
 
 const MOCK_CATEGORIES: CategoryFilterItem[] = [
-  { id: "all", name: "All Categories", slug: "", iconUrl: "../wp-content/uploads/2023/12/Asset-014.png" },
-  { id: "1", name: "Business", slug: "business", iconUrl: "../wp-content/uploads/2023/12/Asset-08.png" },
-  { id: "2", name: "Development", slug: "development", iconUrl: "../wp-content/uploads/2023/12/Asset-09.png" },
-  { id: "3", name: "Language", slug: "language", iconUrl: "../wp-content/uploads/2023/12/Asset-06-1.png" },
-  { id: "4", name: "Marketing", slug: "marketing", iconUrl: "../wp-content/uploads/2023/12/Asset-07.png" },
-  { id: "5", name: "Finance", slug: "finance", iconUrl: "../wp-content/uploads/2023/12/Asset-010.png" },
-  { id: "6", name: "Design", slug: "design", iconUrl: "../wp-content/uploads/2023/12/Asset-011.png" },
-  { id: "7", name: "Photography", slug: "photography", iconUrl: "../wp-content/uploads/2023/12/Asset-012.png" }
+  { id: "all", name: "All Categories", slug: "", iconUrl: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=96&q=80" },
+  { id: "1", name: "Business", slug: "business", iconUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=96&q=80" },
+  { id: "2", name: "Development", slug: "development", iconUrl: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=96&q=80" },
+  { id: "3", name: "Language", slug: "language", iconUrl: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=96&q=80" },
+  { id: "4", name: "Marketing", slug: "marketing", iconUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=96&q=80" },
+  { id: "5", name: "Finance", slug: "finance", iconUrl: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=96&q=80" },
+  { id: "6", name: "Design", slug: "design", iconUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=96&q=80" },
+  { id: "7", name: "Photography", slug: "photography", iconUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=96&q=80" }
 ];
 
 const MOCK_COURSES: CourseItem[] = [
@@ -31,7 +31,7 @@ const MOCK_COURSES: CourseItem[] = [
     price: 18.99,
     oldPrice: 30.99,
     rating: 4.8,
-    imageUrl: "../wp-content/uploads/2023/12/upskilljpg-011.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80"
   },
   {
     id: "2",
@@ -43,7 +43,7 @@ const MOCK_COURSES: CourseItem[] = [
     price: 18.99,
     oldPrice: 20.99,
     rating: 4.8,
-    imageUrl: "../wp-content/uploads/2023/12/upskilljpg-06.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80"
   },
   {
     id: "3",
@@ -55,7 +55,7 @@ const MOCK_COURSES: CourseItem[] = [
     price: 17.99,
     oldPrice: 40.99,
     rating: 4.8,
-    imageUrl: "../wp-content/uploads/2023/12/upskilljpg-012.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80"
   },
   {
     id: "4",
@@ -67,7 +67,7 @@ const MOCK_COURSES: CourseItem[] = [
     price: 18.99,
     oldPrice: 20.99,
     rating: 4.6,
-    imageUrl: "../wp-content/uploads/2023/12/upskilljpg-01.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80"
   },
   {
     id: "5",
@@ -79,7 +79,7 @@ const MOCK_COURSES: CourseItem[] = [
     price: 18.99,
     oldPrice: 30.99,
     rating: 4.8,
-    imageUrl: "../wp-content/uploads/2023/12/upskilljpg-05.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80"
   },
   {
     id: "6",
@@ -91,7 +91,7 @@ const MOCK_COURSES: CourseItem[] = [
     price: 18.99,
     oldPrice: 20.99,
     rating: 4.9,
-    imageUrl: "../wp-content/uploads/2023/12/upskilljpg-02.jpg"
+    imageUrl: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80"
   }
 ];
 
@@ -113,7 +113,7 @@ export const CourseListing: React.FC = () => {
         
         // Map all categories button to start
         setCategories([
-          { id: "all", name: "All Categories", slug: "", iconUrl: "../wp-content/uploads/2023/12/Asset-014.png" },
+          { id: "all", name: "All Categories", slug: "", iconUrl: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=96&q=80" },
           ...catsData
         ]);
         setCourses(coursesData);

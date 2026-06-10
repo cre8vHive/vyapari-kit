@@ -36,7 +36,7 @@ export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
                   }}
                 >
                   <img 
-                    src="wp-content/uploads/2023/12/Asset-014.png" 
+                    src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=96&q=80" 
                     className="attachment-full size-full" 
                     alt={sectionTitle} 
                   />
