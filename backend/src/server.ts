@@ -182,7 +182,7 @@ async function start() {
       await mongoose.connect(process.env.MONGODB_URI);
       console.log('MongoDB connected');
     } catch (error) {
-      console.warn('MongoDB unavailable; continuing with mock API data.');
+      console.error('MongoDB Error:', error);
     }
   }
 
