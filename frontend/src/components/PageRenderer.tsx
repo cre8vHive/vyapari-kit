@@ -9,19 +9,19 @@ const SectionSkeleton: React.FC<{ type: string }> = ({ type }) => {
       style={{ 
         padding: '50px 20px', 
         textAlign: 'center', 
-        background: '#1F233E', 
+        background: '#ffffff', 
         borderRadius: '8px', 
-        color: 'rgba(255,255,255,0.4)',
+        color: '#4b5563',
         margin: '20px 0',
         minHeight: '200px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        border: '1px dashed rgba(255,255,255,0.1)'
+        border: '1px dashed #dbe7f5'
       }}
     >
-      <div className="spinner" style={{ border: '4px solid rgba(255,255,255,0.1)', borderLeft: '4px solid #4caf50', borderRadius: '50%', width: '30px', height: '30px', animation: 'spin 1s linear infinite', marginBottom: '10px' }}></div>
+      <div className="spinner" style={{ border: '4px solid #eaf4ff', borderLeft: '4px solid #0b7cff', borderRadius: '50%', width: '30px', height: '30px', animation: 'spin 1s linear infinite', marginBottom: '10px' }}></div>
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
@@ -137,7 +137,7 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
 }) => {
   if (!sections || sections.length === 0) {
     return (
-      <div className="empty-page-placeholder" style={{ padding: '60px 20px', textAlign: 'center', background: '#191B2E', color: '#fff' }}>
+      <div className="empty-page-placeholder" style={{ padding: '60px 20px', textAlign: 'center', background: '#ffffff', color: '#0b1220' }}>
         <p>No content sections configured for this page.</p>
       </div>
     );

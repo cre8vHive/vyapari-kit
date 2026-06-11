@@ -34,11 +34,12 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
               key={index} 
               className="stat-box-item elementor-widget" 
               style={{ 
-                background: '#1F233E', 
+                background: '#ffffff', 
                 borderRadius: '12px', 
                 padding: '30px 20px', 
                 textAlign: 'center',
-                border: '1px solid rgba(255,255,255,0.03)'
+                border: '1px solid #dbe7f5',
+                boxShadow: '0 18px 38px rgba(15, 52, 92, 0.08)'
               }}
             >
               <div className="elementor-widget-container">
@@ -53,10 +54,10 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
                       />
                     </div>
                   )}
-                  <div className="number-wrapper" style={{ fontSize: '36px', fontWeight: 'bold', color: '#4caf50', marginBottom: '10px' }}>
+                  <div className="number-wrapper" style={{ fontSize: '36px', fontWeight: 'bold', color: '#0b7cff', marginBottom: '10px' }}>
                     {item.number}
                   </div>
-                  <div className="label-wrapper" style={{ fontSize: '15px', color: '#eee', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <div className="label-wrapper" style={{ fontSize: '15px', color: '#4b5563', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     {item.label}
                   </div>
                 </div>

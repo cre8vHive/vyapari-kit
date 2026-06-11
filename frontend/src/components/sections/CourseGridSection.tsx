@@ -77,7 +77,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
             <div 
               key={course.id || index}
               className="elementor-element e-con-full e-flex e-con e-child course-card-wrapper"
-              style={{ background: '#1F233E', borderRadius: '12px', overflow: 'hidden' }}
+              style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden' }}
             >
               {/* Image Hotspot (Difficulty Badge overlay) */}
               <div className="elementor-element elementor-element-hotspot-container elementor-widget elementor-widget-hotspot">
@@ -119,7 +119,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                   <div className="elementor-element elementor-widget elementor-widget-heading">
                     <div className="elementor-widget-container">
                       <h5 className="elementor-heading-title elementor-size-default">
-                        <a href={`/courses?category=${course.categoryName}`} style={{ color: '#4caf50' }}>
+                        <a href={`/courses?category=${course.categoryName}`} style={{ color: '#0b7cff' }}>
                           in {course.categoryName}
                         </a>
                       </h5>
@@ -150,7 +150,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                 {/* Pricing and Action Button */}
                 <div className="elementor-element e-con-full e-flex e-con e-child price-button-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
                   <div className="price-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <span className="price-new" style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold' }}>
+                    <span className="price-new" style={{ color: '#0b1220', fontSize: '18px', fontWeight: 'bold' }}>
                       ${course.price.toFixed(2)}
                     </span>
                     {course.oldPrice && (

@@ -172,7 +172,7 @@ export const Home: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="loading-placeholder" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#1F233E', color: '#fff' }}>
+      <div className="loading-placeholder" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#ffffff', color: '#0b1220' }}>
         <div className="spinner" style={{ fontSize: '24px' }}>Loading Upskill...</div>
       </div>
     );
@@ -180,7 +180,7 @@ export const Home: React.FC = () => {
 
   if (error || !pageData) {
     return (
-      <div className="error-placeholder" style={{ padding: '50px', textAlign: 'center', background: '#1F233E', color: '#fff' }}>
+      <div className="error-placeholder" style={{ padding: '50px', textAlign: 'center', background: '#ffffff', color: '#0b1220' }}>
         <h2>Error Loading Page</h2>
         <p>{error || "Page not found"}</p>
       </div>
