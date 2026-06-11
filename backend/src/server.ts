@@ -2,155 +2,232 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
+import { SESSION_TTL_MS, createToken, generateSessionId, hashPassword, requireActiveSession, requireAuth, verifyPassword } from './auth';
+import { categories as fallbackCategories, courses as fallbackCourses, homePage } from './data/demoContent';
+import Category from './models/Category';
+import Course from './models/Course';
+import Page from './models/Page';
+import PageTemplate from './models/PageTemplate';
+import User from './models/User';
 
 dotenv.config();
 
 const app = express();
 const port = Number(process.env.PORT || 5000);
+const clientOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim());
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173' }));
+app.use(cors({ origin: clientOrigins, credentials: true }));
 app.use(express.json());
 
-const categories = [
-  { id: '1', name: 'Business', slug: 'business', iconUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=96&q=80' },
-  { id: '2', name: 'Development', slug: 'development', iconUrl: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=96&q=80' },
-  { id: '3', name: 'Language', slug: 'language', iconUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=96&q=80' },
-  { id: '4', name: 'Marketing', slug: 'marketing', iconUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=96&q=80' },
-  { id: '5', name: 'Finance', slug: 'finance', iconUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=96&q=80' },
-  { id: '6', name: 'Design', slug: 'design', iconUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=96&q=80' },
-  { id: '7', name: 'Photography', slug: 'photography', iconUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=96&q=80' }
-];
+function isMongoConnected() {
+  return mongoose.connection.readyState === 1;
+}
 
-const courses = [
-  {
-    id: '1',
-    slug: 'photography-masterclass-guide',
-    title: 'Photography Masterclass: A Complete Guide to Photography',
-    instructorName: 'Onecontributor',
-    categoryName: 'Photography',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 30.99,
-    rating: 4.8,
-    imageUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    id: '2',
-    slug: 'wordpress-developer-course',
-    title: 'Complete WordPress Developer Course 2024',
-    instructorName: 'Onecontributor',
-    categoryName: 'Development',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 20.99,
-    rating: 4.8,
-    imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    id: '3',
-    slug: 'personal-finance-course',
-    title: 'The Complete Personal Finance Course',
-    instructorName: 'Onecontributor',
-    categoryName: 'Finance',
-    difficulty: 'Beginner',
-    price: 17.99,
-    oldPrice: 40.99,
-    rating: 4.8,
-    imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    id: '4',
-    slug: 'digital-marketing-course',
-    title: 'The Complete Digital Marketing Course',
-    instructorName: 'Onecontributor',
-    categoryName: 'Marketing',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 20.99,
-    rating: 4.6,
-    imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    id: '5',
-    slug: 'business-startup-guide',
-    title: 'The Business Startup Guide to Become an Entrepreneur',
-    instructorName: 'Onecontributor',
-    categoryName: 'Business',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 30.99,
-    rating: 4.8,
-    imageUrl: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    id: '6',
-    slug: 'german-language-course',
-    title: 'Best Way to Learn German Language: Full Beginner',
-    instructorName: 'Onecontributor',
-    categoryName: 'Language',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 20.99,
-    rating: 4.9,
-    imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80'
-  }
-];
+function publicUser(user: { _id: unknown; name: string; email: string; role: string }) {
+  return {
+    id: String(user._id),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  };
+}
 
-const homePage = {
-  title: 'Upskill - Online Course',
-  slug: 'home',
-  seo: {
-    metaTitle: 'Upskill - Online Courses, Bootcamp & Lessons',
-    metaDescription: 'Upskill is a learning platform providing courses in business, tech, language, and marketing.',
-    noIndex: false
-  },
-  sections: [
+async function seedDemoContent() {
+  if (!isMongoConnected()) return;
+
+  await Category.bulkWrite(
+    fallbackCategories.map((category) => {
+      const { id: _id, ...categoryDoc } = category;
+      return {
+        updateOne: {
+          filter: { slug: category.slug },
+          update: { $set: categoryDoc },
+          upsert: true,
+        },
+      };
+    })
+  );
+
+  await Course.bulkWrite(
+    fallbackCourses.map((course) => {
+      const { id: _id, ...courseDoc } = course;
+      return {
+        updateOne: {
+          filter: { slug: course.slug },
+          update: { $set: courseDoc },
+          upsert: true,
+        },
+      };
+    })
+  );
+
+  const template = await PageTemplate.findOneAndUpdate(
+    { key: 'landing-page' },
     {
-      type: 'hero',
-      order: 1,
-      config: {
-        headline: 'Faster Way For Your Grow & Upskill',
-        subheading: 'Gain access to practical courses taught by expert instructors.',
-        backgroundType: 'gradient',
-        backgroundValue: 'linear-gradient(135deg, #161829 0%, #1f3d3c 55%, #7a4c28 100%)',
-        primaryButton: { text: 'Subscribe', link: '/register' },
-        secondaryButton: { text: 'Learn Now', link: '/courses' }
-      }
+      $set: {
+        name: 'Landing Page',
+        key: 'landing-page',
+        description: 'Default landing page template',
+      },
     },
-    { type: 'categories', order: 2, config: { sectionTitle: 'All Categories', categories } },
-    { type: 'course-grid', order: 3, config: { sectionTitle: 'Popular classes', courses: courses.slice(0, 3) } },
+    { new: true, upsert: true }
+  );
+
+  await Page.findOneAndUpdate(
+    { slug: homePage.slug },
     {
-      type: 'testimonials',
-      order: 4,
-      config: {
-        sectionTitle: 'What Our Students Say',
-        testimonials: [
-          { id: '1', name: 'Sophia Morgan', role: 'Student', reviewText: 'Expert-led courses helped me build practical skills quickly.', rating: 5 },
-          { id: '2', name: 'Benjamin Reed', role: 'Student', reviewText: 'The lessons are focused, clear, and easy to apply at work.', rating: 5 },
-          { id: '3', name: 'Olivia Carter', role: 'Student', reviewText: 'A smooth learning experience with useful projects and guidance.', rating: 5 }
-        ]
-      }
+      $set: {
+        ...homePage,
+        template: template._id,
+      },
     },
-    {
-      type: 'cta',
-      order: 5,
-      config: {
-        title: 'Launch Your Career Journey through Upskill.',
-        buttonText: 'Register Now',
-        buttonLink: '/register'
-      }
-    }
-  ]
-};
+    { new: true, upsert: true }
+  );
+}
 
 app.get('/api/v1/health', (_req, res) => {
   res.json({
     ok: true,
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'not-connected'
+    database: isMongoConnected() ? 'connected' : 'not-connected',
   });
 });
 
-app.get('/api/v1/pages/:slug', (req, res) => {
+app.post('/api/v1/auth/register', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const name = String(req.body.name || '').trim();
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
+
+  if (name.length < 2 || !email || password.length < 8) {
+    res.status(400).json({ message: 'Name, valid email, and 8+ character password are required' });
+    return;
+  }
+
+  const existingUser = await User.findOne({ email }).select('_id').lean();
+  if (existingUser) {
+    res.status(409).json({ message: 'An account with this email already exists' });
+    return;
+  }
+
+  const sessionId = generateSessionId();
+  const user = await User.create({
+    name,
+    email,
+    passwordHash: hashPassword(password),
+    role: 'student',
+    activeSessionId: sessionId,
+    lastHeartbeat: new Date(),
+  });
+
+  const safeUser = publicUser(user);
+  res.status(201).json({
+    user: safeUser,
+    token: createToken(safeUser, sessionId),
+  });
+});
+
+app.post('/api/v1/auth/login', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
+  const user = await User.findOne({ email }).select('+passwordHash +activeSessionId +lastHeartbeat');
+
+  if (!user || !verifyPassword(password, user.passwordHash)) {
+    res.status(401).json({ message: 'Invalid email or password' });
+    return;
+  }
+
+  // ── Single-session lock: block login if another session is active ──
+  if (user.activeSessionId && user.lastHeartbeat) {
+    const timeSinceHeartbeat = Date.now() - new Date(user.lastHeartbeat).getTime();
+    if (timeSinceHeartbeat < SESSION_TTL_MS) {
+      res.status(403).json({
+        message: 'This account is already logged in on another device. Please log out from that device first.',
+        code: 'SESSION_ACTIVE',
+      });
+      return;
+    }
+  }
+
+  const sessionId = generateSessionId();
+  await User.findByIdAndUpdate(user._id, {
+    activeSessionId: sessionId,
+    lastHeartbeat: new Date(),
+  });
+
+  const safeUser = publicUser(user);
+  res.json({
+    user: safeUser,
+    token: createToken(safeUser, sessionId),
+  });
+});
+
+app.post('/api/v1/auth/logout', requireAuth, async (_req, res) => {
+  const authUser = res.locals.user;
+
+  if (isMongoConnected()) {
+    await User.findByIdAndUpdate(authUser.sub, {
+      activeSessionId: null,
+      lastHeartbeat: null,
+    });
+  }
+
+  res.json({ message: 'Logged out successfully' });
+});
+
+app.post('/api/v1/auth/heartbeat', requireAuth, requireActiveSession, async (_req, res) => {
+  const authUser = res.locals.user;
+
+  await User.findByIdAndUpdate(authUser.sub, {
+    lastHeartbeat: new Date(),
+  });
+
+  res.json({ ok: true });
+});
+
+app.get('/api/v1/auth/me', requireAuth, requireActiveSession, async (_req, res) => {
+  const authUser = res.locals.user;
+
+  if (!isMongoConnected()) {
+    res.json({
+      user: {
+        id: authUser.sub,
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+      },
+    });
+    return;
+  }
+
+  const user = await User.findById(authUser.sub);
+  if (!user) {
+    res.status(401).json({ message: 'Account no longer exists' });
+    return;
+  }
+
+  res.json({ user: publicUser(user) });
+});
+
+app.get('/api/v1/pages/:slug', async (req, res) => {
+  if (isMongoConnected()) {
+    const page = await Page.findOne({ slug: req.params.slug }).lean();
+    if (page) {
+      res.json(page);
+      return;
+    }
+  }
+
   if (req.params.slug === 'home') {
     res.json(homePage);
     return;
@@ -159,15 +236,31 @@ app.get('/api/v1/pages/:slug', (req, res) => {
   res.status(404).json({ message: 'Page not found' });
 });
 
-app.get('/api/v1/categories', (_req, res) => {
-  res.json(categories);
+app.get('/api/v1/categories', async (_req, res) => {
+  if (isMongoConnected()) {
+    const categories = await Category.find().sort({ name: 1 }).lean();
+    res.json(categories);
+    return;
+  }
+
+  res.json(fallbackCategories);
 });
 
-app.get('/api/v1/courses', (req, res) => {
+app.get('/api/v1/courses', async (req, res) => {
   const category = String(req.query.category || '').toLowerCase();
   const search = String(req.query.search || '').toLowerCase();
 
-  const filtered = courses.filter((course) => {
+  if (isMongoConnected()) {
+    const query: Record<string, any> = {};
+    if (category) query.categoryName = new RegExp(`^${category}$`, 'i');
+    if (search) query.title = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+
+    const courses = await Course.find(query).sort({ createdAt: -1 }).lean();
+    res.json(courses);
+    return;
+  }
+
+  const filtered = fallbackCourses.filter((course) => {
     const matchesCategory = !category || course.categoryName.toLowerCase() === category;
     const matchesSearch = !search || course.title.toLowerCase().includes(search);
     return matchesCategory && matchesSearch;
@@ -181,6 +274,8 @@ async function start() {
     try {
       await mongoose.connect(process.env.MONGODB_URI);
       console.log('MongoDB connected');
+      await seedDemoContent();
+      console.log('Demo content synced to MongoDB');
     } catch (error) {
       console.error('MongoDB Error:', error);
     }
