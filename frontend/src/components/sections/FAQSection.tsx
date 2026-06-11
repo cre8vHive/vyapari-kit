@@ -32,7 +32,7 @@ export const FAQSection: React.FC<FAQSectionProps> = ({
         {sectionTitle && (
           <div className="elementor-element elementor-widget elementor-widget-heading" style={{ marginBottom: '25px', width: '100%' }}>
             <div className="elementor-widget-container">
-              <h2 className="elementor-heading-title elementor-size-default" style={{ color: '#fff', fontSize: '28px', margin: 0 }}>
+              <h2 className="elementor-heading-title elementor-size-default" style={{ color: '#0b1220', fontSize: '28px', margin: 0 }}>
                 {sectionTitle}
               </h2>
             </div>
@@ -45,25 +45,25 @@ export const FAQSection: React.FC<FAQSectionProps> = ({
               {items.map((item, index) => {
                 const isOpen = !!openIndexes[index];
                 return (
-                  <div key={index} className={`card-wrapper ${isOpen ? 'active' : ''}`} style={{ marginBottom: '15px', background: '#1F233E', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div key={index} className={`card-wrapper ${isOpen ? 'active' : ''}`} style={{ marginBottom: '15px', background: '#ffffff', borderRadius: '8px', border: '1px solid #dbe7f5', boxShadow: '0 12px 28px rgba(15, 52, 92, 0.06)' }}>
                     <div className="card-header" style={{ padding: '15px 20px', cursor: 'pointer' }} onClick={() => toggleIndex(index)}>
                       <a 
                         href={`#expand-${index}`} 
                         className="card-header-button" 
                         aria-expanded={isOpen}
                         onClick={(e) => e.preventDefault()}
-                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textDecoration: 'none', color: '#fff' }}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textDecoration: 'none', color: '#0b1220' }}
                       >
                         <span className="title" style={{ fontWeight: '600', fontSize: '16px' }}>{item.question}</span>
-                        <div className="right-icon-group" style={{ fontSize: '14px', color: '#4caf50' }}>
+                        <div className="right-icon-group" style={{ fontSize: '14px', color: '#0b7cff' }}>
                           <i aria-hidden="true" className={`jki ${isOpen ? 'jki-up-arrow1-light' : 'jki-down-arrow1-light'}`}></i>
                         </div>
                       </a>
                     </div>
                     
                     {isOpen && (
-                      <div className="card-expand" id={`expand-${index}`} style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                        <div className="card-body" style={{ padding: '20px', color: '#eee', fontSize: '14px', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: item.answer }} />
+                      <div className="card-expand" id={`expand-${index}`} style={{ borderTop: '1px solid #dbe7f5' }}>
+                        <div className="card-body" style={{ padding: '20px', color: '#4b5563', fontSize: '14px', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: item.answer }} />
                       </div>
                     )}
                   </div>

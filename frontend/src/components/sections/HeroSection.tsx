@@ -1,4 +1,5 @@
 import React from 'react';
+import heroBannerUrl from '../../assets/hero-banner.png';
 
 export interface HeroSectionProps {
   headline: string;
@@ -23,19 +24,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   primaryButton,
   secondaryButton,
 }) => {
-  // Enforce background inline style dynamic overrides if custom value is provided
-  const heroStyle: React.CSSProperties = {};
-  if (backgroundValue) {
-    if (backgroundType === 'image') {
-      heroStyle.backgroundImage = `url(${backgroundValue})`;
-      heroStyle.backgroundSize = 'cover';
-      heroStyle.backgroundPosition = 'center';
-    } else if (backgroundType === 'gradient') {
-      heroStyle.background = backgroundValue;
-    } else if (backgroundType === 'solid') {
-      heroStyle.backgroundColor = backgroundValue;
-    }
-  }
+  const heroStyle: React.CSSProperties = {
+    backgroundImage: `url(${backgroundType === 'image' && backgroundValue ? backgroundValue : heroBannerUrl})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  };
 
   return (
     <div className="elementor-element elementor-element-4fbeb70 e-flex e-con-boxed e-con e-parent">
@@ -69,7 +62,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               {subheading && (
                 <div className="elementor-element elementor-element-subheading elementor-widget elementor-widget-heading">
                   <div className="elementor-widget-container">
-                    <h5 className="elementor-heading-title elementor-size-default" style={{ color: '#fff', opacity: 0.9 }}>
+                    <h5 className="elementor-heading-title elementor-size-default" style={{ color: 'rgba(255, 255, 255, 0.88)' }}>
                       {subheading}
                     </h5>
                   </div>

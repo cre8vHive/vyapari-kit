@@ -34,7 +34,7 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
             <div 
               key={test.id || index}
               className="testimonial-item elementor-repeater-item-b15e91d"
-              style={{ background: '#1F233E', borderRadius: '12px', padding: '24px' }}
+              style={{ background: '#ffffff', borderRadius: '12px', padding: '24px', border: '1px solid #dbe7f5', boxShadow: '0 18px 38px rgba(15, 52, 92, 0.08)' }}
             >
               <div className="testimonial-box">
                 <div className="testimonial-slider hover-from-left">
@@ -52,7 +52,7 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
                     </div>
                     <div>
                       <span className="profile-info" style={{ display: 'block' }}>
-                        <strong className="profile-name" style={{ color: '#fff', fontSize: '16px' }}>{test.name}</strong>
+                        <strong className="profile-name" style={{ color: '#0b1220', fontSize: '16px' }}>{test.name}</strong>
                         <p className="profile-des" style={{ margin: 0, opacity: 0.7, fontSize: '13px' }}>{test.role}</p>
                       </span>
                       {/* Star Rating list */}
@@ -68,7 +68,7 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
 
                   {/* Comment text */}
                   <div className="comment-content">
-                    <p style={{ fontStyle: 'italic', margin: 0, opacity: 0.9, color: '#eee', lineHeight: '1.6' }}>
+                    <p style={{ fontStyle: 'italic', margin: 0, opacity: 0.9, color: '#4b5563', lineHeight: '1.6' }}>
                       "{test.reviewText}"
                     </p>
                   </div>

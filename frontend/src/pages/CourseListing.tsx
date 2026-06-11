@@ -175,7 +175,7 @@ export const CourseListing: React.FC = () => {
 
       {/* Breadcrumbs & Page Header Section */}
       <div className="elementor-element elementor-element-a76cdd5 e-con-full e-flex e-con e-parent">
-        <div className="elementor-element elementor-element-53962af e-flex e-con-boxed e-con e-child" style={{ background: '#191B2E', padding: '40px 20px', width: '100%' }}>
+        <div className="elementor-element elementor-element-53962af e-flex e-con-boxed e-con e-child" style={{ background: '#eaf4ff', padding: '40px 20px', width: '100%' }}>
           <div className="e-con-inner">
             <div className="elementor-element elementor-element-6b50a33 e-con-full e-flex e-con e-child">
               
@@ -184,13 +184,13 @@ export const CourseListing: React.FC = () => {
                 <div className="elementor-widget-container">
                   <ul className="elementor-icon-list-items elementor-inline-items" style={{ display: 'flex', gap: '8px', listStyle: 'none', padding: 0 }}>
                     <li className="elementor-icon-list-item elementor-inline-item">
-                      <a href="/" style={{ color: '#fff', opacity: 0.7 }}>Home</a>
+                      <a href="/" style={{ color: '#0b7cff', opacity: 0.85 }}>Home</a>
                     </li>
-                    <li className="elementor-icon-list-item elementor-inline-item" style={{ color: '#fff', opacity: 0.7 }}>
+                    <li className="elementor-icon-list-item elementor-inline-item" style={{ color: '#4b5563', opacity: 0.7 }}>
                       /
                     </li>
                     <li className="elementor-icon-list-item elementor-inline-item">
-                      <span className="elementor-icon-list-text" style={{ color: '#fff' }}>Course</span>
+                      <span className="elementor-icon-list-text" style={{ color: '#0b1220' }}>Course</span>
                     </li>
                   </ul>
                 </div>
@@ -199,7 +199,7 @@ export const CourseListing: React.FC = () => {
               {/* Title */}
               <div className="elementor-element elementor-element-e3310db elementor-widget elementor-widget-heading" style={{ marginTop: '10px' }}>
                 <div className="elementor-widget-container">
-                  <h2 className="elementor-heading-title elementor-size-default" style={{ fontSize: '32px', color: '#fff', margin: 0 }}>
+                  <h2 className="elementor-heading-title elementor-size-default" style={{ fontSize: '32px', color: '#0b1220', margin: 0 }}>
                     Course Program
                   </h2>
                 </div>
@@ -225,14 +225,14 @@ export const CourseListing: React.FC = () => {
                 >
                   <div className="elementor-widget-container" style={{ opacity: isActive ? 1 : 0.8 }}>
                     <div className="jeg-elementor-kit jkit-icon-box">
-                      <div className="jkit-icon-box-wrapper" style={{ border: isActive ? '2px solid #4caf50' : '2px solid transparent', borderRadius: '8px', background: '#1F233E', padding: '15px 25px' }}>
+                      <div className="jkit-icon-box-wrapper" style={{ border: isActive ? '2px solid #0b7cff' : '2px solid #dbe7f5', borderRadius: '8px', background: isActive ? '#eaf4ff' : '#ffffff', padding: '15px 25px' }}>
                         <div className="icon-box icon-box-header" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                           <img 
                             src={cat.iconUrl} 
                             alt={cat.name} 
                             style={{ width: '30px', height: '30px' }} 
                           />
-                          <h4 className="title" style={{ margin: 0, fontSize: '15px', color: '#fff' }}>{cat.name}</h4>
+                          <h4 className="title" style={{ margin: 0, fontSize: '15px', color: '#0b1220' }}>{cat.name}</h4>
                         </div>
                       </div>
                     </div>

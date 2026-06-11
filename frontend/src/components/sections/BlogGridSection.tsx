@@ -67,7 +67,7 @@ export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
         {sectionTitle && (
           <div className="elementor-element elementor-widget elementor-widget-heading" style={{ marginBottom: '25px', width: '100%' }}>
             <div className="elementor-widget-container">
-              <h2 className="elementor-heading-title elementor-size-default" style={{ color: '#fff', fontSize: '28px', margin: 0 }}>
+              <h2 className="elementor-heading-title elementor-size-default" style={{ color: '#0b1220', fontSize: '28px', margin: 0 }}>
                 {sectionTitle}
               </h2>
             </div>
@@ -88,12 +88,13 @@ export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
               key={blog.id} 
               className="elementor-post elementor-grid-item" 
               style={{ 
-                background: '#1F233E', 
+                background: '#ffffff', 
                 borderRadius: '12px', 
                 overflow: 'hidden', 
                 display: 'flex', 
                 flexDirection: 'column',
-                border: '1px solid rgba(255,255,255,0.03)'
+                border: '1px solid #dbe7f5',
+                boxShadow: '0 18px 38px rgba(15, 52, 92, 0.08)'
               }}
             >
               {/* Blog Image */}
@@ -114,10 +115,10 @@ export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
               <div className="elementor-post__text" style={{ padding: '24px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                 
                 {/* Meta details */}
-                <div className="elementor-post__meta-data" style={{ display: 'flex', gap: '15px', fontSize: '13px', opacity: 0.7, marginBottom: '12px', color: '#eee' }}>
+                <div className="elementor-post__meta-data" style={{ display: 'flex', gap: '15px', fontSize: '13px', opacity: 0.75, marginBottom: '12px', color: '#4b5563' }}>
                   {showAuthor && (
                     <span className="elementor-post-author" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <i className="jki jki-user-circle-solid" style={{ color: '#4caf50' }}></i>
+                      <i className="jki jki-user-circle-solid" style={{ color: '#0b7cff' }}></i>
                       {blog.authorName}
                     </span>
                   )}
@@ -131,13 +132,13 @@ export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
 
                 {/* Title */}
                 <h3 className="elementor-post__title" style={{ margin: '0 0 12px 0', fontSize: '18px', fontWeight: 'bold', lineHeight: '1.4' }}>
-                  <a href={`/blog/${blog.slug}`} style={{ color: '#fff', textDecoration: 'none' }}>
+                  <a href={`/blog/${blog.slug}`} style={{ color: '#0b1220', textDecoration: 'none' }}>
                     {blog.title}
                   </a>
                 </h3>
 
                 {/* Excerpt */}
-                <p style={{ color: '#eee', opacity: 0.8, fontSize: '14px', lineHeight: '1.6', margin: '0 0 20px 0', flexGrow: 1 }}>
+                <p style={{ color: '#4b5563', opacity: 0.9, fontSize: '14px', lineHeight: '1.6', margin: '0 0 20px 0', flexGrow: 1 }}>
                   {blog.excerpt}
                 </p>
 
@@ -145,7 +146,7 @@ export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
                 <a 
                   className="elementor-post__read-more" 
                   href={`/blog/${blog.slug}`} 
-                  style={{ color: '#4caf50', textDecoration: 'none', fontWeight: '600', fontSize: '14px', marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  style={{ color: '#0b7cff', textDecoration: 'none', fontWeight: '600', fontSize: '14px', marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
                   Read More »
                 </a>

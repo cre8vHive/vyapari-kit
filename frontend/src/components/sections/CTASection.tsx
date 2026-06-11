@@ -19,7 +19,7 @@ export const CTASection: React.FC<CTASectionProps> = ({
         <div 
           className="elementor-element elementor-element-a4dec13 e-con-full e-flex e-con e-child" 
           data-element_type="container"
-          style={{ background: '#1F233E', borderRadius: '16px', overflow: 'hidden' }}
+          style={{ background: '#eaf4ff', borderRadius: '16px', overflow: 'hidden' }}
         >
           <div 
             className="elementor-element elementor-element-b509800 e-con-full e-flex e-con e-child"
@@ -31,7 +31,7 @@ export const CTASection: React.FC<CTASectionProps> = ({
                 <div className="elementor-widget-container">
                   <div className="jeg-elementor-kit jkit-heading align- align-tablet-left align-mobile-center">
                     <div className="heading-section-title display-inline-block">
-                      <h4 className="heading-title" style={{ fontSize: '28px', color: '#fff', fontWeight: 'bold', lineHeight: '1.4' }}>
+                      <h4 className="heading-title" style={{ fontSize: '28px', color: '#0b1220', fontWeight: 'bold', lineHeight: '1.4' }}>
                         {title}
                       </h4>
                     </div>
