@@ -1,13 +1,18 @@
 import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
+import User from './models/User';
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
+
+/** How long (ms) a session stays alive without a heartbeat */
+export const SESSION_TTL_MS = 2 * 60 * 1000; // 2 minutes
 
 interface TokenPayload {
   sub: string;
   email: string;
   name: string;
   role: string;
+  sid: string;
   exp: number;
 }
 
@@ -17,6 +22,10 @@ function base64Url(input: string | Buffer) {
 
 function getAuthSecret() {
   return process.env.AUTH_SECRET || 'local-development-auth-secret';
+}
+
+export function generateSessionId() {
+  return crypto.randomUUID();
 }
 
 export function hashPassword(password: string) {
@@ -35,13 +44,14 @@ export function verifyPassword(password: string, storedHash: string) {
   return candidate.length === expected.length && crypto.timingSafeEqual(candidate, expected);
 }
 
-export function createToken(user: { id: string; email: string; name: string; role: string }) {
+export function createToken(user: { id: string; email: string; name: string; role: string }, sessionId: string) {
   const header = base64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const payload: TokenPayload = {
     sub: user.id,
     email: user.email,
     name: user.name,
     role: user.role,
+    sid: sessionId,
     exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
   };
   const body = base64Url(JSON.stringify(payload));
@@ -82,5 +92,33 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 
   res.locals.user = payload;
+  next();
+}
+
+/**
+ * Middleware that checks if the token's session ID matches the active session in MongoDB.
+ * Use AFTER requireAuth. Returns 403 SESSION_EXPIRED if session was replaced or expired.
+ */
+export async function requireActiveSession(_req: Request, res: Response, next: NextFunction) {
+  const payload = res.locals.user as TokenPayload;
+  if (!payload) {
+    res.status(401).json({ message: 'Authentication required' });
+    return;
+  }
+
+  const user = await User.findById(payload.sub).select('activeSessionId').lean();
+  if (!user) {
+    res.status(401).json({ message: 'Account no longer exists' });
+    return;
+  }
+
+  if (user.activeSessionId !== payload.sid) {
+    res.status(403).json({
+      message: 'Session expired. You may have logged in from another device.',
+      code: 'SESSION_EXPIRED',
+    });
+    return;
+  }
+
   next();
 }

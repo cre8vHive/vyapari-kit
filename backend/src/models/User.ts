@@ -6,6 +6,8 @@ export interface IUser extends Document, IAudit {
   email: string;
   passwordHash: string;
   role: 'student' | 'admin';
+  activeSessionId: string | null;
+  lastHeartbeat: Date | null;
 }
 
 const UserSchema = new Schema<any>({
@@ -32,6 +34,14 @@ const UserSchema = new Schema<any>({
     type: String,
     enum: ['student', 'admin'],
     default: 'student',
+  },
+  activeSessionId: {
+    type: String,
+    default: null,
+  },
+  lastHeartbeat: {
+    type: Date,
+    default: null,
   },
   isDeleted: AuditSchema.path('isDeleted'),
   deletedAt: AuditSchema.path('deletedAt'),
