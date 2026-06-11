@@ -17,6 +17,22 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// ── Response interceptor: detect session-expired (403 SESSION_EXPIRED) ──
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error.response?.status === 403 &&
+      error.response?.data?.code === 'SESSION_EXPIRED'
+    ) {
+      localStorage.removeItem('upskill_auth_user');
+      localStorage.removeItem('upskill_auth_token');
+      window.dispatchEvent(new CustomEvent('session-expired'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export interface PageResponse {
   title: string;
   slug: string;
@@ -71,6 +87,12 @@ export const authApi = {
   login: async (payload: { email: string; password: string }): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/login', payload);
     return response.data;
+  },
+  logout: async (): Promise<void> => {
+    await apiClient.post('/auth/logout');
+  },
+  heartbeat: async (): Promise<void> => {
+    await apiClient.post('/auth/heartbeat');
   },
   me: async (): Promise<{ user: AuthUser }> => {
     const response = await apiClient.get<{ user: AuthUser }>('/auth/me');

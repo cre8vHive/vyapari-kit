@@ -2,7 +2,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
-import { createToken, hashPassword, requireAuth, verifyPassword } from './auth';
+import { SESSION_TTL_MS, createToken, generateSessionId, hashPassword, requireActiveSession, requireAuth, verifyPassword } from './auth';
 import { categories as fallbackCategories, courses as fallbackCourses, homePage } from './data/demoContent';
 import Category from './models/Category';
 import Course from './models/Course';
@@ -115,17 +115,20 @@ app.post('/api/v1/auth/register', async (req, res) => {
     return;
   }
 
+  const sessionId = generateSessionId();
   const user = await User.create({
     name,
     email,
     passwordHash: hashPassword(password),
     role: 'student',
+    activeSessionId: sessionId,
+    lastHeartbeat: new Date(),
   });
 
   const safeUser = publicUser(user);
   res.status(201).json({
     user: safeUser,
-    token: createToken(safeUser),
+    token: createToken(safeUser, sessionId),
   });
 });
 
@@ -137,21 +140,62 @@ app.post('/api/v1/auth/login', async (req, res) => {
 
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
-  const user = await User.findOne({ email }).select('+passwordHash');
+  const user = await User.findOne({ email }).select('+passwordHash +activeSessionId +lastHeartbeat');
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
     res.status(401).json({ message: 'Invalid email or password' });
     return;
   }
 
+  // ── Single-session lock: block login if another session is active ──
+  if (user.activeSessionId && user.lastHeartbeat) {
+    const timeSinceHeartbeat = Date.now() - new Date(user.lastHeartbeat).getTime();
+    if (timeSinceHeartbeat < SESSION_TTL_MS) {
+      res.status(403).json({
+        message: 'This account is already logged in on another device. Please log out from that device first.',
+        code: 'SESSION_ACTIVE',
+      });
+      return;
+    }
+  }
+
+  const sessionId = generateSessionId();
+  await User.findByIdAndUpdate(user._id, {
+    activeSessionId: sessionId,
+    lastHeartbeat: new Date(),
+  });
+
   const safeUser = publicUser(user);
   res.json({
     user: safeUser,
-    token: createToken(safeUser),
+    token: createToken(safeUser, sessionId),
   });
 });
 
-app.get('/api/v1/auth/me', requireAuth, async (_req, res) => {
+app.post('/api/v1/auth/logout', requireAuth, async (_req, res) => {
+  const authUser = res.locals.user;
+
+  if (isMongoConnected()) {
+    await User.findByIdAndUpdate(authUser.sub, {
+      activeSessionId: null,
+      lastHeartbeat: null,
+    });
+  }
+
+  res.json({ message: 'Logged out successfully' });
+});
+
+app.post('/api/v1/auth/heartbeat', requireAuth, requireActiveSession, async (_req, res) => {
+  const authUser = res.locals.user;
+
+  await User.findByIdAndUpdate(authUser.sub, {
+    lastHeartbeat: new Date(),
+  });
+
+  res.json({ ok: true });
+});
+
+app.get('/api/v1/auth/me', requireAuth, requireActiveSession, async (_req, res) => {
   const authUser = res.locals.user;
 
   if (!isMongoConnected()) {

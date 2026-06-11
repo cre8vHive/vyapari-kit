@@ -906,3 +906,96 @@ img {
   }
 }
 
+/* ═══════════════════════════════════════════════
+   SESSION EXPIRED MODAL
+   ═══════════════════════════════════════════════ */
+
+@keyframes sessionModalIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes sessionCardIn {
+  from { opacity: 0; transform: scale(0.9) translateY(12px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes sessionIconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.session-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  animation: sessionModalIn 0.3s ease both;
+}
+
+.session-modal {
+  width: min(420px, 100%);
+  padding: 40px 32px;
+  border-radius: 20px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 40px 80px rgba(0, 0, 0, 0.08);
+  animation: sessionCardIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.session-modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #fef2f2;
+  animation: sessionIconPulse 2s ease-in-out infinite;
+}
+
+.session-modal h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.session-modal p {
+  margin: 10px 0 0;
+  color: var(--color-muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.session-modal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 50px;
+  margin-top: 24px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0b6cff 0%, #6366f1 100%);
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(11, 108, 255, 0.25);
+}
+
+.session-modal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(11, 108, 255, 0.35);
+}

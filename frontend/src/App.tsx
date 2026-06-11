@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import CourseListing from './pages/CourseListing';
 import Home from './pages/Home';
 import AuthPage from './pages/Auth';
 import { AuthUser, authApi } from './services/api';
+
+const HEARTBEAT_INTERVAL_MS = 30_000; // 30 seconds
 
 const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -10,6 +12,8 @@ const App: React.FC = () => {
     const storedUser = localStorage.getItem('upskill_auth_user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const handleLocationChange = () => setCurrentPath(window.location.pathname);
@@ -17,6 +21,7 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
+  // ── Validate token on mount ──
   useEffect(() => {
     const token = localStorage.getItem('upskill_auth_token');
     if (!token) return;
@@ -33,20 +38,75 @@ const App: React.FC = () => {
       });
   }, []);
 
+  // ── Listen for session-expired event from API interceptor ──
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      setSessionExpired(true);
+    };
+
+    window.addEventListener('session-expired', handleSessionExpired);
+    return () => window.removeEventListener('session-expired', handleSessionExpired);
+  }, []);
+
+  // ── Heartbeat: keep session alive while logged in ──
+  useEffect(() => {
+    if (!user) {
+      // Clear heartbeat when not logged in
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
+      return;
+    }
+
+    // Send immediate heartbeat, then every 30s
+    const sendHeartbeat = () => {
+      authApi.heartbeat().catch(() => {
+        // If heartbeat fails (session expired), the response interceptor handles it
+      });
+    };
+
+    sendHeartbeat();
+    heartbeatRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS);
+
+    return () => {
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
+    };
+  }, [user]);
+
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
   const path = basePath && currentPath.startsWith(basePath)
     ? currentPath.slice(basePath.length) || '/'
     : currentPath;
   const withBase = (path: string) => `${basePath}${path}`;
+
   const handleAuth = (nextUser: AuthUser, token: string) => {
     setUser(nextUser);
+    setSessionExpired(false);
     localStorage.setItem('upskill_auth_user', JSON.stringify(nextUser));
     localStorage.setItem('upskill_auth_token', token);
   };
-  const handleLogout = () => {
+
+  const handleLogout = useCallback(async () => {
+    // Call backend to clear the session in MongoDB
+    try {
+      await authApi.logout();
+    } catch {
+      // Even if the backend call fails, clear local state
+    }
     setUser(null);
     localStorage.removeItem('upskill_auth_user');
     localStorage.removeItem('upskill_auth_token');
+  }, []);
+
+  const handleSessionExpiredDismiss = () => {
+    setSessionExpired(false);
+    window.history.pushState(null, '', withBase('/login'));
+    window.dispatchEvent(new PopStateEvent('popstate'));
   };
 
   return (
@@ -79,6 +139,31 @@ const App: React.FC = () => {
         {path.startsWith('/courses') && <CourseListing />}
         {!path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/courses') && <Home />}
       </main>
+
+      {/* ── Session Expired Modal ── */}
+      {sessionExpired && (
+        <div className="session-modal-backdrop" id="session-expired-modal">
+          <div className="session-modal">
+            <div className="session-modal-icon" aria-hidden="true">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <h2>Session Expired</h2>
+            <p>Your session has ended. This can happen if you were inactive for too long or your account was logged out.</p>
+            <button
+              className="session-modal-btn"
+              type="button"
+              onClick={handleSessionExpiredDismiss}
+              id="session-expired-signin-btn"
+            >
+              Sign In Again
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };
