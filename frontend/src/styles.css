@@ -56,10 +56,14 @@ img {
 }
 
 .site-brand {
-  color: var(--color-blue);
-  font-size: 36px;
-  font-weight: 800;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  width: 240px;
+  height: 48px;
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-position: -61px -34px;
+  background-size: 360px auto;
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -68,8 +72,7 @@ img {
 }
 
 .site-brand::after {
-  content: ".";
-  color: #ffb020;
+  content: none;
 }
 
 .site-nav {
