@@ -156,6 +156,7 @@ export const Home: React.FC = () => {
   // Update Page Title and SEO Meta headers
   useEffect(() => {
     if (pageData) {
+      console.log(pageData)
       document.title = pageData.seo.metaTitle || pageData.title;
       
       const metaDesc = document.querySelector('meta[name="description"]');

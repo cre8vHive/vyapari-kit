@@ -11,6 +11,8 @@ export interface ICourse extends Document, IAudit {
   oldPrice?: number;
   rating: number;
   imageUrl: string;
+  pdfAsset?: mongoose.Types.ObjectId;
+  isPublished: boolean;
 }
 
 const CourseSchema = new Schema<any>({
@@ -59,6 +61,15 @@ const CourseSchema = new Schema<any>({
     type: String,
     required: [true, 'Course image URL is required'],
     trim: true,
+  },
+  pdfAsset: {
+    type: Schema.Types.ObjectId,
+    ref: 'CoursePdf',
+  },
+  isPublished: {
+    type: Boolean,
+    default: true,
+    required: true,
   },
   isDeleted: AuditSchema.path('isDeleted'),
   deletedAt: AuditSchema.path('deletedAt'),

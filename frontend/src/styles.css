@@ -1109,3 +1109,661 @@ img {
   transform: translateY(-2px);
   box-shadow: 0 8px 28px rgba(11, 108, 255, 0.35);
 }
+
+.secure-pdf-shell {
+  min-height: calc(100vh - 96px);
+  padding: 28px clamp(16px, 5vw, 64px) 60px;
+  background: #f5f8fc;
+  color: var(--color-text);
+  user-select: none;
+}
+
+@keyframes secureWatermarkDrift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(14px, -10px, 0); }
+}
+
+.secure-pdf-toolbar {
+  position: sticky;
+  top: 86px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: min(1100px, 100%);
+  margin: 0 auto 24px;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 40px rgba(15, 52, 92, 0.08);
+}
+
+.secure-pdf-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-blue);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.secure-pdf-toolbar h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.secure-pdf-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.secure-pdf-meta span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--color-blue-soft);
+  color: var(--color-blue);
+}
+
+.secure-pdf-pages {
+  display: grid;
+  gap: 26px;
+  justify-items: center;
+}
+
+.secure-pdf-page {
+  position: relative;
+  width: min(980px, 100%);
+  padding: clamp(10px, 2vw, 18px);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(15, 52, 92, 0.12);
+  overflow: hidden;
+}
+
+.secure-pdf-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #ffffff;
+  pointer-events: none;
+}
+
+.secure-pdf-watermark {
+  position: absolute;
+  inset: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: space-around;
+  gap: 24px 16px;
+  pointer-events: none;
+  opacity: 0.32;
+  mix-blend-mode: multiply;
+  animation: secureWatermarkDrift 7s ease-in-out infinite;
+}
+
+.secure-pdf-watermark span {
+  color: #111827;
+  font-size: clamp(11px, 1.25vw, 15px);
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: center;
+  transform: rotate(-28deg);
+  overflow-wrap: anywhere;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.secure-pdf-page-number {
+  position: absolute;
+  right: 18px;
+  bottom: 12px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(11, 18, 32, 0.72);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.secure-pdf-status,
+.secure-pdf-error,
+.secure-pdf-page-error {
+  width: min(640px, 100%);
+  margin: 70px auto;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 18px 44px rgba(15, 52, 92, 0.08);
+}
+
+.secure-pdf-error h1 {
+  margin: 0 0 10px;
+  font-size: 24px;
+}
+
+.secure-pdf-error p,
+.secure-pdf-status,
+.secure-pdf-page-error {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.secure-pdf-privacy-shield {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #0b1220;
+  color: #ffffff;
+}
+
+.secure-pdf-privacy-shield div {
+  width: min(520px, 100%);
+  padding: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.secure-pdf-privacy-shield h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.secure-pdf-privacy-shield p {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.admin-shell {
+  min-height: calc(100vh - 96px);
+  padding: 34px clamp(18px, 5vw, 72px) 72px;
+  background: #f6f8fb;
+  color: var(--color-text);
+}
+
+.admin-header,
+.admin-layout,
+.admin-metrics,
+.admin-alert {
+  width: min(1360px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.admin-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-blue);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.admin-header h1,
+.admin-state h1 {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.admin-state {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  text-align: center;
+}
+
+.admin-state p {
+  max-width: 520px;
+  margin: 12px 0 18px;
+  color: var(--color-muted);
+}
+
+.admin-primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--color-blue);
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.admin-metrics div {
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 52, 92, 0.05);
+}
+
+.admin-metrics strong {
+  display: block;
+  color: var(--color-blue);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.admin-metrics span {
+  display: block;
+  margin-top: 8px;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-alert {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 800;
+}
+
+.admin-alert-error {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(420px, 1fr) minmax(260px, 320px);
+  gap: 18px;
+  align-items: start;
+}
+
+.admin-course-list,
+.admin-course-form,
+.admin-tool-panel {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 52, 92, 0.06);
+}
+
+.admin-course-list,
+.admin-course-form {
+  padding: 18px;
+}
+
+.admin-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.admin-panel-heading h2,
+.admin-tool-panel h2,
+.admin-pdf-box h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.admin-panel-heading span {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.admin-course-items {
+  display: grid;
+  gap: 8px;
+  max-height: 680px;
+  overflow: auto;
+}
+
+.admin-course-item {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.admin-course-item:hover,
+.admin-course-item.active {
+  border-color: rgba(11, 124, 255, 0.45);
+  background: var(--color-blue-soft);
+}
+
+.admin-course-item:hover {
+  transform: translateY(-1px);
+}
+
+.admin-course-item span {
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.admin-course-item small,
+.admin-empty,
+.admin-tool-panel p {
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-course-form label,
+.admin-tool-panel label,
+.admin-full-field {
+  display: grid;
+  gap: 6px;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-course-form input,
+.admin-course-form select,
+.admin-tool-panel input,
+.admin-tool-panel select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--color-text);
+  font: inherit;
+  outline: none;
+}
+
+.admin-course-form input:focus,
+.admin-course-form select:focus,
+.admin-tool-panel input:focus,
+.admin-tool-panel select:focus {
+  border-color: var(--color-blue);
+  box-shadow: 0 0 0 3px rgba(11, 124, 255, 0.1);
+}
+
+.admin-full-field,
+.admin-pdf-box {
+  margin-top: 14px;
+}
+
+.admin-switch {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  align-content: center;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.admin-switch input {
+  width: 18px;
+  min-height: 18px;
+}
+
+.admin-pdf-box {
+  padding: 14px;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.admin-pdf-box h3 {
+  margin-bottom: 12px;
+}
+
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.admin-primary-btn,
+.admin-secondary-btn,
+.admin-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-primary-btn {
+  background: var(--color-blue);
+  color: #ffffff;
+}
+
+.admin-secondary-btn {
+  border-color: var(--color-blue);
+  background: #ffffff;
+  color: var(--color-blue);
+}
+
+.admin-danger-btn {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #be123c;
+}
+
+.admin-primary-btn:disabled,
+.admin-secondary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.admin-side-tools {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-tool-panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.admin-log-panel {
+  grid-column: 1 / -1;
+  max-height: none;
+  overflow: hidden;
+}
+
+.admin-log-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-log-heading .admin-secondary-btn {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.admin-log-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(220px, 1.2fr) minmax(180px, 1fr) minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.admin-log-filters label {
+  display: grid;
+  gap: 5px;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-log-filters select,
+.admin-log-filters input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-log-filters .admin-secondary-btn {
+  width: 100%;
+  min-height: 36px;
+}
+
+.admin-log-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.admin-log-item {
+  display: grid;
+  gap: 5px;
+  padding: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.admin-log-item div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-log-item strong {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.admin-log-item span {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--color-blue-soft);
+  color: var(--color-blue);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.admin-log-item p,
+.admin-log-item small,
+.admin-log-item time {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .secure-pdf-toolbar {
+    position: static;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .secure-pdf-meta {
+    justify-content: flex-start;
+  }
+
+  .secure-pdf-watermark {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-metrics,
+  .admin-layout,
+  .admin-field-grid,
+  .admin-log-filters,
+  .admin-log-list {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  body::before {
+    content: "Printing protected course material is disabled.";
+    visibility: visible !important;
+    display: block;
+    padding: 40px;
+    color: #0b1220;
+    font: 700 18px Inter, ui-sans-serif, system-ui, sans-serif;
+  }
+}
