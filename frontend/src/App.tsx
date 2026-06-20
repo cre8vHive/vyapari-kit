@@ -5,6 +5,7 @@ import AuthPage from './pages/Auth';
 import PdfViewer from './pages/PdfViewer';
 import AdminDashboard from './pages/AdminDashboard';
 import { AuthUser, authApi } from './services/api';
+import vyapaarKitLogo from './assets/vyapaar-kit-logo.jpg';
 
 const HEARTBEAT_INTERVAL_MS = 30_000; // 30 seconds
 
@@ -115,7 +116,12 @@ const App: React.FC = () => {
   return (
     <>
       <header className="site-header">
-        <a className="site-brand" href={withBase('/')}>Upskill</a>
+        <a
+          className="site-brand"
+          href={withBase('/')}
+          aria-label="Vyapaar Kit home"
+          style={{ backgroundImage: `url(${vyapaarKitLogo})` }}
+        />
         <nav className="site-nav" aria-label="Primary navigation">
           <a href={withBase('/')}>Home</a>
           <a href={withBase('/courses')}>Course</a>
