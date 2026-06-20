@@ -11,6 +11,7 @@ export interface CourseItem {
   oldPrice?: number;
   rating: number;
   imageUrl: string;
+  hasPdf?: boolean;
 }
 
 export interface CourseGridSectionProps {
@@ -73,12 +74,16 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
 
         {/* Courses Listing Container */}
         <div className={`course-list-container layout-${layout}`}>
-          {courses.map((course, index) => (
-            <div 
-              key={course.id || index}
-              className="elementor-element e-con-full e-flex e-con e-child course-card-wrapper"
-              style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden' }}
-            >
+          {courses.map((course, index) => {
+            const courseUrl = course.hasPdf ? `/courses/${course.id}/viewer` : `/courses/${course.slug}`;
+            const actionText = course.hasPdf ? 'View Material' : 'Start Learning';
+
+            return (
+              <div 
+                key={course.id || index}
+                className="elementor-element e-con-full e-flex e-con e-child course-card-wrapper"
+                style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden' }}
+              >
               {/* Image Hotspot (Difficulty Badge overlay) */}
               <div className="elementor-element elementor-element-hotspot-container elementor-widget elementor-widget-hotspot">
                 <div className="elementor-widget-container">
@@ -102,7 +107,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                 <div className="elementor-element elementor-widget elementor-widget-heading">
                   <div className="elementor-widget-container">
                     <h4 className="elementor-heading-title elementor-size-default">
-                      <a href={`/courses/${course.slug}`}>{course.title}</a>
+                      <a href={courseUrl}>{course.title}</a>
                     </h4>
                   </div>
                 </div>
@@ -165,11 +170,11 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                       <div className="elementor-button-wrapper">
                         <a 
                           className="elementor-button elementor-button-link elementor-size-sm" 
-                          href={`/courses/${course.slug}`}
+                          href={courseUrl}
                           style={{ padding: '8px 16px', fontSize: '14px' }}
                         >
                           <span className="elementor-button-content-wrapper">
-                            <span className="elementor-button-text">Start Learning</span>
+                            <span className="elementor-button-text">{actionText}</span>
                           </span>
                         </a>
                       </div>
@@ -179,8 +184,9 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
 
               </div>
 
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
       </div>

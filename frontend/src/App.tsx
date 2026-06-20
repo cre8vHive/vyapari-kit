@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import CourseListing from './pages/CourseListing';
 import Home from './pages/Home';
 import AuthPage from './pages/Auth';
+import PdfViewer from './pages/PdfViewer';
+import AdminDashboard from './pages/AdminDashboard';
 import { AuthUser, authApi } from './services/api';
 
 const HEARTBEAT_INTERVAL_MS = 30_000; // 30 seconds
@@ -83,6 +85,7 @@ const App: React.FC = () => {
     ? currentPath.slice(basePath.length) || '/'
     : currentPath;
   const withBase = (path: string) => `${basePath}${path}`;
+  const courseViewerMatch = path.match(/^\/courses\/([^/]+)\/viewer$/);
 
   const handleAuth = (nextUser: AuthUser, token: string) => {
     setUser(nextUser);
@@ -120,6 +123,7 @@ const App: React.FC = () => {
           <a href={withBase('/')}>Page</a>
           <a href={withBase('/')}>Blog</a>
           <a href={withBase('/')}>Contact</a>
+          {user?.role === 'admin' && <a href={withBase('/admin')}>Admin</a>}
         </nav>
         {user ? (
           <div className="site-actions site-user-actions" aria-label="Account actions">
@@ -136,8 +140,10 @@ const App: React.FC = () => {
       <main>
         {path.startsWith('/login') && <AuthPage mode="login" onAuth={handleAuth} />}
         {path.startsWith('/register') && <AuthPage mode="register" onAuth={handleAuth} />}
-        {path.startsWith('/courses') && <CourseListing />}
-        {!path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/courses') && <Home />}
+        {path.startsWith('/admin') && <AdminDashboard user={user} />}
+        {courseViewerMatch && <PdfViewer courseId={courseViewerMatch[1]} />}
+        {!path.startsWith('/admin') && !courseViewerMatch && path.startsWith('/courses') && <CourseListing />}
+        {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/courses') && <Home />}
       </main>
 
       {/* ── Session Expired Modal ── */}
