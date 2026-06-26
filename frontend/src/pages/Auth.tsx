@@ -42,7 +42,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
+  const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
   const [success, setSuccess] = useState(false);
   const [shake, setShake] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -53,6 +56,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
     setEmail('');
     setPassword('');
     setError('');
+    setErrorCode('');
+    setNotice('');
     setShowPassword(false);
     setSuccess(false);
     setShake(false);
@@ -66,6 +71,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError('');
+    setErrorCode('');
+    setNotice('');
     setIsSubmitting(true);
 
     try {
@@ -84,9 +91,34 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Something went wrong. Please try again.';
       setError(msg);
+      setErrorCode(err.response?.data?.code || '');
       triggerShake();
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleLogoutAllDevices = async () => {
+    setError('');
+    setNotice('');
+
+    if (!email || !password) {
+      setError('Enter your email and password to log out all devices.');
+      triggerShake();
+      return;
+    }
+
+    setIsLoggingOutAll(true);
+    try {
+      await authApi.logoutAllDevices({ email, password });
+      setErrorCode('');
+      setNotice('All devices have been logged out. Sign in again to continue.');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Unable to log out all devices. Please try again.';
+      setError(msg);
+      triggerShake();
+    } finally {
+      setIsLoggingOutAll(false);
     }
   };
 
@@ -214,6 +246,32 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
                   </svg>
                   <span>{error}</span>
                 </div>
+              )}
+
+              {notice && (
+                <div className="auth-notice" role="status" id="auth-notice">
+                  <CheckIcon />
+                  <span>{notice}</span>
+                </div>
+              )}
+
+              {!isRegister && errorCode === 'SESSION_ACTIVE' && (
+                <button
+                  className="auth-secondary-action"
+                  type="button"
+                  onClick={handleLogoutAllDevices}
+                  disabled={isLoggingOutAll}
+                  id="auth-logout-all-btn"
+                >
+                  {isLoggingOutAll ? (
+                    <>
+                      <SpinnerIcon />
+                      <span>Logging out devices...</span>
+                    </>
+                  ) : (
+                    <span>Logout from all devices</span>
+                  )}
+                </button>
               )}
 
               {/* Submit */}

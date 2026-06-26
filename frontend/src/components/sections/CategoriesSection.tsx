@@ -12,13 +12,43 @@ export interface CategoriesSectionProps {
   categories: CategoryItem[];
   allCategoriesPopupId?: string; // e.g. "338" to trigger modal
   onAllCategoriesClick?: () => void;
+  variant?: 'tiles' | 'filters';
+  selectedSlug?: string;
+  onCategorySelect?: (slug: string) => void;
 }
 
 export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
   sectionTitle = "All Categories",
   categories,
   onAllCategoriesClick,
+  variant = 'tiles',
+  selectedSlug,
+  onCategorySelect,
 }) => {
+  if (variant === 'filters') {
+    return (
+      <div className="course-category-filter-bar" aria-label="Course categories">
+        {categories.map((cat) => {
+          const slug = cat.slug || 'all';
+          const isActive = selectedSlug === slug;
+
+          return (
+            <button
+              key={cat.id || slug}
+              className={`course-category-filter${isActive ? ' active' : ''}`}
+              type="button"
+              onClick={() => onCategorySelect?.(slug)}
+              aria-pressed={isActive}
+            >
+              <img src={cat.iconUrl} alt="" loading="lazy" />
+              <span>{cat.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="elementor-element elementor-element-1438c1b e-flex e-con-boxed e-con e-parent">
       <div className="e-con-inner">
