@@ -67,6 +67,13 @@ export const cmsApi = {
   },
 };
 
+export const courseApi = {
+  getMyCourses: async (): Promise<CourseSummary[]> => {
+    const response = await apiClient.get<CourseSummary[]>('/my/courses');
+    return response.data;
+  },
+};
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -179,6 +186,9 @@ export const authApi = {
   },
   logout: async (): Promise<void> => {
     await apiClient.post('/auth/logout');
+  },
+  logoutAllDevices: async (payload: { email: string; password: string }): Promise<void> => {
+    await apiClient.post('/auth/logout-all', payload);
   },
   heartbeat: async (): Promise<void> => {
     await apiClient.post('/auth/heartbeat');

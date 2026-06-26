@@ -371,6 +371,29 @@ app.post('/api/v1/auth/login', async (req, res) => {
   });
 });
 
+app.post('/api/v1/auth/logout-all', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const password = String(req.body.password || '');
+  const user = await User.findOne({ email }).select('+passwordHash');
+
+  if (!user || !verifyPassword(password, user.passwordHash)) {
+    res.status(401).json({ message: 'Invalid email or password' });
+    return;
+  }
+
+  await User.findByIdAndUpdate(user._id, {
+    activeSessionId: null,
+    lastHeartbeat: null,
+  });
+
+  res.json({ message: 'Logged out from all devices successfully' });
+});
+
 app.post('/api/v1/auth/logout', requireAuth, async (_req, res) => {
   const authUser = res.locals.user;
 
