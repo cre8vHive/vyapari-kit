@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import AuthPage from './pages/Auth';
 import PdfViewer from './pages/PdfViewer';
 import AdminDashboard from './pages/AdminDashboard';
+import Footer from './components/Footer';
 import { AuthUser, authApi } from './services/api';
 import vyapaarKitLogo from './assets/vyapaar-kit-logo.jpg';
 
@@ -151,6 +152,8 @@ const App: React.FC = () => {
         {!path.startsWith('/admin') && !courseViewerMatch && path.startsWith('/courses') && <CourseListing />}
         {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/courses') && <Home />}
       </main>
+      
+      <Footer />
 
       {/* ── Session Expired Modal ── */}
       {sessionExpired && (

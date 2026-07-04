@@ -1,9 +1,10 @@
 import cors from 'cors';
 import crypto from 'crypto';
-import dotenv from 'dotenv';
-import express, { Request, Response } from 'express';
+import 'express-async-errors';
+import express, { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { SESSION_TTL_MS, createToken, generateSessionId, hashPassword, requireActiveSession, requireAuth, verifyPassword } from './auth';
+import { config, validateConfig } from './config';
 import { categories as fallbackCategories, courses as fallbackCourses, homePage } from './data/demoContent';
 import Category from './models/Category';
 import Course from './models/Course';
@@ -13,21 +14,42 @@ import Page from './models/Page';
 import PageTemplate from './models/PageTemplate';
 import PdfAccessLog from './models/PdfAccessLog';
 import User from './models/User';
+import {
+  accessLogger,
+  apiNoStore,
+  authLimiter,
+  clientIp,
+  corsOptions,
+  generalApiLimiter,
+  pdfLimiter,
+  permissionsPolicy,
+  responseCompression,
+  safePdfFilename,
+  securityHeaders,
+  validateExternalPdfUrl,
+} from './security';
 
-dotenv.config();
+validateConfig();
 
 const app = express();
-const port = Number(process.env.PORT || 5000);
-const clientOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
-  .split(',')
-  .map((origin) => origin.trim());
-const adminEmails = (process.env.ADMIN_EMAILS || '')
-  .split(',')
-  .map((email) => email.trim().toLowerCase())
-  .filter(Boolean);
+const port = config.port;
+const adminEmails = config.adminEmails;
+const maxPasswordLength = 256;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-app.use(cors({ origin: clientOrigins, credentials: true }));
-app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '25mb' }));
+app.disable('x-powered-by');
+app.set('trust proxy', config.trustProxyHops);
+app.use(accessLogger);
+app.use(securityHeaders());
+app.use(permissionsPolicy);
+app.use(responseCompression);
+app.use(cors(corsOptions));
+app.use('/api', apiNoStore);
+app.use('/api', generalApiLimiter);
+app.use(express.json({ limit: config.jsonBodyLimit }));
+app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+app.use(['/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/auth/logout-all'], authLimiter);
+app.use('/api/v1/courses/:courseId/pdf', pdfLimiter);
 
 function isMongoConnected() {
   return mongoose.connection.readyState === 1;
@@ -46,9 +68,8 @@ function isConfiguredAdminEmail(email: string) {
   return adminEmails.includes(email.trim().toLowerCase());
 }
 
-function clientIp(req: Request) {
-  const forwardedFor = req.header('x-forwarded-for');
-  return forwardedFor ? forwardedFor.split(',')[0].trim() : req.ip;
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function publicCourse(course: any) {
@@ -148,11 +169,20 @@ async function logPdfAccess(req: Request, userId: string, courseId: string, even
 
 function decodePdfBase64(pdfBase64: string) {
   const normalized = pdfBase64.includes(',') ? pdfBase64.split(',').pop() || '' : pdfBase64;
+  const estimatedSize = Math.floor((normalized.length * 3) / 4);
+  if (estimatedSize > config.maxPdfUploadBytes) {
+    throw new Error(`PDF upload exceeds the ${config.maxPdfUploadBytes} byte limit`);
+  }
+
   const buffer = Buffer.from(normalized, 'base64');
   const pdfHeader = buffer.subarray(0, 5).toString('utf8');
 
   if (pdfHeader !== '%PDF-') {
     throw new Error('Uploaded file must be a valid PDF');
+  }
+
+  if (buffer.length > config.maxPdfUploadBytes) {
+    throw new Error(`PDF upload exceeds the ${config.maxPdfUploadBytes} byte limit`);
   }
 
   return buffer;
@@ -181,7 +211,7 @@ function pdfDataToBuffer(data: unknown) {
 }
 
 async function upsertCoursePdf(courseId: string, payload: any, actorId: string) {
-  const filename = String(payload.filename || 'course-material.pdf').trim();
+  const filename = safePdfFilename(String(payload.filename || 'course-material.pdf').trim());
   const pdfBase64 = typeof payload.pdfBase64 === 'string' ? payload.pdfBase64 : '';
   const externalUrl = typeof payload.pdfUrl === 'string' ? payload.pdfUrl.trim() : '';
 
@@ -204,12 +234,9 @@ async function upsertCoursePdf(courseId: string, payload: any, actorId: string) 
     update.sha256 = crypto.createHash('sha256').update(data).digest('hex');
     update.externalUrl = undefined;
   } else {
-    const parsed = new URL(externalUrl);
-    if (!['https:', 'http:'].includes(parsed.protocol)) {
-      throw new Error('PDF URL must be an http(s) URL');
-    }
+    const safeExternalUrl = await validateExternalPdfUrl(externalUrl);
     update.storageType = 'external';
-    update.externalUrl = externalUrl;
+    update.externalUrl = safeExternalUrl;
     update.fileSize = undefined;
     update.sha256 = undefined;
     update.data = undefined;
@@ -300,7 +327,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
 
-  if (name.length < 2 || !email || password.length < 8) {
+  if (name.length < 2 || !emailPattern.test(email) || password.length < 8 || password.length > maxPasswordLength) {
     res.status(400).json({ message: 'Name, valid email, and 8+ character password are required' });
     return;
   }
@@ -336,6 +363,10 @@ app.post('/api/v1/auth/login', async (req, res) => {
 
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
+  if (!emailPattern.test(email) || password.length === 0 || password.length > maxPasswordLength) {
+    res.status(401).json({ message: 'Invalid email or password' });
+    return;
+  }
   const user = await User.findOne({ email }).select('+passwordHash +activeSessionId +lastHeartbeat');
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
@@ -379,6 +410,10 @@ app.post('/api/v1/auth/logout-all', async (req, res) => {
 
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
+  if (!emailPattern.test(email) || password.length === 0 || password.length > maxPasswordLength) {
+    res.status(401).json({ message: 'Invalid email or password' });
+    return;
+  }
   const user = await User.findOne({ email }).select('+passwordHash');
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
@@ -863,9 +898,18 @@ app.get('/api/v1/courses/:courseId/pdf/file', requireAuth, requireActiveSession,
       res.status(404).json({ message: 'PDF URL is missing' });
       return;
     }
-    const response = await fetch(pdf.externalUrl);
+    const safeExternalUrl = await validateExternalPdfUrl(pdf.externalUrl);
+    const response = await fetch(safeExternalUrl, {
+      redirect: 'error',
+      signal: AbortSignal.timeout(config.externalPdfFetchTimeoutMs),
+    });
     if (!response.ok) {
       res.status(502).json({ message: 'Unable to retrieve secure PDF asset' });
+      return;
+    }
+    const contentLength = Number(response.headers.get('content-length') || 0);
+    if (contentLength > config.maxPdfUploadBytes) {
+      res.status(502).json({ message: 'Secure PDF asset is too large' });
       return;
     }
     const arrayBuffer = await response.arrayBuffer();
@@ -882,9 +926,14 @@ app.get('/api/v1/courses/:courseId/pdf/file', requireAuth, requireActiveSession,
     return;
   }
 
+  if (pdfBuffer.length > config.maxPdfUploadBytes || pdfBuffer.subarray(0, 5).toString('utf8') !== '%PDF-') {
+    res.status(502).json({ message: 'Secure PDF asset failed validation' });
+    return;
+  }
+
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Length', String(pdfBuffer.length));
-  res.setHeader('Content-Disposition', `inline; filename="${pdf.filename.replace(/"/g, '')}"`);
+  res.setHeader('Content-Disposition', `inline; filename="${safePdfFilename(pdf.filename)}"`);
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -944,13 +993,13 @@ app.get('/api/v1/categories', async (_req, res) => {
 });
 
 app.get('/api/v1/courses', async (req, res) => {
-  const category = String(req.query.category || '').toLowerCase();
-  const search = String(req.query.search || '').toLowerCase();
+  const category = String(req.query.category || '').trim().toLowerCase().slice(0, 80);
+  const search = String(req.query.search || '').trim().toLowerCase().slice(0, 120);
 
   if (isMongoConnected()) {
     const query: Record<string, any> = { isPublished: true };
-    if (category) query.categoryName = new RegExp(`^${category}$`, 'i');
-    if (search) query.title = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    if (category) query.categoryName = new RegExp(`^${escapeRegex(category)}$`, 'i');
+    if (search) query.title = new RegExp(escapeRegex(search), 'i');
 
     const courses = await Course.find(query).sort({ createdAt: -1 }).lean();
     res.json(courses.map(publicCourse));
@@ -988,15 +1037,43 @@ app.get('/api/v1/courses/:courseId', async (req, res) => {
   res.status(404).json({ message: 'Course not found' });
 });
 
+app.use('/api', (_req, res) => {
+  res.status(404).json({ message: 'Endpoint not found' });
+});
+
+app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(JSON.stringify({
+    level: 'error',
+    time: new Date().toISOString(),
+    message: error.message,
+    stack: config.isProduction ? undefined : error.stack,
+  }));
+
+  if (res.headersSent) {
+    return;
+  }
+
+  res.status(500).json({
+    message: config.isProduction ? 'Internal server error' : error.message,
+  });
+});
+
 async function start() {
-  if (process.env.MONGODB_URI) {
+  if (config.mongodbUri) {
     try {
-      await mongoose.connect(process.env.MONGODB_URI);
+      await mongoose.connect(config.mongodbUri, {
+        autoIndex: !config.isProduction,
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 10_000,
+      });
       console.log('MongoDB connected');
       await seedDemoContent();
       console.log('Demo content synced to MongoDB');
     } catch (error) {
       console.error('MongoDB Error:', error);
+      if (config.isProduction) {
+        process.exit(1);
+      }
     }
   }
 
