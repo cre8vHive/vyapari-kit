@@ -16,7 +16,6 @@ const PageTemplateSchema = new Schema<any>({
   key: {
     type: String,
     required: [true, 'Template key is required'],
-    unique: true,
     trim: true,
     lowercase: true,
   },

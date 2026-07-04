@@ -1,8 +1,10 @@
 import crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
+import { config } from './config';
 import User from './models/User';
 
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
+const fallbackAuthSecret = 'local-development-auth-secret';
 
 /** How long (ms) a session stays alive without a heartbeat */
 export const SESSION_TTL_MS = 2 * 60 * 1000; // 2 minutes
@@ -21,7 +23,7 @@ function base64Url(input: string | Buffer) {
 }
 
 function getAuthSecret() {
-  return process.env.AUTH_SECRET || 'local-development-auth-secret';
+  return config.authSecret || fallbackAuthSecret;
 }
 
 export function generateSessionId() {
@@ -64,21 +66,30 @@ export function createToken(user: { id: string; email: string; name: string; rol
 }
 
 export function verifyToken(token: string): TokenPayload | null {
-  const [header, body, signature] = token.split('.');
-  if (!header || !body || !signature) return null;
+  try {
+    const [header, body, signature] = token.split('.');
+    if (!header || !body || !signature) return null;
 
-  const expected = crypto
-    .createHmac('sha256', getAuthSecret())
-    .update(`${header}.${body}`)
-    .digest('base64url');
+    const decodedHeader = JSON.parse(Buffer.from(header, 'base64url').toString('utf8')) as { alg?: string; typ?: string };
+    if (decodedHeader.alg !== 'HS256' || decodedHeader.typ !== 'JWT') return null;
 
-  const isValid = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
-  if (!isValid) return null;
+    const expected = crypto
+      .createHmac('sha256', getAuthSecret())
+      .update(`${header}.${body}`)
+      .digest('base64url');
 
-  const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as TokenPayload;
-  if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+    const received = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expected);
+    if (received.length !== expectedBuffer.length) return null;
+    if (!crypto.timingSafeEqual(received, expectedBuffer)) return null;
 
-  return payload;
+    const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as TokenPayload;
+    if (!payload.sub || !payload.email || !payload.sid || payload.exp < Math.floor(Date.now() / 1000)) return null;
+
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {

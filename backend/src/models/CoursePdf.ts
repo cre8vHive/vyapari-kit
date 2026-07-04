@@ -17,8 +17,6 @@ const CoursePdfSchema = new Schema<any>({
     type: Schema.Types.ObjectId,
     ref: 'Course',
     required: [true, 'Course reference is required'],
-    unique: true,
-    index: true,
   },
   storageType: {
     type: String,

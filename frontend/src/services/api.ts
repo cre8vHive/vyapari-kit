@@ -1,8 +1,19 @@
 import axios from 'axios';
 
+const apiUrl = import.meta.env.VITE_API_URL;
+const isProduction = import.meta.env.PROD;
+
+if (!apiUrl) {
+  throw new Error('VITE_API_URL is required');
+}
+
+if (isProduction && !apiUrl.startsWith('https://')) {
+  throw new Error('VITE_API_URL must use HTTPS in production');
+}
+
 // Create central Axios instance
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: apiUrl,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

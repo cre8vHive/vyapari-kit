@@ -23,7 +23,6 @@ const CourseSchema = new Schema<any>({
   },
   slug: {
     type: String,
-    unique: true,
     trim: true,
     lowercase: true,
   },

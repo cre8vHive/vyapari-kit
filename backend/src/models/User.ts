@@ -20,7 +20,6 @@ const UserSchema = new Schema<any>({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
     trim: true,
     lowercase: true,
     match: [/^\S+@\S+\.\S+$/, 'Email is invalid'],

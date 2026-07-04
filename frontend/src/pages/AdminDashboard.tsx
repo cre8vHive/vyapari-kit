@@ -68,6 +68,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [categoryForm, setCategoryForm] = useState({ name: '', iconUrl: '' });
   const [enrollUserId, setEnrollUserId] = useState('');
   const [logFilters, setLogFilters] = useState({ courseId: '', userId: '', dateFrom: '', dateTo: '' });
+  const [courseFilters, setCourseFilters] = useState({ search: '', category: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -80,6 +81,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   const publishedCount = courses.filter((course) => course.isPublished).length;
   const protectedCount = courses.filter((course) => course.hasPdf).length;
+  const filteredCourses = useMemo(() => {
+    const search = courseFilters.search.trim().toLowerCase();
+    const category = courseFilters.category.trim().toLowerCase();
+
+    return courses.filter((course) => {
+      const matchesSearch = !search ||
+        course.title.toLowerCase().includes(search) ||
+        course.instructorName.toLowerCase().includes(search) ||
+        course.categoryName.toLowerCase().includes(search);
+      const matchesCategory = !category || course.categoryName.toLowerCase() === category;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [courseFilters, courses]);
 
   const loadDashboard = async () => {
     try {
@@ -307,10 +322,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         <aside className="admin-course-list" aria-label="Courses">
           <div className="admin-panel-heading">
             <h2>Courses</h2>
-            <span>{courses.length}</span>
+            <span>{filteredCourses.length} / {courses.length}</span>
+          </div>
+          <div className="admin-course-filters" aria-label="Filter courses">
+            <input
+              value={courseFilters.search}
+              onChange={(event) => setCourseFilters((current) => ({ ...current, search: event.target.value }))}
+              placeholder="Search courses"
+              type="search"
+            />
+            <select
+              value={courseFilters.category}
+              onChange={(event) => setCourseFilters((current) => ({ ...current, category: event.target.value }))}
+              aria-label="Filter courses by category"
+            >
+              <option value="">All categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.name}>{category.name}</option>
+              ))}
+            </select>
           </div>
           <div className="admin-course-items">
-            {courses.map((course) => (
+            {filteredCourses.map((course) => (
               <button
                 key={course.id}
                 className={`admin-course-item ${selectedCourseId === course.id ? 'active' : ''}`}
@@ -324,6 +357,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               </button>
             ))}
             {courses.length === 0 && <p className="admin-empty">No courses yet.</p>}
+            {courses.length > 0 && filteredCourses.length === 0 && <p className="admin-empty">No courses match this filter.</p>}
           </div>
         </aside>
 
