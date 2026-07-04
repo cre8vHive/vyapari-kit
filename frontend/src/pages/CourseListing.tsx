@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CategoriesSection, { CategoryItem } from '../components/sections/CategoriesSection';
 import CourseGridSection, { CourseItem } from '../components/sections/CourseGridSection';
+import CourseDetails from '../components/CourseDetails';
 import { cmsApi, courseApi } from '../services/api';
 
 type CourseTab = 'available' | 'my';
@@ -153,6 +154,7 @@ export const CourseListing: React.FC = () => {
   const [categories, setCategories] = useState<CategoryItem[]>(MOCK_CATEGORIES);
   const [loading, setLoading] = useState(true);
   const [myCoursesLoaded, setMyCoursesLoaded] = useState(false);
+  const [selectedCourseSlug, setSelectedCourseSlug] = useState<string | null>(null);
 
   const activeCourses = listingState.tab === 'my' ? myCourses : availableCourses;
   const filteredCourses = useMemo(
@@ -160,6 +162,13 @@ export const CourseListing: React.FC = () => {
     [activeCourses, listingState.category]
   );
   const activeTabLabel = listingState.tab === 'my' ? 'My Courses' : 'Available Courses';
+
+  const handleCourseClick = useCallback((course: CourseItem, event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (course.slug === 'photography-masterclass-guide') {
+      event.preventDefault();
+      setSelectedCourseSlug(course.slug);
+    }
+  }, []);
 
   const updateListingState = useCallback((nextState: Partial<CourseListingState>, replace = false) => {
     const merged = { ...listingStateRef.current, ...nextState };
@@ -224,6 +233,10 @@ export const CourseListing: React.FC = () => {
     fetchMyCourses();
   }, [listingState.tab, myCoursesLoaded]);
 
+  if (selectedCourseSlug) {
+    return <CourseDetails onBack={() => setSelectedCourseSlug(null)} />;
+  }
+
   return (
     <div className="page-renderer course-listing-template">
       <section className="course-page-hero">
@@ -281,7 +294,7 @@ export const CourseListing: React.FC = () => {
             {loading || (listingState.tab === 'my' && !myCoursesLoaded) ? (
               <div className="course-hub-status">Loading courses...</div>
             ) : filteredCourses.length > 0 ? (
-              <CourseGridSection sectionTitle="" courses={filteredCourses} layout="grid" embedded />
+              <CourseGridSection sectionTitle="" courses={filteredCourses} layout="grid" embedded onCourseClick={handleCourseClick} />
             ) : (
               <div className="course-empty-state">
                 <h3>No courses found</h3>

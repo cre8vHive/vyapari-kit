@@ -19,6 +19,7 @@ export interface CourseGridSectionProps {
   courses: CourseItem[];
   layout?: 'grid' | 'carousel';
   embedded?: boolean;
+  onCourseClick?: (course: CourseItem, event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
 function courseCategorySlug(categoryName: string) {
@@ -30,6 +31,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
   courses,
   layout = 'grid',
   embedded = false,
+  onCourseClick,
 }) => {
   // Star rendering helper based on Mongoose rating floating points
   const renderStars = (rating: number) => {
@@ -98,7 +100,16 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
             <div className="elementor-element elementor-widget elementor-widget-heading">
               <div className="elementor-widget-container">
                 <h4 className="elementor-heading-title elementor-size-default">
-                  <a href={courseUrl}>{course.title}</a>
+                  <a
+                    href={courseUrl}
+                    onClick={(event) => {
+                      if (onCourseClick) {
+                        onCourseClick(course, event);
+                      }
+                    }}
+                  >
+                    {course.title}
+                  </a>
                 </h4>
               </div>
             </div>
@@ -163,6 +174,11 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                       className="elementor-button elementor-button-link elementor-size-sm"
                       href={courseUrl}
                       style={{ padding: '8px 16px', fontSize: '14px' }}
+                      onClick={(event) => {
+                        if (onCourseClick) {
+                          onCourseClick(course, event);
+                        }
+                      }}
                     >
                       <span className="elementor-button-content-wrapper">
                         <span className="elementor-button-text">{actionText}</span>
