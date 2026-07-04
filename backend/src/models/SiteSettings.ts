@@ -10,7 +10,6 @@ const SiteSettingsSchema = new Schema<any>({
   key: {
     type: String,
     required: [true, 'Site settings key is required'],
-    unique: true,
     trim: true,
     lowercase: true,
   },
