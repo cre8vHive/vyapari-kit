@@ -55,6 +55,8 @@ export const config = {
   rateLimitMax: numberFromEnv('RATE_LIMIT_MAX', 300),
   authRateLimitMax: numberFromEnv('AUTH_RATE_LIMIT_MAX', 10),
   pdfRateLimitMax: numberFromEnv('PDF_RATE_LIMIT_MAX', 120),
+  brevoApiKey: process.env.BREVO_API_KEY || '',
+  emailSender: process.env.EMAIL_SENDER || 'no-reply@vyapari.kit',
 };
 
 export function validateConfig() {

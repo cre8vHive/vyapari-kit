@@ -187,8 +187,8 @@ export interface PdfAccessLogFilters {
 }
 
 export const authApi = {
-  register: async (payload: { name: string; email: string; password: string }): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/register', payload);
+  register: async (payload: { name: string; email: string; password: string }): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>('/auth/register', payload);
     return response.data;
   },
   login: async (payload: { email: string; password: string }): Promise<AuthResponse> => {
@@ -206,6 +206,18 @@ export const authApi = {
   },
   me: async (): Promise<{ user: AuthUser }> => {
     const response = await apiClient.get<{ user: AuthUser }>('/auth/me');
+    return response.data;
+  },
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>('/auth/forgot-password', { email });
+    return response.data;
+  },
+  resetPassword: async (payload: { token: string; password: string }): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>('/auth/reset-password', payload);
+    return response.data;
+  },
+  verifyEmail: async (token: string): Promise<AuthResponse & { message: string }> => {
+    const response = await apiClient.post<AuthResponse & { message: string }>('/auth/verify-email', { token });
     return response.data;
   },
 };

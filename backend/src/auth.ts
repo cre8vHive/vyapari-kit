@@ -124,6 +124,7 @@ export async function requireActiveSession(_req: Request, res: Response, next: N
   }
 
   if (user.activeSessionId !== payload.sid) {
+    console.warn(`[requireActiveSession] Mismatch for user ${user._id}. Payload SID: ${payload.sid}, DB SID: ${user.activeSessionId}`);
     res.status(403).json({
       message: 'Session expired. You may have logged in from another device.',
       code: 'SESSION_EXPIRED',

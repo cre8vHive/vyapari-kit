@@ -14,6 +14,9 @@ import Page from './models/Page';
 import PageTemplate from './models/PageTemplate';
 import PdfAccessLog from './models/PdfAccessLog';
 import User from './models/User';
+import { Logger } from './services/logger.service';
+import { PasswordService } from './services/password.service';
+import { EmailService } from './services/email.service';
 import {
   accessLogger,
   apiNoStore,
@@ -327,18 +330,27 @@ app.post('/api/v1/auth/register', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
 
-  if (name.length < 2 || !emailPattern.test(email) || password.length < 8 || password.length > maxPasswordLength) {
-    res.status(400).json({ message: 'Name, valid email, and 8+ character password are required' });
+  if (name.length < 2 || !emailPattern.test(email)) {
+    res.status(400).json({ message: 'Name and a valid email are required' });
+    return;
+  }
+
+  const passwordErrors = PasswordService.validate(password, { email, name });
+  if (passwordErrors.length > 0) {
+    res.status(400).json({ message: 'Password does not meet enterprise requirements', errors: passwordErrors });
     return;
   }
 
   const existingUser = await User.findOne({ email }).select('_id').lean();
   if (existingUser) {
+    Logger.warn('Registration attempt with existing email', Logger.extractReqContext(req));
     res.status(409).json({ message: 'An account with this email already exists' });
     return;
   }
 
   const sessionId = generateSessionId();
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  
   const user = await User.create({
     name,
     email,
@@ -346,12 +358,17 @@ app.post('/api/v1/auth/register', async (req, res) => {
     role: isConfiguredAdminEmail(email) ? 'admin' : 'student',
     activeSessionId: sessionId,
     lastHeartbeat: new Date(),
+    verificationToken,
+    isEmailVerified: false,
   });
 
-  const safeUser = publicUser(user);
+  Logger.info('User registered', { ...Logger.extractReqContext(req), userId: user._id });
+  
+  EmailService.sendWelcome({ name: user.name, email: user.email }).catch(err => Logger.error('Welcome email failed', err));
+  EmailService.sendVerification({ name: user.name, email: user.email }, verificationToken).catch(err => Logger.error('Verification email failed', err));
+
   res.status(201).json({
-    user: safeUser,
-    token: createToken(safeUser, sessionId),
+    message: 'Registration successful. Please check your email to verify your account.'
   });
 });
 
@@ -364,12 +381,39 @@ app.post('/api/v1/auth/login', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
   if (!emailPattern.test(email) || password.length === 0 || password.length > maxPasswordLength) {
+    Logger.warn('Login failed: invalid email or password format', Logger.extractReqContext(req));
     res.status(401).json({ message: 'Invalid email or password' });
     return;
   }
-  const user = await User.findOne({ email }).select('+passwordHash +activeSessionId +lastHeartbeat');
+  const user = await User.findOne({ email }).select('+passwordHash +activeSessionId +lastHeartbeat +failedLoginAttempts +lockedUntil +isEmailVerified');
 
-  if (!user || !verifyPassword(password, user.passwordHash)) {
+  if (!user) {
+    Logger.warn('Login failed: user not found', { ...Logger.extractReqContext(req), attemptedEmail: email });
+    res.status(401).json({ message: 'Invalid email or password' });
+    return;
+  }
+
+  if (user.lockedUntil && user.lockedUntil > new Date()) {
+    Logger.security('Login attempted on locked account', { ...Logger.extractReqContext(req), userId: user._id });
+    res.status(403).json({ message: 'Account is temporarily locked due to multiple failed login attempts. Please try again later.' });
+    return;
+  }
+
+  if (user.isEmailVerified === false) {
+    Logger.security('Login blocked: unverified email', { ...Logger.extractReqContext(req), userId: user._id });
+    res.status(403).json({ message: 'Please verify your email address before logging in.' });
+    return;
+  }
+
+  if (!verifyPassword(password, user.passwordHash)) {
+    user.failedLoginAttempts += 1;
+    if (user.failedLoginAttempts >= 5) {
+      user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // lock for 15 minutes
+      Logger.security('Account locked due to failed login attempts', { ...Logger.extractReqContext(req), userId: user._id });
+    }
+    await user.save();
+    
+    Logger.warn('Login failed: incorrect password', { ...Logger.extractReqContext(req), userId: user._id });
     res.status(401).json({ message: 'Invalid email or password' });
     return;
   }
@@ -378,6 +422,7 @@ app.post('/api/v1/auth/login', async (req, res) => {
   if (user.activeSessionId && user.lastHeartbeat) {
     const timeSinceHeartbeat = Date.now() - new Date(user.lastHeartbeat).getTime();
     if (timeSinceHeartbeat < SESSION_TTL_MS) {
+      Logger.security('Login blocked: existing active session', { ...Logger.extractReqContext(req), userId: user._id });
       res.status(403).json({
         message: 'This account is already logged in on another device. Please log out from that device first.',
         code: 'SESSION_ACTIVE',
@@ -388,18 +433,133 @@ app.post('/api/v1/auth/login', async (req, res) => {
 
   const sessionId = generateSessionId();
   const nextRole = isConfiguredAdminEmail(email) ? 'admin' : user.role;
-  await User.findByIdAndUpdate(user._id, {
-    role: nextRole,
-    activeSessionId: sessionId,
-    lastHeartbeat: new Date(),
-  });
+  
   user.role = nextRole;
+  user.activeSessionId = sessionId;
+  user.lastHeartbeat = new Date();
+  user.failedLoginAttempts = 0;
+  user.lockedUntil = null;
+  await user.save();
+
+  Logger.info('User logged in', { ...Logger.extractReqContext(req), userId: user._id });
 
   const safeUser = publicUser(user);
   res.json({
     user: safeUser,
     token: createToken(safeUser, sessionId),
   });
+});
+app.post('/api/v1/auth/verify-email', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+  
+  const token = String(req.body.token || '');
+  if (!token) {
+    res.status(400).json({ message: 'Token is required' });
+    return;
+  }
+
+  const sessionId = generateSessionId();
+  const user = await User.findOneAndUpdate(
+    { verificationToken: token },
+    {
+      $set: {
+        isEmailVerified: true,
+        activeSessionId: sessionId,
+        lastHeartbeat: new Date(),
+        failedLoginAttempts: 0,
+        lockedUntil: null
+      },
+      $unset: { verificationToken: 1 }
+    },
+    { new: true }
+  );
+
+  if (!user) {
+    res.status(400).json({ message: 'Invalid or expired verification token' });
+    return;
+  }
+
+  Logger.info('User email verified and logged in', { ...Logger.extractReqContext(req), userId: user._id });
+  
+  const safeUser = publicUser(user);
+  res.json({ 
+    message: 'Email verified successfully',
+    user: safeUser,
+    token: createToken(safeUser, sessionId)
+  });
+});
+
+app.post('/api/v1/auth/forgot-password', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const email = String(req.body.email || '').trim().toLowerCase();
+  if (!emailPattern.test(email)) {
+    res.status(400).json({ message: 'Valid email is required' });
+    return;
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.json({ message: 'If that email is registered, a password reset link has been sent.' });
+    return;
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  await user.save();
+
+  Logger.info('Password reset requested', { ...Logger.extractReqContext(req), userId: user._id });
+  EmailService.sendPasswordReset({ name: user.name, email: user.email }, resetToken).catch(err => Logger.error('Password reset email failed', err));
+
+  res.json({ message: 'If that email is registered, a password reset link has been sent.' });
+});
+
+app.post('/api/v1/auth/reset-password', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const token = String(req.body.token || '');
+  const password = String(req.body.password || '');
+
+  if (!token || !password) {
+    res.status(400).json({ message: 'Token and new password are required' });
+    return;
+  }
+
+  const user = await User.findOne({
+    resetPasswordToken: token,
+    resetPasswordExpires: { $gt: new Date() }
+  });
+
+  if (!user) {
+    res.status(400).json({ message: 'Invalid or expired reset token' });
+    return;
+  }
+
+  const passwordErrors = PasswordService.validate(password, { email: user.email, name: user.name });
+  if (passwordErrors.length > 0) {
+    res.status(400).json({ message: 'Password does not meet enterprise requirements', errors: passwordErrors });
+    return;
+  }
+
+  user.passwordHash = hashPassword(password);
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  user.activeSessionId = null;
+  user.lastHeartbeat = null;
+  await user.save();
+
+  Logger.info('Password reset successfully', { ...Logger.extractReqContext(req), userId: user._id });
+  res.json({ message: 'Password has been reset successfully' });
 });
 
 app.post('/api/v1/auth/logout-all', async (req, res) => {

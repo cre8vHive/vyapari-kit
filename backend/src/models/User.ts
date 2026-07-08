@@ -8,6 +8,12 @@ export interface IUser extends Document, IAudit {
   role: 'student' | 'admin';
   activeSessionId: string | null;
   lastHeartbeat: Date | null;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
+  isEmailVerified: boolean;
+  verificationToken?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 const UserSchema = new Schema<any>({
@@ -42,6 +48,21 @@ const UserSchema = new Schema<any>({
     type: Date,
     default: null,
   },
+  failedLoginAttempts: {
+    type: Number,
+    default: 0,
+  },
+  lockedUntil: {
+    type: Date,
+    default: null,
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: String,
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
   isDeleted: AuditSchema.path('isDeleted'),
   deletedAt: AuditSchema.path('deletedAt'),
   deletedBy: AuditSchema.path('deletedBy'),
