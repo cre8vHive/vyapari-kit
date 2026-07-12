@@ -1,8 +1,10 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import { authApi, AuthUser } from '../services/api';
+import firstFailureSound from '../../fahhh_KcgAXfs.mp3';
+import secondFailureSound from '../../wait-a-minute-who-are-you_I1t9y6l.mp3';
 
 interface AuthPageProps {
-  mode: 'login' | 'register';
+  mode: 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email';
   onAuth: (user: AuthUser, token: string) => void;
 }
 
@@ -37,6 +39,9 @@ const CheckIcon = () => (
 
 export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
   const isRegister = mode === 'register';
+  const isForgot = mode === 'forgot-password';
+  const isReset = mode === 'reset-password';
+  const isVerify = mode === 'verify-email';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -49,23 +54,60 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
   const [success, setSuccess] = useState(false);
   const [shake, setShake] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const loginFailureCountRef = useRef(0);
+
+  /* Verify email on mount if mode is verify-email */
+  useEffect(() => {
+    if (isVerify) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      if (token) {
+        setIsSubmitting(true);
+        authApi.verifyEmail(token).then((res) => {
+          setSuccess(true);
+          setNotice(res.message);
+          setTimeout(() => {
+            onAuth(res.user, res.token);
+            window.history.pushState(null, '', '/');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }, 2000);
+        }).catch((err) => {
+          setError(err.response?.data?.message || 'Verification failed');
+        }).finally(() => {
+          setIsSubmitting(false);
+        });
+      } else {
+        setError('Verification token is missing.');
+      }
+    }
+  }, [isVerify]);
 
   /* Reset state when mode changes */
   useEffect(() => {
-    setName('');
-    setEmail('');
-    setPassword('');
-    setError('');
-    setErrorCode('');
-    setNotice('');
-    setShowPassword(false);
-    setSuccess(false);
-    setShake(false);
-  }, [mode]);
+    if (!isVerify) {
+      setName('');
+      setEmail('');
+      setPassword('');
+      setError('');
+      setErrorCode('');
+      setNotice('');
+      setShowPassword(false);
+      setSuccess(false);
+      setShake(false);
+      loginFailureCountRef.current = 0;
+    }
+  }, [mode, isVerify]);
 
   const triggerShake = () => {
     setShake(true);
     setTimeout(() => setShake(false), 500);
+  };
+
+  const playFailureSound = (attempt: number) => {
+    if (typeof window === 'undefined') return;
+
+    const audio = new Audio(attempt === 1 ? firstFailureSound : secondFailureSound);
+    void audio.play().catch(() => undefined);
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -76,22 +118,47 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
     setIsSubmitting(true);
 
     try {
-      const response = isRegister
-        ? await authApi.register({ name, email, password })
-        : await authApi.login({ email, password });
-
-      setSuccess(true);
-
-      /* Brief success animation before redirect */
-      setTimeout(() => {
-        onAuth(response.user, response.token);
-        window.history.pushState(null, '', '/');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }, 900);
+      if (isForgot) {
+        const response = await authApi.forgotPassword(email);
+        setSuccess(true);
+        setNotice(response.message);
+      } else if (isReset) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token') || '';
+        const response = await authApi.resetPassword({ token, password });
+        setSuccess(true);
+        setNotice(response.message);
+        setTimeout(() => {
+          window.history.pushState(null, '', '/login');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }, 3000);
+      } else {
+        if (isRegister) {
+          const response = await authApi.register({ name, email, password });
+          setSuccess(true);
+          setNotice(response.message);
+          // Stay on the page so the user can read the message to verify their email.
+        } else {
+          const response = await authApi.login({ email, password });
+          loginFailureCountRef.current = 0;
+          setSuccess(true);
+          setTimeout(() => {
+            onAuth(response.user, response.token);
+            window.history.pushState(null, '', '/');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }, 900);
+        }
+      }
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Something went wrong. Please try again.';
       setError(msg);
       setErrorCode(err.response?.data?.code || '');
+      if (!isRegister && !isForgot && !isReset) {
+        loginFailureCountRef.current += 1;
+        if (loginFailureCountRef.current >= 1) {
+          playFailureSound(loginFailureCountRef.current);
+        }
+      }
       triggerShake();
     } finally {
       setIsSubmitting(false);
@@ -136,10 +203,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
             <span className="auth-kicker">
               <span className="auth-kicker-dot" /> Upskill Account
             </span>
-            <h1>{isRegister ? 'Start learning\ntoday' : 'Welcome\nback'}</h1>
+            <h1>{isVerify ? 'Verifying\nemail' : isRegister ? 'Start learning\ntoday' : isForgot ? 'Reset your\npassword' : isReset ? 'Set new\npassword' : 'Welcome\nback'}</h1>
             <p>
-              {isRegister
+              {isVerify
+                ? 'Please wait while we confirm your email address.'
+                : isRegister
                 ? 'Create your student account and unlock thousands of expert-led courses, bootcamps, and learning paths.'
+                : isForgot || isReset ? 'Follow the steps to regain access to your account and continue learning.'
                 : 'Sign in to continue your learning journey. Your progress, certificates, and bookmarks are waiting.'}
             </p>
             <div className="auth-stats" aria-hidden="true">
@@ -166,20 +236,26 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
           {success ? (
             <div className="auth-success" id="auth-success">
               <CheckIcon />
-              <h2>{isRegister ? 'Account Created!' : 'Welcome Back!'}</h2>
-              <p>Redirecting you to the dashboard...</p>
+              <h2>{isVerify ? 'Email Verified!' : isRegister ? 'Account Created!' : isForgot ? 'Email Sent!' : isReset ? 'Password Reset!' : 'Welcome Back!'}</h2>
+              <p>{isVerify ? 'Redirecting you to the dashboard...' : notice || (isForgot ? 'Please check your email.' : isReset ? 'Redirecting you to login...' : 'Redirecting you to the dashboard...')}</p>
             </div>
           ) : (
             <form className="auth-form" onSubmit={handleSubmit} ref={formRef} id="auth-form">
-              <h2>{isRegister ? 'Create Account' : 'Sign In'}</h2>
+              <h2>{isVerify ? 'Verifying Email' : isRegister ? 'Create Account' : isForgot ? 'Forgot Password' : isReset ? 'Reset Password' : 'Sign In'}</h2>
               <p className="auth-form-subtitle">
-                {isRegister
+                {isVerify
+                  ? 'Please wait...'
+                  : isRegister
                   ? 'Fill in your details to get started'
+                  : isForgot
+                  ? 'Enter your email to receive a reset link'
+                  : isReset
+                  ? 'Enter your new password below'
                   : 'Enter your credentials to continue'}
               </p>
 
               {/* Name (register only) */}
-              {isRegister && (
+              {isRegister && !isVerify && (
                 <div className="auth-field">
                   <label htmlFor="auth-name">Full Name</label>
                   <input
@@ -196,22 +272,25 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
               )}
 
               {/* Email */}
-              <div className="auth-field">
-                <label htmlFor="auth-email">Email Address</label>
-                <input
-                  id="auth-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  required
-                />
-              </div>
+              {!isReset && !isVerify && (
+                <div className="auth-field">
+                  <label htmlFor="auth-email">Email Address</label>
+                  <input
+                    id="auth-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+              )}
 
               {/* Password */}
-              <div className="auth-field">
-                <label htmlFor="auth-password">Password</label>
+              {!isForgot && !isVerify && (
+                <div className="auth-field">
+                  <label htmlFor="auth-password">{isReset ? 'New Password' : 'Password'}</label>
                 <div className="auth-password-wrapper">
                   <input
                     id="auth-password"
@@ -235,6 +314,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
                   </button>
                 </div>
               </div>
+              )}
 
               {/* Error */}
               {error && (
@@ -275,29 +355,38 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
               )}
 
               {/* Submit */}
-              <button
-                className="auth-submit"
-                type="submit"
-                disabled={isSubmitting}
-                id="auth-submit-btn"
-              >
-                {isSubmitting ? (
-                  <>
-                    <SpinnerIcon />
-                    <span>Please wait...</span>
-                  </>
-                ) : (
-                  <span>{isRegister ? 'Create Account' : 'Sign In'}</span>
-                )}
-              </button>
+              {!isVerify && (
+                <button
+                  className="auth-submit"
+                  type="submit"
+                  disabled={isSubmitting}
+                  id="auth-submit-btn"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <SpinnerIcon />
+                      <span>Please wait...</span>
+                    </>
+                  ) : (
+                    <span>{isRegister ? 'Create Account' : isForgot ? 'Send Reset Link' : isReset ? 'Reset Password' : 'Sign In'}</span>
+                  )}
+                </button>
+              )}
 
               {/* Switch mode link */}
               <p className="auth-switch">
-                {isRegister ? 'Already have an account?' : 'New to Upskill?'}{' '}
-                <a href={isRegister ? '/login' : '/register'}>
-                  {isRegister ? 'Sign in' : 'Create an account'}
+                {isRegister ? 'Already have an account?' : isForgot || isReset ? 'Remember your password?' : 'New to Upskill?'}{' '}
+                <a href={isRegister || isForgot || isReset ? '/login' : '/register'}>
+                  {isRegister || isForgot || isReset ? 'Sign in' : 'Create an account'}
                 </a>
               </p>
+              
+              {/* Forgot password link */}
+              {!isRegister && !isForgot && !isReset && (
+                <p className="auth-switch" style={{ marginTop: '0.5rem' }}>
+                  <a href="/forgot-password">Forgot your password?</a>
+                </p>
+              )}
             </form>
           )}
         </div>

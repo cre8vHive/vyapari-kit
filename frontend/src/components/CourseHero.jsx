@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CourseHero = ({ course }) => {
+const CourseHero = ({ course, onPurchase }) => {
   return (
     <section className="course-hero">
       <div className="course-hero-left">
@@ -53,8 +53,8 @@ const CourseHero = ({ course }) => {
             <span>{course.price.old}</span>
           </div>
           <div className="hero-actions">
-            <button type="button" className="btn btn-primary">Enroll Now</button>
-            <button type="button" className="btn btn-secondary">Buy Now</button>
+            <button type="button" className="btn btn-primary" onClick={onPurchase}>Enroll Now</button>
+            <button type="button" className="btn btn-secondary" onClick={onPurchase}>Buy Now</button>
           </div>
           <div className="hero-include-list">
             <h3>Course includes</h3>
