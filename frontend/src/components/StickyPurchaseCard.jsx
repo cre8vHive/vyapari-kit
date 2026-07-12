@@ -1,6 +1,6 @@
 import React from 'react';
 
-const StickyPurchaseCard = ({ course }) => {
+const StickyPurchaseCard = ({ course, onPurchase }) => {
   return (
     <aside className="sticky-purchase-card">
       <div className="purchase-card">
@@ -13,8 +13,8 @@ const StickyPurchaseCard = ({ course }) => {
           <span>{course.price.old}</span>
         </div>
         <div className="purchase-actions">
-          <button type="button" className="btn btn-primary">Enroll Now</button>
-          <button type="button" className="btn btn-secondary">Buy Now</button>
+          <button type="button" className="btn btn-primary" onClick={onPurchase}>Enroll Now</button>
+          <button type="button" className="btn btn-secondary" onClick={onPurchase}>Buy Now</button>
         </div>
         <ul className="purchase-benefits">
           <li>Lifetime access</li>

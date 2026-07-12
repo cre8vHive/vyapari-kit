@@ -57,6 +57,8 @@ export const config = {
   pdfRateLimitMax: numberFromEnv('PDF_RATE_LIMIT_MAX', 120),
   brevoApiKey: process.env.BREVO_API_KEY || '',
   emailSender: process.env.EMAIL_SENDER || 'no-reply@vyapari.kit',
+  razorpayKeyId: process.env.RAZORPAY_KEY_ID || '',
+  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || '',
 };
 
 export function validateConfig() {

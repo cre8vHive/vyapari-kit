@@ -90,6 +90,12 @@ export interface AuthUser {
   name: string;
   email: string;
   role: string;
+  createdAt?: string;
+  lastHeartbeat?: string;
+  failedLoginAttempts?: number;
+  lockedUntil?: string;
+  isEmailVerified?: boolean;
+  isDeleted?: boolean;
 }
 
 export interface AuthResponse {
@@ -232,6 +238,17 @@ export const coursePdfApi = {
   },
 };
 
+export const paymentApi = {
+  createOrder: async (courseId: string): Promise<any> => {
+    const response = await apiClient.post(`/courses/${courseId}/purchase`);
+    return response.data;
+  },
+  verifyPayment: async (courseId: string, payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>(`/courses/${courseId}/verify-payment`, payload);
+    return response.data;
+  }
+};
+
 export const adminApi = {
   getCourses: async (): Promise<AdminCourse[]> => {
     const response = await apiClient.get<AdminCourse[]>('/admin/courses');
@@ -266,6 +283,26 @@ export const adminApi = {
   },
   enrollUser: async (courseId: string, userId: string): Promise<void> => {
     await apiClient.post(`/admin/courses/${courseId}/enrollments`, { userId });
+  },
+  updateUser: async (userId: string, payload: { name: string; role: string }): Promise<{ user: AuthUser }> => {
+    const response = await apiClient.put<{ user: AuthUser }>(`/admin/users/${userId}`, payload);
+    return response.data;
+  },
+  blockUser: async (userId: string): Promise<{ user: AuthUser }> => {
+    const response = await apiClient.post<{ user: AuthUser }>(`/admin/users/${userId}/block`);
+    return response.data;
+  },
+  unblockUser: async (userId: string): Promise<{ user: AuthUser }> => {
+    const response = await apiClient.post<{ user: AuthUser }>(`/admin/users/${userId}/unblock`);
+    return response.data;
+  },
+  deleteUser: async (userId: string): Promise<{ user: AuthUser }> => {
+    const response = await apiClient.delete<{ user: AuthUser }>(`/admin/users/${userId}`);
+    return response.data;
+  },
+  triggerPasswordReset: async (userId: string): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>(`/admin/users/${userId}/trigger-reset`);
+    return response.data;
   },
 };
 

@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import 'express-async-errors';
 import express, { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
+import Razorpay from 'razorpay';
 import { SESSION_TTL_MS, createToken, generateSessionId, hashPassword, requireActiveSession, requireAuth, verifyPassword } from './auth';
 import { config, validateConfig } from './config';
 import { categories as fallbackCategories, courses as fallbackCourses, homePage } from './data/demoContent';
@@ -1195,6 +1196,84 @@ app.get('/api/v1/courses/:courseId', async (req, res) => {
   }
 
   res.status(404).json({ message: 'Course not found' });
+});
+
+app.post('/api/v1/courses/:courseId/purchase', requireAuth, requireActiveSession, async (req, res) => {
+  try {
+    const course = await Course.findOne({ slug: req.params.courseId, isDeleted: false }).lean();
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    if (!config.razorpayKeyId || !config.razorpayKeySecret) {
+      return res.status(500).json({ message: 'Payment gateway is not configured.' });
+    }
+
+    const priceAmount = parseFloat(course.price.current.replace(/[^0-9.]/g, '')) * 100;
+
+    const instance = new Razorpay({
+      key_id: config.razorpayKeyId,
+      key_secret: config.razorpayKeySecret,
+    });
+
+    const options = {
+      amount: Math.round(priceAmount), 
+      currency: 'INR',
+      receipt: `receipt_${course._id}_${Date.now()}`
+    };
+
+    const order = await instance.orders.create(options);
+    res.json(order);
+  } catch (error) {
+    Logger.error('Order creation failed:', error);
+    res.status(500).json({ message: 'Failed to initiate payment.' });
+  }
+});
+
+app.post('/api/v1/courses/:courseId/verify-payment', requireAuth, requireActiveSession, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    
+    if (!config.razorpayKeySecret) {
+      return res.status(500).json({ message: 'Payment gateway is not configured.' });
+    }
+
+    const sign = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac('sha256', config.razorpayKeySecret)
+      .update(sign.toString())
+      .digest('hex');
+
+    if (razorpay_signature === expectedSign) {
+      const course = await Course.findOne({ slug: req.params.courseId, isDeleted: false }).lean();
+      if (!course) {
+        return res.status(404).json({ message: 'Course not found' });
+      }
+
+      await Enrollment.findOneAndUpdate(
+        { user: (req as any).user.sub, course: course._id },
+        {
+          $set: {
+            user: (req as any).user.sub,
+            course: course._id,
+            status: 'active',
+            enrolledAt: new Date(),
+            isDeleted: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        { upsert: true, new: true }
+      );
+
+      return res.json({ message: 'Payment verified successfully.' });
+    } else {
+      return res.status(400).json({ message: 'Invalid payment signature.' });
+    }
+  } catch (error) {
+    Logger.error('Payment verification failed:', error);
+    res.status(500).json({ message: 'Failed to verify payment.' });
+  }
 });
 
 app.use('/api', (_req, res) => {
