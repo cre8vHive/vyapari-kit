@@ -18,6 +18,7 @@ import User from './models/User';
 import { Logger } from './services/logger.service';
 import { PasswordService } from './services/password.service';
 import { EmailService } from './services/email.service';
+import { uploadRoutes } from './routes/upload.routes';
 import {
   accessLogger,
   apiNoStore,
@@ -54,6 +55,8 @@ app.use(express.json({ limit: config.jsonBodyLimit }));
 app.use(express.urlencoded({ extended: false, limit: '100kb' }));
 app.use(['/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/auth/logout-all'], authLimiter);
 app.use('/api/v1/courses/:courseId/pdf', pdfLimiter);
+
+app.use('/api/v1/upload', uploadRoutes);
 
 function isMongoConnected() {
   return mongoose.connection.readyState === 1;
@@ -124,6 +127,15 @@ function courseInput(body: any) {
     rating: Number(body.rating || 0),
     imageUrl: String(body.imageUrl || '').trim(),
     isPublished: body.isPublished !== false,
+    subtitle: typeof body.subtitle === 'string' ? body.subtitle.trim() : undefined,
+    language: typeof body.language === 'string' ? body.language.trim() : undefined,
+    includes: Array.isArray(body.includes) ? body.includes : undefined,
+    learningHighlights: Array.isArray(body.learningHighlights) ? body.learningHighlights : undefined,
+    description: Array.isArray(body.description) ? body.description : undefined,
+    skills: Array.isArray(body.skills) ? body.skills : undefined,
+    requirements: Array.isArray(body.requirements) ? body.requirements : undefined,
+    audience: Array.isArray(body.audience) ? body.audience : undefined,
+    faqs: Array.isArray(body.faqs) ? body.faqs : undefined,
   };
 }
 
@@ -351,7 +363,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
 
   const sessionId = generateSessionId();
   const verificationToken = crypto.randomBytes(32).toString('hex');
-  
+
   const user = await User.create({
     name,
     email,
@@ -364,7 +376,7 @@ app.post('/api/v1/auth/register', async (req, res) => {
   });
 
   Logger.info('User registered', { ...Logger.extractReqContext(req), userId: user._id });
-  
+
   EmailService.sendWelcome({ name: user.name, email: user.email }).catch(err => Logger.error('Welcome email failed', err));
   EmailService.sendVerification({ name: user.name, email: user.email }, verificationToken).catch(err => Logger.error('Verification email failed', err));
 
@@ -413,7 +425,7 @@ app.post('/api/v1/auth/login', async (req, res) => {
       Logger.security('Account locked due to failed login attempts', { ...Logger.extractReqContext(req), userId: user._id });
     }
     await user.save();
-    
+
     Logger.warn('Login failed: incorrect password', { ...Logger.extractReqContext(req), userId: user._id });
     res.status(401).json({ message: 'Invalid email or password' });
     return;
@@ -434,7 +446,7 @@ app.post('/api/v1/auth/login', async (req, res) => {
 
   const sessionId = generateSessionId();
   const nextRole = isConfiguredAdminEmail(email) ? 'admin' : user.role;
-  
+
   user.role = nextRole;
   user.activeSessionId = sessionId;
   user.lastHeartbeat = new Date();
@@ -455,7 +467,7 @@ app.post('/api/v1/auth/verify-email', async (req, res) => {
     res.status(503).json({ message: 'Database is not connected' });
     return;
   }
-  
+
   const token = String(req.body.token || '');
   if (!token) {
     res.status(400).json({ message: 'Token is required' });
@@ -484,9 +496,9 @@ app.post('/api/v1/auth/verify-email', async (req, res) => {
   }
 
   Logger.info('User email verified and logged in', { ...Logger.extractReqContext(req), userId: user._id });
-  
+
   const safeUser = publicUser(user);
-  res.json({ 
+  res.json({
     message: 'Email verified successfully',
     user: safeUser,
     token: createToken(safeUser, sessionId)
@@ -1208,8 +1220,8 @@ app.post('/api/v1/courses/:courseId/purchase', requireAuth, requireActiveSession
     if (!config.razorpayKeyId || !config.razorpayKeySecret) {
       return res.status(500).json({ message: 'Payment gateway is not configured.' });
     }
-
-    const priceAmount = parseFloat(course.price.current.replace(/[^0-9.]/g, '')) * 100;
+    console.log("Course Price", course.price);
+    const priceAmount = Number(course.price) * 100;
 
     const instance = new Razorpay({
       key_id: config.razorpayKeyId,
@@ -1217,9 +1229,9 @@ app.post('/api/v1/courses/:courseId/purchase', requireAuth, requireActiveSession
     });
 
     const options = {
-      amount: Math.round(priceAmount), 
+      amount: Math.round(priceAmount),
       currency: 'INR',
-      receipt: `receipt_${course._id}_${Date.now()}`
+      receipt: `rcpt_${Date.now()}`
     };
 
     const order = await instance.orders.create(options);
@@ -1233,7 +1245,7 @@ app.post('/api/v1/courses/:courseId/purchase', requireAuth, requireActiveSession
 app.post('/api/v1/courses/:courseId/verify-payment', requireAuth, requireActiveSession, async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-    
+
     if (!config.razorpayKeySecret) {
       return res.status(500).json({ message: 'Payment gateway is not configured.' });
     }

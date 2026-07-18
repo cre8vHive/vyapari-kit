@@ -1,5 +1,5 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
-import { adminApi, AdminCategory, AdminCourse, AuthUser, CourseSavePayload, PdfAccessLogItem } from '../services/api';
+import { adminApi, AdminCategory, AdminCourse, AuthUser, CourseSavePayload, PdfAccessLogItem, uploadApi } from '../services/api';
 
 interface AdminCourseManagementProps {
   user: AuthUser | null;
@@ -17,6 +17,15 @@ interface CourseFormState {
   isPublished: boolean;
   pdfUrl: string;
   pdfFile: File | null;
+  subtitle: string;
+  language: string;
+  includes: string;
+  learningHighlights: string;
+  description: string;
+  skills: string;
+  requirements: string;
+  audience: string;
+  faqs: { question: string; answer: string }[];
 }
 
 const emptyCourseForm: CourseFormState = {
@@ -31,6 +40,15 @@ const emptyCourseForm: CourseFormState = {
   isPublished: true,
   pdfUrl: '',
   pdfFile: null,
+  subtitle: '',
+  language: '',
+  includes: '',
+  learningHighlights: '',
+  description: '',
+  skills: '',
+  requirements: '',
+  audience: '',
+  faqs: [],
 };
 
 function fileToDataUrl(file: File) {
@@ -55,6 +73,15 @@ function courseToForm(course: AdminCourse): CourseFormState {
     isPublished: course.isPublished,
     pdfUrl: '',
     pdfFile: null,
+    subtitle: course.subtitle || '',
+    language: course.language || '',
+    includes: course.includes?.join('\\n') || '',
+    learningHighlights: course.learningHighlights?.join('\\n') || '',
+    description: course.description?.join('\\n\\n') || '',
+    skills: course.skills?.join(', ') || '',
+    requirements: course.requirements?.join('\\n') || '',
+    audience: course.audience?.join('\\n') || '',
+    faqs: course.faqs || [],
   };
 }
 
@@ -154,12 +181,30 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       rating: Number(form.rating || 0),
       imageUrl: form.imageUrl,
       isPublished: form.isPublished,
+      subtitle: form.subtitle,
+      language: form.language,
+      includes: form.includes.split('\\n').map(s => s.trim()).filter(Boolean),
+      learningHighlights: form.learningHighlights.split('\\n').map(s => s.trim()).filter(Boolean),
+      description: form.description.split('\\n\\n').map(s => s.trim()).filter(Boolean),
+      skills: form.skills.split(',').map(s => s.trim()).filter(Boolean),
+      requirements: form.requirements.split('\\n').map(s => s.trim()).filter(Boolean),
+      audience: form.audience.split('\\n').map(s => s.trim()).filter(Boolean),
+      faqs: form.faqs.filter(f => f.question.trim() && f.answer.trim()),
     };
 
     if (form.pdfFile) {
+      setMessage('Uploading PDF to Cloudflare R2...');
+      const { uploadUrl, fileUrl } = await uploadApi.getPresignedUrl(form.pdfFile.name, 'application/pdf', 'pdfs');
+      
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        body: form.pdfFile,
+        headers: { 'Content-Type': 'application/pdf' },
+      });
+
       payload.pdf = {
         filename: form.pdfFile.name,
-        pdfBase64: await fileToDataUrl(form.pdfFile),
+        pdfUrl: fileUrl,
       };
     } else if (form.pdfUrl.trim()) {
       payload.pdf = {
@@ -413,6 +458,65 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
             Image URL
             <input value={form.imageUrl} onChange={(event) => updateForm('imageUrl', event.target.value)} required />
           </label>
+
+          <label className="admin-full-field">
+            Subtitle
+            <input value={form.subtitle} onChange={(event) => updateForm('subtitle', event.target.value)} />
+          </label>
+          <label className="admin-full-field">
+            Language
+            <input value={form.language} onChange={(event) => updateForm('language', event.target.value)} />
+          </label>
+          <label className="admin-full-field">
+            Description (Paragraphs separated by newlines)
+            <textarea rows={5} value={form.description} onChange={(event) => updateForm('description', event.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text)' }} />
+          </label>
+          <label className="admin-full-field">
+            What you will learn (Separated by newlines)
+            <textarea rows={4} value={form.learningHighlights} onChange={(event) => updateForm('learningHighlights', event.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text)' }} />
+          </label>
+          <label className="admin-full-field">
+            Course Includes (Separated by newlines)
+            <textarea rows={3} value={form.includes} onChange={(event) => updateForm('includes', event.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text)' }} />
+          </label>
+          <label className="admin-full-field">
+            Skills you will gain (Comma separated)
+            <input value={form.skills} onChange={(event) => updateForm('skills', event.target.value)} />
+          </label>
+          <label className="admin-full-field">
+            Requirements (Separated by newlines)
+            <textarea rows={3} value={form.requirements} onChange={(event) => updateForm('requirements', event.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text)' }} />
+          </label>
+          <label className="admin-full-field">
+            Who this course is for (Separated by newlines)
+            <textarea rows={3} value={form.audience} onChange={(event) => updateForm('audience', event.target.value)} style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text)' }} />
+          </label>
+
+          <div className="admin-full-field">
+            <strong>FAQs</strong>
+            {form.faqs.map((faq, index) => (
+              <div key={index} style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <input placeholder="Question" value={faq.question} onChange={(e) => {
+                  const newFaqs = [...form.faqs];
+                  newFaqs[index].question = e.target.value;
+                  updateForm('faqs', newFaqs as any);
+                }} style={{ flex: 1 }} />
+                <input placeholder="Answer" value={faq.answer} onChange={(e) => {
+                  const newFaqs = [...form.faqs];
+                  newFaqs[index].answer = e.target.value;
+                  updateForm('faqs', newFaqs as any);
+                }} style={{ flex: 2 }} />
+                <button type="button" onClick={() => {
+                  const newFaqs = form.faqs.filter((_, i) => i !== index);
+                  updateForm('faqs', newFaqs as any);
+                }} className="admin-danger-btn" style={{ padding: '0 10px' }}>X</button>
+              </div>
+            ))}
+            <button type="button" onClick={() => {
+              updateForm('faqs', [...form.faqs, { question: '', answer: '' }] as any);
+            }} className="admin-secondary-btn" style={{ marginTop: '10px' }}>+ Add FAQ</button>
+          </div>
+
 
           <div className="admin-pdf-box">
             <h3>Protected PDF</h3>

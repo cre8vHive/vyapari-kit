@@ -59,8 +59,30 @@ export const config = {
   emailSender: process.env.EMAIL_SENDER || 'no-reply@vyapari.kit',
   razorpayKeyId: process.env.RAZORPAY_KEY_ID || '',
   razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || '',
+  r2AccountId: process.env.R2_ACCOUNT_ID || '',
+  r2AccessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+  r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+  r2BucketName: process.env.R2_BUCKET_NAME || '',
+  r2PublicUrl: process.env.R2_PUBLIC_URL || '',
 };
 
+// Automatically allow Cloudflare R2 hostnames if configured
+if (config.r2PublicUrl) {
+  try {
+    const parsed = new URL(config.r2PublicUrl);
+    if (!config.allowedPdfHostnames.includes(parsed.hostname.toLowerCase())) {
+      config.allowedPdfHostnames.push(parsed.hostname.toLowerCase());
+    }
+  } catch (e) {
+    // Ignore invalid URL
+  }
+}
+if (config.r2AccountId) {
+  const r2DirectHost = `${config.r2AccountId}.r2.cloudflarestorage.com`.toLowerCase();
+  if (!config.allowedPdfHostnames.includes(r2DirectHost)) {
+    config.allowedPdfHostnames.push(r2DirectHost);
+  }
+}
 export function validateConfig() {
   const errors: string[] = [];
 
