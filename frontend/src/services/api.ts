@@ -116,6 +116,15 @@ export interface CourseSummary {
   imageUrl: string;
   isPublished: boolean;
   hasPdf: boolean;
+  subtitle?: string;
+  language?: string;
+  includes?: string[];
+  learningHighlights?: string[];
+  description?: string[];
+  skills?: string[];
+  requirements?: string[];
+  audience?: string[];
+  faqs?: { question: string; answer: string }[];
 }
 
 export interface PdfViewerManifest {
@@ -163,6 +172,15 @@ export interface CourseSavePayload {
   rating: number;
   imageUrl: string;
   isPublished: boolean;
+  subtitle?: string;
+  language?: string;
+  includes?: string[];
+  learningHighlights?: string[];
+  description?: string[];
+  skills?: string[];
+  requirements?: string[];
+  audience?: string[];
+  faqs?: { question: string; answer: string }[];
   pdf?: {
     filename?: string;
     pdfBase64?: string;
@@ -224,6 +242,27 @@ export const authApi = {
   },
   verifyEmail: async (token: string): Promise<AuthResponse & { message: string }> => {
     const response = await apiClient.post<AuthResponse & { message: string }>('/auth/verify-email', { token });
+    return response.data;
+  },
+};
+
+export const uploadApi = {
+  uploadImage: async (file: File): Promise<{ url: string; key: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post<{ url: string; key: string }>('/upload/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+  getPresignedUrl: async (filename: string, contentType: string, type: 'images' | 'videos' | 'pdfs'): Promise<{ uploadUrl: string; fileUrl: string; key: string }> => {
+    const response = await apiClient.post<{ uploadUrl: string; fileUrl: string; key: string }>('/upload/presigned-url', {
+      filename,
+      contentType,
+      type,
+    });
     return response.data;
   },
 };

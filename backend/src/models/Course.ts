@@ -13,6 +13,15 @@ export interface ICourse extends Document, IAudit {
   imageUrl: string;
   pdfAsset?: mongoose.Types.ObjectId;
   isPublished: boolean;
+  subtitle?: string;
+  language?: string;
+  includes?: string[];
+  learningHighlights?: string[];
+  description?: string[];
+  skills?: string[];
+  requirements?: string[];
+  audience?: string[];
+  faqs?: { question: string; answer: string }[];
 }
 
 const CourseSchema = new Schema<any>({
@@ -70,6 +79,18 @@ const CourseSchema = new Schema<any>({
     default: true,
     required: true,
   },
+  subtitle: { type: String, trim: true },
+  language: { type: String, trim: true },
+  includes: [{ type: String }],
+  learningHighlights: [{ type: String }],
+  description: [{ type: String }],
+  skills: [{ type: String }],
+  requirements: [{ type: String }],
+  audience: [{ type: String }],
+  faqs: [{
+    question: { type: String },
+    answer: { type: String }
+  }],
   isDeleted: AuditSchema.path('isDeleted'),
   deletedAt: AuditSchema.path('deletedAt'),
   deletedBy: AuditSchema.path('deletedBy'),
@@ -81,7 +102,7 @@ const CourseSchema = new Schema<any>({
 
 CourseSchema.index({ slug: 1 }, { unique: true });
 CourseSchema.index({ categoryName: 1 });
-CourseSchema.index({ title: 'text' });
+CourseSchema.index({ title: 'text' }, { language_override: 'dummyLanguageField' });
 CourseSchema.index({ isDeleted: 1 });
 
 CourseSchema.pre('validate', function (this: ICourse, next) {

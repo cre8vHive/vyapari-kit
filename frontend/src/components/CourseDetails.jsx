@@ -16,11 +16,11 @@ const CourseDetails = ({ onBack }) => {
       // In a real scenario, use the actual dynamic course ID, e.g. courseDetails.id
       // We will fallback to a default id if not present for the demo
       const courseId = courseDetails.id || 'demo-course-id';
-      
+
       const order = await paymentApi.createOrder(courseId);
-      
+
       const options = {
-        key: 'RAZORPAY_KEY_ID_PLACEHOLDER', // This is handled by Razorpay script usually via key or we can fetch it, but usually the frontend needs the public key. We can leave it as a placeholder.
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
         amount: order.amount,
         currency: order.currency,
         name: 'Vyapari Kit',
@@ -42,9 +42,9 @@ const CourseDetails = ({ onBack }) => {
           color: '#0b6cff'
         }
       };
-      
+
       const rzp = new window.Razorpay(options);
-      rzp.on('payment.failed', function (response){
+      rzp.on('payment.failed', function (response) {
         alert('Payment failed: ' + response.error.description);
       });
       rzp.open();
