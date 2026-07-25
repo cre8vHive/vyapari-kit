@@ -156,7 +156,10 @@ export const CourseListing: React.FC = () => {
   const [myCoursesLoaded, setMyCoursesLoaded] = useState(false);
   const [selectedCourseSlug, setSelectedCourseSlug] = useState<string | null>(null);
 
-  const activeCourses = listingState.tab === 'my' ? myCourses : availableCourses;
+  const activeCourses = listingState.tab === 'my' 
+    ? myCourses 
+    : availableCourses.filter(ac => !myCourses.some(mc => mc.id === ac.id));
+    
   const filteredCourses = useMemo(
     () => activeCourses.filter((course) => matchesCategory(course, listingState.category)),
     [activeCourses, listingState.category]
@@ -204,10 +207,22 @@ export const CourseListing: React.FC = () => {
 
         setCategories(withAllCategory(catsData));
         setAvailableCourses(coursesData);
+        
+        // Always try to fetch my courses so we can filter them out of available courses
+        try {
+          const myCoursesData = await courseApi.getMyCourses();
+          setMyCourses(myCoursesData);
+        } catch {
+          setMyCourses([]);
+        }
+        setMyCoursesLoaded(true);
+        
       } catch (err) {
         console.warn('API server not running, using static listing assets.');
         setCategories(MOCK_CATEGORIES);
         setAvailableCourses(MOCK_COURSES);
+        setMyCourses([]);
+        setMyCoursesLoaded(true);
       } finally {
         setLoading(false);
       }
@@ -215,23 +230,6 @@ export const CourseListing: React.FC = () => {
 
     fetchListingData();
   }, []);
-
-  useEffect(() => {
-    if (listingState.tab !== 'my' || myCoursesLoaded) return;
-
-    const fetchMyCourses = async () => {
-      try {
-        const courses = await courseApi.getMyCourses();
-        setMyCourses(courses);
-      } catch {
-        setMyCourses([]);
-      } finally {
-        setMyCoursesLoaded(true);
-      }
-    };
-
-    fetchMyCourses();
-  }, [listingState.tab, myCoursesLoaded]);
 
   if (selectedCourseSlug) {
     return <CourseDetails onBack={() => setSelectedCourseSlug(null)} />;
@@ -294,7 +292,7 @@ export const CourseListing: React.FC = () => {
             {loading || (listingState.tab === 'my' && !myCoursesLoaded) ? (
               <div className="course-hub-status">Loading courses...</div>
             ) : filteredCourses.length > 0 ? (
-              <CourseGridSection sectionTitle="" courses={filteredCourses} layout="grid" embedded onCourseClick={handleCourseClick} />
+              <CourseGridSection sectionTitle="" courses={filteredCourses} layout="grid" embedded mode={listingState.tab} onCourseClick={handleCourseClick} />
             ) : (
               <div className="course-empty-state">
                 <h3>No courses found</h3>

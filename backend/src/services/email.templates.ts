@@ -55,3 +55,11 @@ export const passwordResetTemplate = (name: string, link: string) => baseTemplat
   <p style="word-break: break-all; color: #4f46e5;">${link}</p>
   <p>If you didn't request this, you can safely ignore this email.</p>
 `);
+
+export const coursePurchaseTemplate = (name: string, courseTitle: string, link: string) => baseTemplate(`
+  <h2 style="margin-top: 0;">Purchase Successful!</h2>
+  <p>Hi ${name},</p>
+  <p>Thank you for purchasing <strong>${courseTitle}</strong>. Your enrollment is now active.</p>
+  <a href="${link}" class="btn">Go to My Courses</a>
+  <p>Happy learning!</p>
+`);

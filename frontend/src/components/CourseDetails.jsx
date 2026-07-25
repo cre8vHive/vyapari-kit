@@ -34,6 +34,7 @@ const CourseDetails = ({ onBack }) => {
               razorpay_signature: response.razorpay_signature
             });
             alert('Payment successful and enrolled!');
+            window.location.href = '/courses';
           } catch (err) {
             alert('Payment verification failed.');
           }

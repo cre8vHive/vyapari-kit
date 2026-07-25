@@ -1,6 +1,6 @@
 import { config } from '../config';
 import { Logger } from './logger.service';
-import { welcomeTemplate, verificationTemplate, passwordResetTemplate } from './email.templates';
+import { welcomeTemplate, verificationTemplate, passwordResetTemplate, coursePurchaseTemplate } from './email.templates';
 
 export class EmailService {
   private static readonly BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
@@ -56,5 +56,12 @@ export class EmailService {
     const link = `${frontendUrl}/reset-password?token=${token}`;
     const html = passwordResetTemplate(user.name, link);
     await this.send(user, 'Password Reset Request', html);
+  }
+
+  static async sendCoursePurchase(user: { name: string; email: string }, courseTitle: string) {
+    const frontendUrl = config.clientOrigins[0] || 'http://localhost:5173';
+    const link = `${frontendUrl}/courses`;
+    const html = coursePurchaseTemplate(user.name, courseTitle, link);
+    await this.send(user, `Purchase Confirmation: ${courseTitle}`, html);
   }
 }

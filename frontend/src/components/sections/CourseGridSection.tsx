@@ -19,6 +19,7 @@ export interface CourseGridSectionProps {
   courses: CourseItem[];
   layout?: 'grid' | 'carousel';
   embedded?: boolean;
+  mode?: 'available' | 'my';
   onCourseClick?: (course: CourseItem, event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -31,6 +32,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
   courses,
   layout = 'grid',
   embedded = false,
+  mode = 'available',
   onCourseClick,
 }) => {
   // Star rendering helper based on Mongoose rating floating points
@@ -68,8 +70,9 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
   const courseGrid = (
     <div className={`course-list-container layout-${layout}`}>
       {courses.map((course, index) => {
-        const courseUrl = course.hasPdf ? `/courses/${course.id}/viewer` : `/courses/${course.slug}`;
-        const actionText = course.hasPdf ? 'View Material' : 'Start Learning';
+        const isMyCourse = mode === 'my';
+        const courseUrl = (isMyCourse && course.hasPdf) ? `/courses/${course.id}/viewer` : `/courses/${course.slug}`;
+        const actionText = (isMyCourse && course.hasPdf) ? 'View Material' : 'View Details';
 
         return (
           <div
