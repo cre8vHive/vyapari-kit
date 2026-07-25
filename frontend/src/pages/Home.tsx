@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { cmsApi, PageResponse } from '../services/api';
+import { AuthUser, cmsApi, PageResponse } from '../services/api';
 import PageRenderer from '../components/PageRenderer';
 
 // Local Mock Data Fallbacks for Development
@@ -128,8 +128,11 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
     }
   ]
 };
+interface HomeProps {
+  user?: AuthUser | null; // You can replace 'any' with a more specific User type later
+}
 
-export const Home: React.FC = () => {
+export const Home: React.FC<HomeProps> = ({ user }) => {
   const [pageData, setPageData] = useState<PageResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,7 +161,7 @@ export const Home: React.FC = () => {
     if (pageData) {
       console.log(pageData)
       document.title = pageData.seo.metaTitle || pageData.title;
-      
+
       const metaDesc = document.querySelector('meta[name="description"]');
       if (metaDesc) {
         metaDesc.setAttribute('content', pageData.seo.metaDescription || '');
@@ -190,7 +193,7 @@ export const Home: React.FC = () => {
 
   return (
     <div className="page-renderer home-template">
-      <PageRenderer sections={pageData.sections} />
+      <PageRenderer sections={pageData.sections} user={user} />
     </div>
   );
 };

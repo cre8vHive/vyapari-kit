@@ -153,9 +153,9 @@ const App: React.FC = () => {
         {path.startsWith('/admin') && <AdminDashboard user={user} />}
         {courseViewerMatch && <PdfViewer courseId={courseViewerMatch[1]} />}
         {!path.startsWith('/admin') && !courseViewerMatch && path.startsWith('/courses') && <CourseListing />}
-        {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password') && !path.startsWith('/verify-email') && !path.startsWith('/courses') && <Home />}
+        {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password') && !path.startsWith('/verify-email') && !path.startsWith('/courses') && <Home user={user} />}
       </main>
-      
+
       <Footer />
 
       {/* ── Session Expired Modal ── */}

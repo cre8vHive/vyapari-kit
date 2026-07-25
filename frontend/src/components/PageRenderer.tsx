@@ -1,16 +1,17 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import SectionRegistry from './sections/SectionRegistry';
+import { AuthUser } from '../services/api';
 
 // Section level skeleton loading placeholder
 const SectionSkeleton: React.FC<{ type: string }> = ({ type }) => {
   return (
-    <div 
-      className="section-skeleton-placeholder" 
-      style={{ 
-        padding: '50px 20px', 
-        textAlign: 'center', 
-        background: '#ffffff', 
-        borderRadius: '8px', 
+    <div
+      className="section-skeleton-placeholder"
+      style={{
+        padding: '50px 20px',
+        textAlign: 'center',
+        background: '#ffffff',
+        borderRadius: '8px',
         color: '#4b5563',
         margin: '20px 0',
         minHeight: '200px',
@@ -60,19 +61,19 @@ class SectionErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       // In production, we gracefully hide it, but in dev/staging we show a fallback container
       const isDev = import.meta.env.DEV;
-      
+
       if (!isDev) {
         return null; // Gracefully degrade by returning nothing
       }
 
       return (
-        <div 
-          className="section-error-fallback" 
-          style={{ 
-            padding: '20px', 
-            background: '#3a1f28', 
-            border: '2px solid #cf2e2e', 
-            borderRadius: '8px', 
+        <div
+          className="section-error-fallback"
+          style={{
+            padding: '20px',
+            background: '#3a1f28',
+            border: '2px solid #cf2e2e',
+            borderRadius: '8px',
             color: '#ffcdd2',
             margin: '20px 0'
           }}
@@ -97,13 +98,13 @@ const FallbackDebugSection: React.FC<{ type: string; config: any }> = ({ type, c
   }
 
   return (
-    <div 
-      className="fallback-debug-section" 
-      style={{ 
-        padding: '30px 20px', 
-        background: '#2b2a24', 
-        border: '2px dashed #fcb900', 
-        borderRadius: '8px', 
+    <div
+      className="fallback-debug-section"
+      style={{
+        padding: '30px 20px',
+        background: '#2b2a24',
+        border: '2px dashed #fcb900',
+        borderRadius: '8px',
         color: '#ffe082',
         margin: '20px 0',
         fontFamily: 'monospace'
@@ -130,10 +131,12 @@ export interface PageSectionData {
 export interface PageRendererProps {
   sections: PageSectionData[];
   pageTitle?: string;
+  user?: AuthUser | null; // You can replace 'any' with a more specific User type later
 }
 
 export const PageRenderer: React.FC<PageRendererProps> = ({
   sections,
+  user
 }) => {
   if (!sections || sections.length === 0) {
     return (
@@ -141,6 +144,9 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
         <p>No content sections configured for this page.</p>
       </div>
     );
+  }
+  if (user) {
+    sections = sections.filter((section) => section.type !== "cta");
   }
 
   // Sort sections dynamically based on their configured order index
@@ -153,17 +159,17 @@ export const PageRenderer: React.FC<PageRendererProps> = ({
 
         if (!SectionComponent) {
           return (
-            <FallbackDebugSection 
-              key={`fallback-${index}`} 
-              type={section.type} 
-              config={section.config} 
+            <FallbackDebugSection
+              key={`fallback-${index}`}
+              type={section.type}
+              config={section.config}
             />
           );
         }
 
         return (
-          <SectionErrorBoundary 
-            key={`section-${section.type}-${index}`} 
+          <SectionErrorBoundary
+            key={`section-${section.type}-${index}`}
             sectionType={section.type}
           >
             <React.Suspense fallback={<SectionSkeleton type={section.type} />}>
