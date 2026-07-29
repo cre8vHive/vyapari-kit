@@ -93,6 +93,28 @@ function publicCourse(course: any) {
     imageUrl: course.imageUrl,
     isPublished: course.isPublished ?? true,
     hasPdf: Boolean(course.pdfAsset),
+    shortDescription: course.shortDescription,
+    description: course.description,
+    thumbnail: course.thumbnail || course.imageUrl,
+    bannerImage: course.bannerImage,
+    duration: course.duration,
+    lessons: course.lessons,
+    language: course.language,
+    certificate: course.certificate,
+    students: course.students,
+    totalReviews: course.totalReviews,
+    instructor: course.instructor,
+    requirements: course.requirements,
+    learningOutcomes: course.learningOutcomes,
+    keyPoints: course.keyPoints,
+    skills: course.skills,
+    audience: course.audience,
+    includes: course.includes,
+    curriculum: course.curriculum,
+    faqs: course.faqs,
+    reviews: course.reviews,
+    createdAt: course.createdAt,
+    updatedAt: course.updatedAt,
   };
 }
 
@@ -1188,22 +1210,28 @@ app.get('/api/v1/courses', async (req, res) => {
   res.json(filtered);
 });
 
-app.get('/api/v1/courses/:courseId', async (req, res) => {
+app.get('/api/v1/courses/:slug', async (req, res) => {
   if (isMongoConnected()) {
-    const query = mongoose.Types.ObjectId.isValid(req.params.courseId)
-      ? { _id: req.params.courseId, isPublished: true }
-      : { slug: req.params.courseId, isPublished: true };
-
-    const course = await Course.findOne(query).lean();
+    const course = await Course.findOne({ slug: req.params.slug.toLowerCase(), isPublished: true }).lean();
     if (course) {
-      res.json(publicCourse(course));
+      const related = await Course.find({
+        _id: { $ne: course._id },
+        categoryName: course.categoryName,
+        isPublished: true,
+      }).sort({ rating: -1, createdAt: -1 }).limit(4).lean();
+      res.json({ ...publicCourse(course), relatedCourses: related.map(publicCourse) });
       return;
     }
+    res.status(404).json({ message: 'Course not found' });
+    return;
   }
 
-  const fallback = fallbackCourses.find((course) => course.id === req.params.courseId || course.slug === req.params.courseId);
+  const fallback = fallbackCourses.find((course) => course.slug === req.params.slug);
   if (fallback) {
-    res.json({ ...fallback, hasPdf: false, isPublished: true });
+    const relatedCourses = fallbackCourses
+      .filter((course) => course.slug !== fallback.slug && course.categoryName === fallback.categoryName)
+      .slice(0, 4);
+    res.json({ ...fallback, hasPdf: false, isPublished: true, relatedCourses });
     return;
   }
 

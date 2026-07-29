@@ -25,10 +25,10 @@ const Footer: React.FC = () => {
           <div className="footer-col">
             <h3 className="footer-heading">Company</h3>
             <ul className="footer-links">
-              <li><a href={withBase('/about')}>About Us</a></li>
+              <li><a href={withBase('/about-us')}>About Us</a></li>
               <li><a href={withBase('/courses')}>Courses</a></li>
               <li><a href={withBase('/blog')}>Blog</a></li>
-              <li><a href={withBase('/contact')}>Contact Us</a></li>
+              <li><a href={withBase('/contact-us')}>Contact Us</a></li>
             </ul>
           </div>
 

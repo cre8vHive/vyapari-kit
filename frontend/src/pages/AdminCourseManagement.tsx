@@ -77,7 +77,7 @@ function courseToForm(course: AdminCourse): CourseFormState {
     language: course.language || '',
     includes: course.includes?.join('\\n') || '',
     learningHighlights: course.learningHighlights?.join('\\n') || '',
-    description: course.description?.join('\\n\\n') || '',
+    description: Array.isArray(course.description) ? course.description.join('\\n\\n') : course.description || '',
     skills: course.skills?.join(', ') || '',
     requirements: course.requirements?.join('\\n') || '',
     audience: course.audience?.join('\\n') || '',
