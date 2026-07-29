@@ -7,15 +7,16 @@ import ReviewSection from './ReviewSection';
 import FAQSection from './FAQSection';
 import RelatedCourses from './RelatedCourses';
 import StickyPurchaseCard from './StickyPurchaseCard';
-import courseDetails from '../data/courseDetails';
 import { paymentApi } from '../services/api';
 
-const CourseDetails = ({ onBack }) => {
+const CourseDetails = ({ course, onBack }) => {
+  const goBack = onBack || (() => {
+    window.location.href = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses`;
+  });
+
   const handlePurchase = async () => {
     try {
-      // In a real scenario, use the actual dynamic course ID, e.g. courseDetails.id
-      // We will fallback to a default id if not present for the demo
-      const courseId = courseDetails.id || 'demo-course-id';
+      const courseId = course.id;
 
       const order = await paymentApi.createOrder(courseId);
 
@@ -24,7 +25,7 @@ const CourseDetails = ({ onBack }) => {
         amount: order.amount,
         currency: order.currency,
         name: 'Vyapari Kit',
-        description: `Purchase ${courseDetails.title}`,
+        description: `Purchase ${course.title}`,
         order_id: order.id,
         handler: async function (response) {
           try {
@@ -57,27 +58,27 @@ const CourseDetails = ({ onBack }) => {
     <div className="course-details-page">
       <div className="course-details-shell">
         <div className="details-header">
-          <button type="button" className="details-back" onClick={onBack}>
+          <button type="button" className="details-back" onClick={goBack}>
             ← Back to Courses
           </button>
           <div className="details-actions">
-            <span className="details-pill">{courseDetails.category}</span>
+            <span className="details-pill">{course.category}</span>
             <button type="button" className="details-action">♡ Wishlist</button>
             <button type="button" className="details-action">↗ Share</button>
           </div>
         </div>
 
-        <CourseHero course={courseDetails} onPurchase={handlePurchase} />
+        <CourseHero course={course} onPurchase={handlePurchase} />
 
         <div className="course-details-layout">
           <main className="course-details-main">
-            <CourseOverview course={courseDetails} />
-            <CourseCurriculum curriculum={courseDetails.curriculum} />
+            <CourseOverview course={course} />
+            <CourseCurriculum curriculum={course.curriculum} />
             <div className="details-grid-two">
               <section className="info-panel">
                 <h2>Requirements</h2>
                 <ul>
-                  {courseDetails.requirements.map((item) => (
+                  {course.requirements.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
@@ -85,19 +86,19 @@ const CourseDetails = ({ onBack }) => {
               <section className="info-panel">
                 <h2>Who this course is for</h2>
                 <ul>
-                  {courseDetails.audience.map((item) => (
+                  {course.audience.map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
               </section>
             </div>
-            <InstructorSection instructor={courseDetails.instructor} />
-            <ReviewSection reviews={courseDetails.reviews} rating={courseDetails.rating} />
-            <FAQSection faqs={courseDetails.faqs} />
-            <RelatedCourses courses={courseDetails.relatedCourses} />
+            <InstructorSection instructor={course.instructor} />
+            <ReviewSection reviews={course.reviews} rating={course.rating} />
+            <FAQSection faqs={course.faqs} />
+            <RelatedCourses courses={course.relatedCourses} />
           </main>
           <aside className="course-details-aside">
-            <StickyPurchaseCard course={courseDetails} onPurchase={handlePurchase} />
+            <StickyPurchaseCard course={course} onPurchase={handlePurchase} />
           </aside>
         </div>
       </div>

@@ -24,6 +24,27 @@ export interface ICourse extends Document, IAudit {
   faqs?: { question: string; answer: string }[];
 }
 
+const LessonSchema = new Schema({
+  title: { type: String, required: true, trim: true },
+  duration: { type: String, default: '', trim: true },
+  preview: { type: Boolean, default: false },
+}, { _id: false });
+
+const CurriculumSectionSchema = new Schema({
+  sectionTitle: { type: String, required: true, trim: true },
+  lessons: { type: [LessonSchema], default: [] },
+}, { _id: false });
+
+const InstructorSchema = new Schema({
+  name: { type: String, trim: true },
+  title: { type: String, trim: true },
+  image: { type: String, trim: true },
+  bio: { type: String, trim: true },
+  courses: { type: Number, min: 0 },
+  students: { type: Number, min: 0 },
+  rating: { type: Number, min: 0, max: 5 },
+}, { _id: false });
+
 const CourseSchema = new Schema<any>({
   title: {
     type: String,
@@ -70,6 +91,42 @@ const CourseSchema = new Schema<any>({
     required: [true, 'Course image URL is required'],
     trim: true,
   },
+  shortDescription: { type: String, trim: true },
+  subtitle: { type: String, trim: true },
+  description: { type: Schema.Types.Mixed },
+  thumbnail: { type: String, trim: true },
+  bannerImage: { type: String, trim: true },
+  duration: { type: String, trim: true },
+  lessons: { type: Number, min: 0 },
+  language: { type: String, trim: true },
+  certificate: { type: Boolean, default: false },
+  students: { type: Number, min: 0, default: 0 },
+  totalReviews: { type: Number, min: 0, default: 0 },
+  instructor: { type: InstructorSchema },
+  requirements: { type: [String], default: [] },
+  learningOutcomes: { type: [String], default: [] },
+  learningHighlights: { type: [String], default: [] },
+  keyPoints: { type: [String], default: [] },
+  skills: { type: [String], default: [] },
+  audience: { type: [String], default: [] },
+  includes: { type: [String], default: [] },
+  curriculum: { type: [CurriculumSectionSchema], default: [] },
+  faqs: {
+    type: [{ question: String, answer: String, _id: false }],
+    default: [],
+  },
+  reviews: {
+    type: [{
+      name: String,
+      avatar: String,
+      rating: { type: Number, min: 0, max: 5 },
+      title: String,
+      comment: String,
+      date: String,
+      _id: false,
+    }],
+    default: [],
+  },
   pdfAsset: {
     type: Schema.Types.ObjectId,
     ref: 'CoursePdf',
@@ -79,18 +136,6 @@ const CourseSchema = new Schema<any>({
     default: true,
     required: true,
   },
-  subtitle: { type: String, trim: true },
-  language: { type: String, trim: true },
-  includes: [{ type: String }],
-  learningHighlights: [{ type: String }],
-  description: [{ type: String }],
-  skills: [{ type: String }],
-  requirements: [{ type: String }],
-  audience: [{ type: String }],
-  faqs: [{
-    question: { type: String },
-    answer: { type: String }
-  }],
   isDeleted: AuditSchema.path('isDeleted'),
   deletedAt: AuditSchema.path('deletedAt'),
   deletedBy: AuditSchema.path('deletedBy'),
@@ -106,7 +151,7 @@ CourseSchema.index({ title: 'text' }, { language_override: 'dummyLanguageField' 
 CourseSchema.index({ isDeleted: 1 });
 
 CourseSchema.pre('validate', function (this: ICourse, next) {
-  if (this.title && (!this.slug || this.isModified('title'))) {
+  if (this.title && !this.slug) {
     this.slug = slugify(this.title);
   }
   next();

@@ -79,6 +79,10 @@ export const cmsApi = {
 };
 
 export const courseApi = {
+  getCourse: async (courseIdOrSlug: string): Promise<CourseSummary> => {
+    const response = await apiClient.get<CourseSummary>(`/courses/${encodeURIComponent(courseIdOrSlug)}`);
+    return response.data;
+  },
   getMyCourses: async (): Promise<CourseSummary[]> => {
     const response = await apiClient.get<CourseSummary[]>('/my/courses');
     return response.data;
@@ -107,6 +111,7 @@ export interface CourseSummary {
   id: string;
   slug: string;
   title: string;
+  subtitle?: string;
   instructorName: string;
   categoryName: string;
   difficulty: string;
@@ -116,15 +121,49 @@ export interface CourseSummary {
   imageUrl: string;
   isPublished: boolean;
   hasPdf: boolean;
-  subtitle?: string;
   language?: string;
+  shortDescription?: string;
+  description?: string | string[];
+  thumbnail?: string;
+  bannerImage?: string;
+  duration?: string;
+  lessons?: number;
+  certificate?: boolean;
+  students?: number;
+  totalReviews?: number;
   includes?: string[];
   learningHighlights?: string[];
-  description?: string[];
+  whatYouWillLearn?: string[];
+  keyPoints?: string[];
   skills?: string[];
   requirements?: string[];
   audience?: string[];
-  faqs?: { question: string; answer: string }[];
+  learningOutcomes?: string[];
+  curriculum?: Array<{
+    sectionTitle: string;
+    lessons: Array<{ title: string; duration?: string; preview?: boolean }>;
+  }>;
+  instructor?: {
+    name?: string;
+    title?: string;
+    image?: string;
+    bio?: string;
+    courses?: number;
+    students?: number;
+    rating?: number;
+  };
+  faqs?: Array<{ question: string; answer: string }>;
+  reviews?: Array<{
+    name: string;
+    avatar?: string;
+    rating: number;
+    title?: string;
+    comment: string;
+    date?: string;
+  }>;
+  relatedCourses?: CourseSummary[];
+  updatedAt?: string;
+  createdAt?: string;
 }
 
 export interface PdfViewerManifest {

@@ -17,10 +17,7 @@ const StickyPurchaseCard = ({ course, onPurchase }) => {
           <button type="button" className="btn btn-secondary" onClick={onPurchase}>Buy Now</button>
         </div>
         <ul className="purchase-benefits">
-          <li>Lifetime access</li>
-          <li>Certificate</li>
-          <li>Downloadable resources</li>
-          <li>Assignments</li>
+          {course.includes.map((benefit) => <li key={benefit}>{benefit}</li>)}
         </ul>
       </div>
     </aside>

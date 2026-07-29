@@ -4,6 +4,9 @@ import Home from './pages/Home';
 import AuthPage from './pages/Auth';
 import PdfViewer from './pages/PdfViewer';
 import AdminDashboard from './pages/AdminDashboard';
+import CourseDetailPage from './pages/CourseDetailPage';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
 import Footer from './components/Footer';
 import { AuthUser, authApi } from './services/api';
 import vyapaarKitLogo from './assets/vyapaar-kit-logo.jpg';
@@ -88,6 +91,7 @@ const App: React.FC = () => {
     : currentPath;
   const withBase = (path: string) => `${basePath}${path}`;
   const courseViewerMatch = path.match(/^\/courses\/([^/]+)\/viewer$/);
+  const courseDetailMatch = path.match(/^\/courses\/([^/]+)\/?$/);
 
   const handleAuth = (nextUser: AuthUser, token: string) => {
     setUser(nextUser);
@@ -152,8 +156,11 @@ const App: React.FC = () => {
         {path.startsWith('/verify-email') && <AuthPage mode="verify-email" onAuth={handleAuth} />}
         {path.startsWith('/admin') && <AdminDashboard user={user} />}
         {courseViewerMatch && <PdfViewer courseId={courseViewerMatch[1]} />}
-        {!path.startsWith('/admin') && !courseViewerMatch && path.startsWith('/courses') && <CourseListing />}
-        {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password') && !path.startsWith('/verify-email') && !path.startsWith('/courses') && <Home user={user} />}
+        {courseDetailMatch && !courseViewerMatch && <CourseDetailPage courseIdOrSlug={decodeURIComponent(courseDetailMatch[1])} />}
+        {!path.startsWith('/admin') && !courseViewerMatch && !courseDetailMatch && path.startsWith('/courses') && <CourseListing />}
+        {path === '/about-us' && <AboutUs />}
+        {path === '/contact-us' && <ContactUs />}
+        {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password') && !path.startsWith('/verify-email') && !path.startsWith('/courses') && path !== '/about-us' && path !== '/contact-us' && <Home user={user} />}
       </main>
 
       <Footer />

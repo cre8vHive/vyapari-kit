@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AuthUser, cmsApi, PageResponse } from '../services/api';
 import PageRenderer from '../components/PageRenderer';
+import { SHOP_CATEGORY_DATA } from '../components/sections/CategoriesSection';
 
 // Local Mock Data Fallbacks for Development
 const MOCK_HOME_PAYLOAD: PageResponse = {
@@ -27,15 +28,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
       order: 2,
       config: {
         sectionTitle: "All Categories",
-        categories: [
-          { id: "1", name: "Business", slug: "business", iconUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=96&q=80" },
-          { id: "2", name: "Development", slug: "development", iconUrl: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=96&q=80" },
-          { id: "3", name: "Language", slug: "language", iconUrl: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=96&q=80" },
-          { id: "4", name: "Marketing", slug: "marketing", iconUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=96&q=80" },
-          { id: "5", name: "Finance", slug: "finance", iconUrl: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=96&q=80" },
-          { id: "6", name: "Design", slug: "design", iconUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=96&q=80" },
-          { id: "7", name: "Photography", slug: "photography", iconUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=96&q=80" }
-        ]
+        categories: SHOP_CATEGORY_DATA
       }
     },
     {
