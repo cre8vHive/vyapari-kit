@@ -86,7 +86,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             id: "1",
             name: "Sophia Morgan",
             role: "Customers",
-            reviewText: "Incredible experience with Upskill. Expert-led courses equipped me with vital skills. Highly recommended investment.",
+            reviewText: "Incredible experience with VyapaarKit. Expert-led courses equipped me with vital skills. Highly recommended investment.",
             avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=96&q=80",
             rating: 5
           },
@@ -94,7 +94,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             id: "2",
             name: "Benjamin Reed",
             role: "Customers",
-            reviewText: "Upskill's training exceeded expectations. Exceptional instructors, real-world focus. A pivotal step toward career advancement.",
+            reviewText: "VyapaarKit's training exceeded expectations. Exceptional instructors, real-world focus. A pivotal step toward career advancement.",
             avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=96&q=80",
             rating: 5
           },
@@ -102,7 +102,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             id: "3",
             name: "Olivia Carter",
             role: "Customers",
-            reviewText: "Thrilled with Upskill's program. Invaluable knowledge, seamless delivery. Elevate your skills and future prospects confidently.",
+            reviewText: "Thrilled with VyapaarKit's program. Invaluable knowledge, seamless delivery. Elevate your skills and future prospects confidently.",
             avatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=96&q=80",
             rating: 5
           }
