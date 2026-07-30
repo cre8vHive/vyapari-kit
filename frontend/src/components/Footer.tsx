@@ -12,7 +12,7 @@ const Footer: React.FC = () => {
       <div className="site-footer-container">
         <div className="site-footer-grid">
           {/* Column 1: Brand */}
-          <div className="footer-col footer-brand">
+          <div className="footer-col footer-brand" id="about-us">
             <a href={withBase('/')} className="footer-logo" aria-label="Vyapaar Kit home">
               <img src={vyapaarKitLogo} alt="Vyapaar Kit" />
             </a>
@@ -44,7 +44,7 @@ const Footer: React.FC = () => {
           </div>
 
           {/* Column 4: Connect */}
-          <div className="footer-col footer-connect">
+          <div className="footer-col footer-connect" id="contact-us">
             <h3 className="footer-heading">Connect</h3>
             <div className="footer-socials">
               <a href="#" aria-label="Facebook">

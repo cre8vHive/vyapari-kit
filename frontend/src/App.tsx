@@ -21,6 +21,8 @@ const App: React.FC = () => {
   });
   const [sessionExpired, setSessionExpired] = useState(false);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scrollToAboutRef = useRef(false);
+  const scrollToContactRef = useRef(false);
 
   useEffect(() => {
     const handleLocationChange = () => setCurrentPath(window.location.pathname);
@@ -93,6 +95,59 @@ const App: React.FC = () => {
   const courseViewerMatch = path.match(/^\/courses\/([^/]+)\/viewer$/);
   const courseDetailMatch = path.match(/^\/courses\/([^/]+)\/?$/);
 
+  const scrollToAboutUs = useCallback(() => {
+    document.getElementById('about-us')?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  const scrollToContactUs = useCallback(() => {
+    document.getElementById('contact-us')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, []);
+
+  const handleAboutUsClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+
+    if (path === '/') {
+      scrollToAboutUs();
+      return;
+    }
+
+    scrollToAboutRef.current = true;
+    window.history.pushState(null, '', withBase('/'));
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
+  const handleContactUsClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+
+    if (path === '/') {
+      scrollToContactUs();
+      return;
+    }
+
+    scrollToContactRef.current = true;
+    window.history.pushState(null, '', withBase('/'));
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
+  useEffect(() => {
+    if (path !== '/' || !scrollToAboutRef.current) return;
+
+    scrollToAboutRef.current = false;
+    const animationFrame = window.requestAnimationFrame(scrollToAboutUs);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [path, scrollToAboutUs]);
+
+  useEffect(() => {
+    if (path !== '/' || !scrollToContactRef.current) return;
+
+    scrollToContactRef.current = false;
+    const animationFrame = window.requestAnimationFrame(scrollToContactUs);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [path, scrollToContactUs]);
+
   const handleAuth = (nextUser: AuthUser, token: string) => {
     setUser(nextUser);
     setSessionExpired(false);
@@ -130,10 +185,8 @@ const App: React.FC = () => {
         <nav className="site-nav" aria-label="Primary navigation">
           <a href={withBase('/')}>Home</a>
           <a href={withBase('/courses')}>Course</a>
-          <a href={withBase('/courses')}>Bootcamp</a>
-          <a href={withBase('/')}>Page</a>
-          <a href={withBase('/')}>Blog</a>
-          <a href={withBase('/')}>Contact</a>
+          <a href={`${withBase('/')}#about-us`} onClick={handleAboutUsClick}>About Us</a>
+          <a href={`${withBase('/')}#contact-us`} onClick={handleContactUsClick}>Contact Us</a>
           {user?.role === 'admin' && <a href={withBase('/admin')}>Admin</a>}
         </nav>
         {user ? (
