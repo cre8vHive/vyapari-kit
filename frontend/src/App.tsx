@@ -20,9 +20,8 @@ const App: React.FC = () => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const scrollToAboutRef = useRef(false);
-  const scrollToContactRef = useRef(false);
 
   useEffect(() => {
     const handleLocationChange = () => setCurrentPath(window.location.pathname);
@@ -94,59 +93,9 @@ const App: React.FC = () => {
   const withBase = (path: string) => `${basePath}${path}`;
   const courseViewerMatch = path.match(/^\/courses\/([^/]+)\/viewer$/);
   const courseDetailMatch = path.match(/^\/courses\/([^/]+)\/?$/);
-
-  const scrollToAboutUs = useCallback(() => {
-    document.getElementById('about-us')?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  const scrollToContactUs = useCallback(() => {
-    document.getElementById('contact-us')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    });
-  }, []);
-
-  const handleAboutUsClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-
-    if (path === '/') {
-      scrollToAboutUs();
-      return;
-    }
-
-    scrollToAboutRef.current = true;
-    window.history.pushState(null, '', withBase('/'));
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  };
-
-  const handleContactUsClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-
-    if (path === '/') {
-      scrollToContactUs();
-      return;
-    }
-
-    scrollToContactRef.current = true;
-    window.history.pushState(null, '', withBase('/'));
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  };
-
-  useEffect(() => {
-    if (path !== '/' || !scrollToAboutRef.current) return;
-
-    scrollToAboutRef.current = false;
-    const animationFrame = window.requestAnimationFrame(scrollToAboutUs);
-    return () => window.cancelAnimationFrame(animationFrame);
-  }, [path, scrollToAboutUs]);
-
-  useEffect(() => {
-    if (path !== '/' || !scrollToContactRef.current) return;
-
-    scrollToContactRef.current = false;
-    const animationFrame = window.requestAnimationFrame(scrollToContactUs);
-    return () => window.cancelAnimationFrame(animationFrame);
-  }, [path, scrollToContactUs]);
+  const isActivePath = (href: string) => href === '/'
+    ? path === '/'
+    : path === href || path.startsWith(`${href}/`);
 
   const handleAuth = (nextUser: AuthUser, token: string) => {
     setUser(nextUser);
@@ -182,11 +131,23 @@ const App: React.FC = () => {
           aria-label="Vyapaar Kit home"
           style={{ backgroundImage: `url(${vyapaarKitLogo})` }}
         />
-        <nav className="site-nav" aria-label="Primary navigation">
-          <a href={withBase('/')}>Home</a>
-          <a href={withBase('/courses')}>Course</a>
-          <a href={`${withBase('/')}#about-us`} onClick={handleAboutUsClick}>About Us</a>
-          <a href={`${withBase('/')}#contact-us`} onClick={handleContactUsClick}>Contact Us</a>
+        <button
+          className="site-menu-toggle"
+          type="button"
+          aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+          aria-expanded={isMenuOpen}
+          aria-controls="primary-navigation"
+          onClick={() => setIsMenuOpen((open) => !open)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <nav id="primary-navigation" className={`site-nav${isMenuOpen ? ' is-open' : ''}`} aria-label="Primary navigation">
+          <a href={withBase('/')} aria-current={isActivePath('/') ? 'page' : undefined}>Home</a>
+          <a href={withBase('/courses')} aria-current={isActivePath('/courses') ? 'page' : undefined}>Course</a>
+          <a href={withBase('/about-us')} aria-current={isActivePath('/about-us') ? 'page' : undefined}>About Us</a>
+          <a href={withBase('/contact-us')} aria-current={isActivePath('/contact-us') ? 'page' : undefined}>Contact Us</a>
           {user?.role === 'admin' && <a href={withBase('/admin')}>Admin</a>}
         </nav>
         {user ? (
