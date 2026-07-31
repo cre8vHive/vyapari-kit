@@ -1240,7 +1240,7 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
 
 app.post('/api/v1/courses/:courseId/purchase', requireAuth, requireActiveSession, async (req, res) => {
   try {
-    const course = await Course.findOne({ slug: req.params.courseId, isDeleted: false }).lean();
+    const course = await Course.findOne({ _id: req.params.courseId, isDeleted: false }).lean();
     if (!course) {
       return res.status(404).json({ message: 'Course not found' });
     }
@@ -1287,7 +1287,7 @@ app.post('/api/v1/courses/:courseId/verify-payment', requireAuth, requireActiveS
     const isDevBypass = req.body.bypass === true;
 
     if (razorpay_signature === expectedSign || isDevBypass) {
-      const course = await Course.findOne({ slug: req.params.courseId, isDeleted: false }).lean();
+      const course = await Course.findOne({ _id: req.params.courseId, isDeleted: false }).lean();
       if (!course) {
         return res.status(404).json({ message: 'Course not found' });
       }
