@@ -48,6 +48,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [errorCode, setErrorCode] = useState('');
+  const [errorList, setErrorList] = useState<string[]>([]);
   const [notice, setNotice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
@@ -90,6 +91,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
       setPassword('');
       setError('');
       setErrorCode('');
+      setErrorList([]);
       setNotice('');
       setShowPassword(false);
       setSuccess(false);
@@ -153,6 +155,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
       const msg = err.response?.data?.message || 'Something went wrong. Please try again.';
       setError(msg);
       setErrorCode(err.response?.data?.code || '');
+      setErrorList(err.response?.data?.errors || []);
       if (!isRegister && !isForgot && !isReset) {
         loginFailureCountRef.current += 1;
         if (loginFailureCountRef.current >= 1) {
@@ -324,7 +327,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
                     <line x1="15" y1="9" x2="9" y2="15" />
                     <line x1="9" y1="9" x2="15" y2="15" />
                   </svg>
-                  <span>{error}</span>
+                  <div>
+                    <span>{error}</span>
+                    {errorList.length > 0 && (
+                      <ul style={{ margin: '8px 0 0 16px', padding: 0, fontSize: '0.85em', opacity: 0.9 }}>
+                        {errorList.map((errItem, idx) => (
+                          <li key={idx} style={{ marginBottom: '4px' }}>{errItem}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               )}
 

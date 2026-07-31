@@ -7,7 +7,7 @@ const RelatedCourses = ({ courses }) => {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {courses.map((item) => (
           <a href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses/${item.slug}`} key={item.id} className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50 transition duration-300 hover:shadow-lg">
-            <img className="h-40 w-full object-cover" src={item.imageUrl} alt={item.title} />
+            <img className="h-40 w-full object-cover" src={item.imageUrl} alt={item.title} loading="lazy" />
             <div className="p-4">
               <p className="text-sm font-semibold text-slate-700">{item.category}</p>
               <h3 className="mt-2 text-lg font-semibold text-slate-900">{item.title}</h3>

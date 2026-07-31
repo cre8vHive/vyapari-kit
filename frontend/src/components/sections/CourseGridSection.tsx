@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export interface CourseItem {
   id: string;
@@ -35,6 +35,43 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
   mode = 'available',
   onCourseClick,
 }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 10;
+  const totalPages = Math.ceil(courses.length / coursesPerPage);
+
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(1);
+  }
+
+  const startIndex = (currentPage - 1) * coursesPerPage;
+  const displayedCourses = courses.slice(startIndex, startIndex + coursesPerPage);
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+    
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', padding: '20px 0', alignItems: 'center' }}>
+        <button 
+          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+          disabled={currentPage === 1}
+          style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f8fafc' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: currentPage === 1 ? '#94a3b8' : '#0f172a' }}
+        >
+          Previous
+        </button>
+        <span style={{ fontWeight: 500, color: '#475569' }}>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button 
+          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+          disabled={currentPage === totalPages}
+          style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f8fafc' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: currentPage === totalPages ? '#94a3b8' : '#0f172a' }}
+        >
+          Next
+        </button>
+      </div>
+    );
+  };
+
   // Star rendering helper based on Mongoose rating floating points
   const renderStars = (rating: number) => {
     const stars = [];
@@ -68,38 +105,40 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
   };
 
   const courseGrid = (
-    <div className={`course-list-container layout-${layout}`}>
-      {courses.map((course, index) => {
-        const isMyCourse = mode === 'my';
-        const courseUrl = (isMyCourse && course.hasPdf) ? `/courses/${course.id}/viewer` : `/courses/${course.slug}`;
-        const actionText = (isMyCourse && course.hasPdf) ? 'View Material' : 'View Details';
+    <>
+      {renderPagination()}
+      <div className={`course-list-container layout-${layout}`}>
+        {displayedCourses.map((course, index) => {
+          const isMyCourse = mode === 'my';
+          const courseUrl = (isMyCourse && course.hasPdf) ? `/courses/${course.id}/viewer` : `/courses/${course.slug}`;
+          const actionText = (isMyCourse && course.hasPdf) ? 'View Material' : 'View Details';
 
-        return (
-          <div
-            key={course.id || index}
-            className="elementor-element e-con-full e-flex e-con e-child course-card-wrapper"
-            style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden' }}
-          >
-          {/* Image Hotspot (Difficulty Badge overlay) */}
-          <div className="elementor-element elementor-element-hotspot-container elementor-widget elementor-widget-hotspot">
-            <div className="elementor-widget-container">
-              <img
-                src={course.imageUrl}
-                className="attachment-full size-full"
-                alt={course.title}
-                loading="lazy"
-              />
-              <div className="e-hotspot elementor-repeater-item-d6856d8 e-hotspot--position-left e-hotspot--position-top">
-                <div className="e-hotspot__button">
-                  <div className="e-hotspot__label">{course.difficulty}</div>
-                </div>
+          return (
+            <div
+              key={course.id || index}
+              className="elementor-element e-con-full e-flex e-con e-child course-card-wrapper"
+              style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden' }}
+            >
+            {/* Image Hotspot (Difficulty Badge overlay removed, moved to pill) */}
+            <div className="elementor-element elementor-element-hotspot-container elementor-widget elementor-widget-hotspot">
+              <div className="elementor-widget-container">
+                <img
+                  src={course.imageUrl}
+                  className="attachment-full size-full"
+                  alt={course.title}
+                  loading="lazy"
+                />
               </div>
             </div>
-          </div>
 
-          {/* Card Content */}
-          <div className="elementor-element e-con-full e-flex e-con e-child course-card-body" style={{ padding: '20px' }}>
-            {/* Course Title */}
+            {/* Card Content */}
+            <div className="elementor-element e-con-full e-flex e-con e-child course-card-body" style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ background: '#e0f2fe', color: '#0284c7', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
+                  {course.difficulty}
+                </span>
+              </div>
+              {/* Course Title */}
             <div className="elementor-element elementor-widget elementor-widget-heading">
               <div className="elementor-widget-container">
                 <h4 className="elementor-heading-title elementor-size-default">
@@ -198,6 +237,8 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
         );
       })}
     </div>
+    {renderPagination()}
+    </>
   );
 
   if (embedded) {
