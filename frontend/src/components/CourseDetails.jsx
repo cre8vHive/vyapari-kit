@@ -51,7 +51,13 @@ const CourseDetails = ({ course, onBack }) => {
       });
       rzp.open();
     } catch (err) {
-      alert('Failed to initiate payment. Please try again.');
+      if (err.response?.status === 401) {
+        alert('Please log in or sign up to purchase this course.');
+        window.location.href = '/auth';
+      } else {
+        alert('Failed to initiate payment. Please try again.');
+        console.error(err);
+      }
     }
   };
   return (
