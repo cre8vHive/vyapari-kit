@@ -24,10 +24,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   primaryButton,
   secondaryButton,
 }) => {
+  const heroImageUrl = backgroundType === 'image' && backgroundValue ? backgroundValue : heroBannerUrl;
   const heroStyle: React.CSSProperties = {
-    backgroundImage: `url(${backgroundType === 'image' && backgroundValue ? backgroundValue : heroBannerUrl})`,
-    backgroundSize: 'cover',
+    backgroundImage: `url(${heroImageUrl})`,
+    backgroundSize: 'contain',
     backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
   };
 
   return (
@@ -40,6 +42,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
           </div>
         </div>
+        <img className="hero-mobile-image" src={heroImageUrl} alt="Business professional working at a laptop" />
       </div>
       
       <div 
