@@ -2026,6 +2026,17 @@ img {
   max-width: 100%;
 }
 
+.course-grid-section-embedded .course-card-wrapper img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+.course-grid-section-embedded .course-card-wrapper:hover img {
+  transform: none;
+}
+
 .course-hub-status,
 .course-empty-state {
   display: grid;
