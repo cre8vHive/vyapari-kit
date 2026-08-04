@@ -23,81 +23,6 @@ const MOCK_CATEGORIES: CategoryItem[] = [
   { id: '7', name: 'Photography', slug: 'photography', iconUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=96&q=80' },
 ];
 
-const MOCK_COURSES: CourseItem[] = [
-  {
-    id: '1',
-    slug: 'photography-masterclass-guide',
-    title: 'Photography Masterclass: A Complete Guide to Photography',
-    instructorName: 'Onecontributor',
-    categoryName: 'Photography',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 30.99,
-    rating: 4.8,
-    imageUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: '2',
-    slug: 'wordpress-developer-course',
-    title: 'Complete WordPress Developer Course 2024',
-    instructorName: 'Onecontributor',
-    categoryName: 'Development',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 20.99,
-    rating: 4.8,
-    imageUrl: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: '3',
-    slug: 'personal-finance-course',
-    title: 'The Complete Personal Finance Course',
-    instructorName: 'Onecontributor',
-    categoryName: 'Finance',
-    difficulty: 'Beginner',
-    price: 17.99,
-    oldPrice: 40.99,
-    rating: 4.8,
-    imageUrl: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: '4',
-    slug: 'digital-marketing-course',
-    title: 'The Complete Digital Marketing Course',
-    instructorName: 'Onecontributor',
-    categoryName: 'Marketing',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 20.99,
-    rating: 4.6,
-    imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: '5',
-    slug: 'business-startup-guide',
-    title: 'The Business Startup Guide to Become an Entrepreneur',
-    instructorName: 'Onecontributor',
-    categoryName: 'Business',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 30.99,
-    rating: 4.8,
-    imageUrl: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    id: '6',
-    slug: 'german-language-course',
-    title: 'Best Way to Learn German Language: Full Beginner',
-    instructorName: 'Onecontributor',
-    categoryName: 'Language',
-    difficulty: 'Beginner',
-    price: 18.99,
-    oldPrice: 20.99,
-    rating: 4.9,
-    imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80',
-  },
-];
-
 function normalizeSlug(value: string | null | undefined) {
   const normalized = String(value || '').trim().toLowerCase().replace(/\s+/g, '-');
   return normalized || ALL_CATEGORY;
@@ -154,9 +79,7 @@ export const CourseListing: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [myCoursesLoaded, setMyCoursesLoaded] = useState(false);
 
-  const activeCourses = listingState.tab === 'my' 
-    ? myCourses 
-    : availableCourses.filter(ac => !myCourses.some(mc => mc.id === ac.id));
+  const activeCourses = listingState.tab === 'my' ? myCourses : availableCourses;
     
   const filteredCourses = useMemo(
     () => activeCourses.filter((course) => matchesCategory(course, listingState.category)),
@@ -209,9 +132,9 @@ export const CourseListing: React.FC = () => {
         setMyCoursesLoaded(true);
         
       } catch (err) {
-        console.warn('API server not running, using static listing assets.');
+        console.warn('Unable to load courses from the API.');
         setCategories(MOCK_CATEGORIES);
-        setAvailableCourses(MOCK_COURSES);
+        setAvailableCourses([]);
         setMyCourses([]);
         setMyCoursesLoaded(true);
       } finally {
@@ -279,7 +202,14 @@ export const CourseListing: React.FC = () => {
             {loading || (listingState.tab === 'my' && !myCoursesLoaded) ? (
               <div className="course-hub-status">Loading courses...</div>
             ) : filteredCourses.length > 0 ? (
-              <CourseGridSection sectionTitle="" courses={filteredCourses} layout="grid" embedded mode={listingState.tab} />
+              <CourseGridSection
+                key={`${listingState.tab}:${listingState.category}`}
+                sectionTitle=""
+                courses={filteredCourses}
+                layout="grid"
+                embedded
+                mode={listingState.tab}
+              />
             ) : (
               <div className="course-empty-state">
                 <h3>No courses found</h3>
