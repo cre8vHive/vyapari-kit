@@ -2015,9 +2015,9 @@ img {
 }
 
 .course-grid-section-embedded .course-list-container {
-  width: 100%;
-  grid-template-columns: minmax(0, 420px);
-  justify-content: center;
+  width: min(100%, 960px);
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 1fr);
   gap: 28px;
 }
 
