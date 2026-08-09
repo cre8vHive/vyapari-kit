@@ -4,7 +4,7 @@ dotenv.config();
 
 const localClientOrigin = 'http://localhost:5173';
 const defaultJsonBodyLimit = '15mb';
-const defaultMaxPdfUploadBytes = 15 * 1024 * 1024;
+const defaultMaxPdfUploadBytes = 100 * 1024 * 1024;
 
 function csv(value?: string) {
   return (value || '')

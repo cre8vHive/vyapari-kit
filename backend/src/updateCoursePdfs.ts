@@ -9,7 +9,7 @@ const pdf = require('pdf-parse');
 const pdfParse = pdf.default || pdf;
 
 // The base URL where you will upload your PDFs in Cloudflare R2
-const PDF_BASE_URL = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/course-pdfs/';
+const PDF_BASE_URL = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/uploads/pdfs/';
 
 async function main() {
   console.log('Connecting to MongoDB...');

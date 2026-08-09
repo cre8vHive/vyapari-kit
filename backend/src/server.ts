@@ -1088,7 +1088,6 @@ app.get('/api/v1/courses/:courseId/pdf/file', requireAuth, requireActiveSession,
 
   await logPdfAccess(req, authUser.sub, String(course._id), 'stream');
 
-  let pdfBuffer: Buffer;
   if (pdf.storageType === 'external') {
     if (!pdf.externalUrl) {
       res.status(404).json({ message: 'PDF URL is missing' });
@@ -1099,42 +1098,48 @@ app.get('/api/v1/courses/:courseId/pdf/file', requireAuth, requireActiveSession,
       redirect: 'error',
       signal: AbortSignal.timeout(config.externalPdfFetchTimeoutMs),
     });
-    if (!response.ok) {
+    if (!response.ok || !response.body) {
       res.status(502).json({ message: 'Unable to retrieve secure PDF asset' });
       return;
     }
-    const contentLength = Number(response.headers.get('content-length') || 0);
-    if (contentLength > config.maxPdfUploadBytes) {
-      res.status(502).json({ message: 'Secure PDF asset is too large' });
-      return;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    const contentLength = response.headers.get('content-length');
+    if (contentLength) {
+      res.setHeader('Content-Length', contentLength);
     }
-    const arrayBuffer = await response.arrayBuffer();
-    pdfBuffer = Buffer.from(arrayBuffer);
+    res.setHeader('Content-Disposition', `inline; filename="${safePdfFilename(pdf.filename)}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    // Stream the web stream to Express response
+    const stream = require('stream');
+    stream.Readable.fromWeb(response.body as any).pipe(res);
+    return;
+
   } else if (pdf.data) {
     const storedBuffer = pdfDataToBuffer(pdf.data);
     if (!storedBuffer) {
       res.status(500).json({ message: 'Stored PDF data could not be read' });
       return;
     }
-    pdfBuffer = storedBuffer;
+    if (storedBuffer.length > config.maxPdfUploadBytes || storedBuffer.subarray(0, 5).toString('utf8') !== '%PDF-') {
+      res.status(502).json({ message: 'Secure PDF asset failed validation' });
+      return;
+    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', String(storedBuffer.length));
+    res.setHeader('Content-Disposition', `inline; filename="${safePdfFilename(pdf.filename)}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(storedBuffer);
   } else {
     res.status(404).json({ message: 'PDF data is missing' });
-    return;
   }
-
-  if (pdfBuffer.length > config.maxPdfUploadBytes || pdfBuffer.subarray(0, 5).toString('utf8') !== '%PDF-') {
-    res.status(502).json({ message: 'Secure PDF asset failed validation' });
-    return;
-  }
-
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Length', String(pdfBuffer.length));
-  res.setHeader('Content-Disposition', `inline; filename="${safePdfFilename(pdf.filename)}"`);
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.send(pdfBuffer);
 });
 
 app.post('/api/v1/courses/:courseId/pdf/access-log', requireAuth, requireActiveSession, async (req, res) => {

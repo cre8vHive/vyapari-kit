@@ -14,7 +14,7 @@ const s3Client = new S3Client({
 const Bucket = process.env.R2_BUCKET_NAME || 'vyapari-kit-media';
 
 async function list() {
-  const res = await s3Client.send(new ListObjectsV2Command({ Bucket, Prefix: 'course-images/' }));
-  console.log(res.Contents?.slice(0, 5).map(o => o.Key));
+  const res = await s3Client.send(new ListObjectsV2Command({ Bucket }));
+  console.log(res.Contents?.map(o => o.Key));
 }
 list().catch(console.error);
