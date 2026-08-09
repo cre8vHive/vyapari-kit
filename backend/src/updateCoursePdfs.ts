@@ -28,6 +28,7 @@ async function main() {
   courseBlocks.shift();
 
   let updatedCount = 0;
+  const unmatchedTitles: string[] = [];
 
   for (let i = 0; i < courseBlocks.length; i += 2) {
     const number = courseBlocks[i];
@@ -76,11 +77,24 @@ async function main() {
 
           console.log(`Linked PDF ${number}.pdf to course: ${title}`);
           updatedCount++;
+        } else {
+          // Track titles that are not found in the database
+          unmatchedTitles.push(title);
+          console.log(`No match found in DB for title: ${title}`);
         }
       } catch (err) {
         console.error(`Failed to update ${title}:`, err);
       }
     }
+  }
+
+  if (unmatchedTitles.length > 0) {
+    const csvContent = 'Unmatched Titles\n' + unmatchedTitles.map(t => `"${t.replace(/"/g, '""')}"`).join('\n');
+    const outputPath = 'unmatched_titles.csv';
+    fs.writeFileSync(outputPath, csvContent);
+    console.log(`\nWrote ${unmatchedTitles.length} unmatched titles to ${outputPath}`);
+  } else {
+    console.log('\nAll titles were successfully matched in the database!');
   }
 
   console.log(`\nSuccessfully mapped ${updatedCount} PDFs to courses.`);

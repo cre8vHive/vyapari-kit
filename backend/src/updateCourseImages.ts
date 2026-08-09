@@ -1,18 +1,45 @@
 import fs from 'fs';
 import mongoose from 'mongoose';
+import { config as loadEnv } from 'dotenv';
+loadEnv();
 import { config } from './config';
 import Course from './models/Course';
 import { createRequire } from 'module';
+import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
+
 const require = createRequire(import.meta.url);
 const pdf = require('pdf-parse');
 const pdfParse = pdf.default || pdf;
 
-// Choose where your images are hosted.
-// If they are in frontend/public/courses/, use '/courses/'
-// If they are in Cloudflare R2, use process.env.R2_PUBLIC_URL + '/courses/'
-const IMAGE_BASE_URL = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/course-images/'; // Change this to your R2 url if you upload them there
+const IMAGE_BASE_URL = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/'; 
+
+const s3 = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || ''
+  }
+});
 
 async function main() {
+  console.log('Fetching objects from R2...');
+  const Bucket = process.env.R2_BUCKET_NAME || 'vyapari-kit-media';
+  const listRes = await s3.send(new ListObjectsV2Command({ Bucket, Prefix: 'course-images/' }));
+  const objects = (listRes.Contents || []).map(c => c.Key || '');
+  
+  // Create a map from number -> object key
+  // e.g. "course-images/50 .jpeg" -> "50"
+  const imageMap = new Map<string, string>();
+  for (const obj of objects) {
+    const match = obj.match(/course-images\/(\d+)[^/]*$/);
+    if (match) {
+      imageMap.set(match[1], obj);
+    }
+  }
+  
+  console.log(`Found ${objects.length} images in R2.`);
+
   console.log('Connecting to MongoDB...');
   await mongoose.connect(process.env.MONGODB_URI || config.mongodbUri || 'mongodb://localhost:27017/vyaparikit');
   console.log('Connected.');
@@ -50,18 +77,24 @@ async function main() {
     }
 
     if (title) {
-      const imageUrl = `${IMAGE_BASE_URL}${number}.png`;
-      try {
-        const result = await Course.updateOne(
-          { title: title },
-          { $set: { imageUrl: imageUrl } }
-        );
-        if (result.modifiedCount > 0) {
-          console.log(`Linked image ${number}.png to course: ${title}`);
-          updatedCount++;
+      const r2Key = imageMap.get(number);
+      if (r2Key) {
+        // Construct the full URL, being careful to encode spaces properly for the URL
+        const imageUrl = `${IMAGE_BASE_URL}${encodeURIComponent(r2Key).replace(/%2F/g, '/')}`;
+        try {
+          const result = await Course.updateOne(
+            { title: title },
+            { $set: { imageUrl: imageUrl } }
+          );
+          if (result.modifiedCount > 0) {
+            console.log(`Linked image ${r2Key} to course: ${title}`);
+            updatedCount++;
+          }
+        } catch (err) {
+          console.error(`Failed to update ${title}:`, err);
         }
-      } catch (err) {
-        console.error(`Failed to update ${title}:`, err);
+      } else {
+         console.warn(`No image found in R2 for course number ${number} (${title})`);
       }
     }
   }

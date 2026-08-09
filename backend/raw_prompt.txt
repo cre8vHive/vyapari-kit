@@ -1,0 +1,18 @@
+<USER_REQUEST>
+I want to upload these courses into my database. this is only 1 time activity. So, help me do it.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-30T18:59:06+05:30.
+
+The user's current state is as follows:
+Active Document: d:\Cre8vStudio\vyapari-kit\backend\.env (LANGUAGE_UNSPECIFIED)
+Cursor is on line: 25
+Other open documents:
+- d:\Cre8vStudio\vyapari-kit\backend\.env (LANGUAGE_UNSPECIFIED)
+- d:\Cre8vStudio\vyapari-kit\backend\src\server.ts (LANGUAGE_TYPESCRIPT)
+- d:\Cre8vStudio\vyapari-kit\frontend\src\pages\Auth.tsx (LANGUAGE_TSX)
+- d:\Cre8vStudio\vyapari-kit\frontend\src\components\CourseDetails.jsx (LANGUAGE_JAVASCRIPT)
+- d:\Cre8vStudio\vyapari-kit\backend\src\config.ts (LANGUAGE_TYPESCRIPT)
+Running terminal commands:
+- npm run dev (in d:\Cre8vStudio\vyapari-kit, running for 6m12s)
+</ADDITIONAL_METADATA>
