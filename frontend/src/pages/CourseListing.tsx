@@ -9,6 +9,7 @@ interface CourseListingState {
   tab: CourseTab;
   category: string;
   searchQuery: string;
+  sortBy: string;
 }
 
 const ALL_CATEGORY = 'all';
@@ -37,6 +38,7 @@ function readCourseListingState(): CourseListingState {
     tab,
     category: normalizeSlug(params.get('category')),
     searchQuery: params.get('search') || '',
+    sortBy: params.get('sort') || 'newest',
   };
 }
 
@@ -46,6 +48,9 @@ function writeCourseListingState(nextState: CourseListingState, replace = false)
   params.set('category', nextState.category);
   if (nextState.searchQuery) {
     params.set('search', nextState.searchQuery);
+  }
+  if (nextState.sortBy && nextState.sortBy !== 'newest') {
+    params.set('sort', nextState.sortBy);
   }
 
   const nextUrl = `${window.location.pathname}?${params.toString()}`;
@@ -97,9 +102,16 @@ export const CourseListing: React.FC = () => {
           (course.categoryName && course.categoryName.toLowerCase().includes(query))
         );
       }
+      if (listingState.sortBy === 'price-low') {
+        result.sort((a, b) => a.price - b.price);
+      } else if (listingState.sortBy === 'price-high') {
+        result.sort((a, b) => b.price - a.price);
+      } else if (listingState.sortBy === 'rating') {
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      }
       return result;
     },
-    [activeCourses, listingState.category, listingState.searchQuery]
+    [activeCourses, listingState.category, listingState.searchQuery, listingState.sortBy]
   );
   const activeTabLabel = listingState.tab === 'my' ? 'My Courses' : 'Available Courses';
 
@@ -135,7 +147,18 @@ export const CourseListing: React.FC = () => {
           cmsApi.getCourses(),
         ]);
 
-        setCategories(withAllCategory(catsData));
+        const uniqueCatNames = Array.from(new Set(coursesData.map(c => c.categoryName).filter(Boolean))) as string[];
+        const dynamicCats = uniqueCatNames.map((name, i) => {
+          const existing = catsData.find(c => c.name.toLowerCase() === name.toLowerCase());
+          return {
+            id: existing ? existing.id : `dyn-${i}`,
+            name,
+            slug: normalizeSlug(name),
+            iconUrl: existing ? existing.iconUrl : undefined
+          };
+        });
+
+        setCategories(withAllCategory(dynamicCats.length > 0 ? dynamicCats : catsData));
         setAvailableCourses(coursesData);
         
         // Always try to fetch my courses so we can filter them out of available courses
@@ -197,8 +220,8 @@ export const CourseListing: React.FC = () => {
             </button>
           </div>
 
-          <div style={{ padding: '0 2rem', marginTop: '1.5rem', maxWidth: '800px', width: '100%' }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <div style={{ padding: '0 2rem', marginTop: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: '250px' }}>
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 width="20" 
@@ -243,14 +266,69 @@ export const CourseListing: React.FC = () => {
                 }}
               />
             </div>
-          </div>
+            
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Category:</span>
+                <select
+                  value={listingState.category}
+                  onChange={(e) => updateListingState({ category: e.target.value })}
+                  style={{
+                    padding: '1rem 2.5rem 1rem 1rem',
+                    borderRadius: '12px',
+                    border: '2px solid #e5e7eb',
+                    backgroundColor: '#fff',
+                    color: '#374151',
+                    fontSize: '1.05rem',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    appearance: 'none',
+                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 1rem center',
+                    backgroundSize: '1em',
+                    maxWidth: '250px'
+                  }}
+                >
+                  {categories.map((cat) => (
+                    <option key={cat.id || cat.slug || cat.name} value={cat.slug || 'all'}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <CategoriesSection
-            categories={categories}
-            variant="filters"
-            selectedSlug={listingState.category}
-            onCategorySelect={(category) => updateListingState({ category })}
-          />
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Sort by:</span>
+              <select
+                value={listingState.sortBy}
+                onChange={(e) => updateListingState({ sortBy: e.target.value })}
+                style={{
+                  padding: '1rem 2.5rem 1rem 1rem',
+                  borderRadius: '12px',
+                  border: '2px solid #e5e7eb',
+                  backgroundColor: '#fff',
+                  color: '#374151',
+                  fontSize: '1.05rem',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  appearance: 'none',
+                  backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 1rem center',
+                  backgroundSize: '1em',
+                }}
+              >
+                <option value="newest">Newest</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="rating">Highest Rated</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
           <div className="course-hub-content" role="tabpanel" aria-label={activeTabLabel}>
             <div className="course-hub-heading">

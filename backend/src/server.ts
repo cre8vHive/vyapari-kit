@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import 'express-async-errors';
 import express, { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { Readable } from 'stream';
 import Razorpay from 'razorpay';
 import { SESSION_TTL_MS, createToken, generateSessionId, hashPassword, requireActiveSession, requireAuth, verifyPassword } from './auth';
 import { config, validateConfig } from './config';
@@ -1115,8 +1116,7 @@ app.get('/api/v1/courses/:courseId/pdf/file', requireAuth, requireActiveSession,
     res.setHeader('X-Content-Type-Options', 'nosniff');
 
     // Stream the web stream to Express response
-    const stream = require('stream');
-    stream.Readable.fromWeb(response.body as any).pipe(res);
+    Readable.fromWeb(response.body as any).pipe(res);
     return;
 
   } else if (pdf.data) {

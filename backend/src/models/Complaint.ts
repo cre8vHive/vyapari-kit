@@ -5,6 +5,7 @@ export interface IComplaint extends Document {
   lastName: string;
   email: string;
   phone: string;
+  subject: string;
   message: string;
   isResolved: boolean;
   createdAt: Date;

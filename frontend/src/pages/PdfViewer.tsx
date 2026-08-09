@@ -187,7 +187,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ courseId }) => {
         }
       } catch (err: any) {
         if (!cancelled) {
-          setError(err.response?.data?.message || err.message || 'Unable to open this protected PDF.');
+          let errorMessage = err.response?.data?.message || err.message || 'Unable to open this protected PDF.';
+          if (errorMessage.includes('Unexpected server response')) {
+            errorMessage = 'The secure PDF could not be loaded at this time. Please check your connection or try again later.';
+          }
+          setError(errorMessage);
         }
       } finally {
         if (!cancelled) {
