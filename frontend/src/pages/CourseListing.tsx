@@ -8,6 +8,7 @@ type CourseTab = 'available' | 'my';
 interface CourseListingState {
   tab: CourseTab;
   category: string;
+  searchQuery: string;
 }
 
 const ALL_CATEGORY = 'all';
@@ -110,6 +111,7 @@ function readCourseListingState(): CourseListingState {
   return {
     tab,
     category: normalizeSlug(params.get('category')),
+    searchQuery: params.get('search') || '',
   };
 }
 
@@ -117,6 +119,9 @@ function writeCourseListingState(nextState: CourseListingState, replace = false)
   const params = new URLSearchParams();
   params.set('tab', nextState.tab);
   params.set('category', nextState.category);
+  if (nextState.searchQuery) {
+    params.set('search', nextState.searchQuery);
+  }
 
   const nextUrl = `${window.location.pathname}?${params.toString()}`;
   if (`${window.location.pathname}${window.location.search}` === nextUrl) return;
@@ -159,8 +164,19 @@ export const CourseListing: React.FC = () => {
     : availableCourses.filter(ac => !myCourses.some(mc => mc.id === ac.id));
     
   const filteredCourses = useMemo(
-    () => activeCourses.filter((course) => matchesCategory(course, listingState.category)),
-    [activeCourses, listingState.category]
+    () => {
+      let result = activeCourses.filter((course) => matchesCategory(course, listingState.category));
+      if (listingState.searchQuery) {
+        const query = listingState.searchQuery.toLowerCase();
+        result = result.filter(course => 
+          course.title.toLowerCase().includes(query) || 
+          (course.instructorName && course.instructorName.toLowerCase().includes(query)) ||
+          (course.categoryName && course.categoryName.toLowerCase().includes(query))
+        );
+      }
+      return result;
+    },
+    [activeCourses, listingState.category, listingState.searchQuery]
   );
   const activeTabLabel = listingState.tab === 'my' ? 'My Courses' : 'Available Courses';
 
@@ -256,6 +272,54 @@ export const CourseListing: React.FC = () => {
             >
               Available Courses
             </button>
+          </div>
+
+          <div style={{ padding: '0 2rem', marginTop: '1.5rem', maxWidth: '800px', width: '100%' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ position: 'absolute', left: '16px', color: '#6b7280' }}
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="search"
+                placeholder="Search courses by title, instructor, or category..."
+                value={listingState.searchQuery}
+                onChange={(e) => updateListingState({ searchQuery: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '1rem 1rem 1rem 3rem',
+                  borderRadius: '12px',
+                  border: '2px solid #e5e7eb',
+                  backgroundColor: '#f9fafb',
+                  color: '#111827',
+                  fontSize: '1.05rem',
+                  outline: 'none',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.2s ease',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#3b82f6';
+                  e.target.style.backgroundColor = '#ffffff';
+                  e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.15)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#e5e7eb';
+                  e.target.style.backgroundColor = '#f9fafb';
+                  e.target.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                }}
+              />
+            </div>
           </div>
 
           <CategoriesSection

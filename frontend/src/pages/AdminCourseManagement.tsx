@@ -14,6 +14,7 @@ interface CourseFormState {
   oldPrice: string;
   rating: string;
   imageUrl: string;
+  imageFile: File | null;
   isPublished: boolean;
   pdfUrl: string;
   pdfFile: File | null;
@@ -37,6 +38,7 @@ const emptyCourseForm: CourseFormState = {
   oldPrice: '',
   rating: '0',
   imageUrl: '',
+  imageFile: null,
   isPublished: true,
   pdfUrl: '',
   pdfFile: null,
@@ -70,6 +72,7 @@ function courseToForm(course: AdminCourse): CourseFormState {
     oldPrice: course.oldPrice === undefined ? '' : String(course.oldPrice),
     rating: String(course.rating),
     imageUrl: course.imageUrl,
+    imageFile: null,
     isPublished: course.isPublished,
     pdfUrl: '',
     pdfFile: null,
@@ -191,6 +194,19 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       audience: form.audience.split('\\n').map(s => s.trim()).filter(Boolean),
       faqs: form.faqs.filter(f => f.question.trim() && f.answer.trim()),
     };
+
+    if (form.imageFile) {
+      setMessage('Uploading Course Image to Cloudflare R2...');
+      const { uploadUrl, fileUrl } = await uploadApi.getPresignedUrl(form.imageFile.name, 'image/png', 'images');
+      
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        body: form.imageFile,
+        headers: { 'Content-Type': 'image/png' },
+      });
+
+      payload.imageUrl = fileUrl;
+    }
 
     if (form.pdfFile) {
       setMessage('Uploading PDF to Cloudflare R2...');
@@ -455,8 +471,13 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
           </div>
 
           <label className="admin-full-field">
-            Image URL
-            <input value={form.imageUrl} onChange={(event) => updateForm('imageUrl', event.target.value)} required />
+            Course Image (upload only png)
+            <input 
+              type="file" 
+              accept=".png" 
+              onChange={(event) => updateForm('imageFile', event.target.files?.[0] || null)} 
+            />
+            {form.imageUrl && !form.imageFile && <small>Current Image: {form.imageUrl}</small>}
           </label>
 
           <label className="admin-full-field">

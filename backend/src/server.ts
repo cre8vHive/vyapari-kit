@@ -1357,8 +1357,8 @@ async function start() {
         serverSelectionTimeoutMS: 10_000,
       });
       console.log('MongoDB connected');
-      await seedDemoContent();
-      console.log('Demo content synced to MongoDB');
+      // await seedDemoContent();
+      // console.log('Demo content synced to MongoDB');
     } catch (error) {
       console.error('MongoDB Error:', error);
       if (config.isProduction) {
