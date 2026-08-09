@@ -81,13 +81,16 @@ const SecurePdfPage: React.FC<{
 };
 
 const PDF_LOADING_QUOTES = [
-  "Knowledge is power. Power to change your life.",
-  "Every expert was once a beginner.",
-  "Invest in yourself. It pays the best interest.",
-  "Learning is a treasure that will follow its owner everywhere.",
-  "The beautiful thing about learning is nobody can take it away from you.",
-  "Education is the passport to the future.",
-  "An investment in knowledge pays the best interest."
+  "🍳 Let him cook...",
+  "💻 Looking for the missing semicolon...",
+  "🤖 Consulting the AI overlords...",
+  "🌐 Negotiating with your Wi-Fi...",
+  "🎮 Respawning...",
+  "🧠 Sigma verification in progress...",
+  "🕵️ Verifying you're not three raccoons in a trench coat...",
+  "☕ Convincing electrons to cooperate...",
+  "💀 Achievement Unlocked: Patience.",
+  "🎬 May the force load with you."
 ];
 
 export const PdfViewer: React.FC<PdfViewerProps> = ({ courseId }) => {
