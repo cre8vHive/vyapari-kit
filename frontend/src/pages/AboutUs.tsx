@@ -249,7 +249,7 @@ const AboutUs: React.FC = () => {
           <article>
             <h2>Connect With Us</h2>
             <p>Follow Vyapaarkit for new business ideas, updates, and resources.</p>
-            <p>Facebook · Instagram · YouTube · LinkedIn</p>
+            <p>Facebook · Instagram</p>
             <a href="mailto:contact@vyapaarkit.com">contact@vyapaarkit.com</a>
           </article>
         </div>

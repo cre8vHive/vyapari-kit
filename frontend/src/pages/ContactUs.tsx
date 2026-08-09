@@ -38,7 +38,7 @@ const supportPoints = [
   'General information about our business guides',
 ];
 
-const socialChannels = ['Facebook', 'Instagram', 'YouTube', 'LinkedIn'];
+const socialChannels = ['Facebook', 'Instagram'];
 
 function validateContactForm(fields: ContactFields): ContactErrors {
   const errors: ContactErrors = {};
@@ -274,16 +274,6 @@ const ContactUs: React.FC = () => {
         </div>
       </section>
 
-      <section className="about-section contact-map-section about-reveal">
-        <div className="about-container">
-          <span className="about-section-number">FIND US</span>
-          <h2>Find Us</h2>
-          {/* Replace this accessible placeholder with the approved Google Maps embed when a location is provided. */}
-          <div className="contact-map-placeholder" role="img" aria-label="Google Maps location placeholder">
-            <span>+</span><strong>Google Maps</strong><small>Location placeholder</small>
-          </div>
-        </div>
-      </section>
 
       <section className="about-cta about-reveal">
         <div className="about-container">

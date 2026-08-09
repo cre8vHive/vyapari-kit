@@ -80,6 +80,16 @@ const SecurePdfPage: React.FC<{
   );
 };
 
+const PDF_LOADING_QUOTES = [
+  "Knowledge is power. Power to change your life.",
+  "Every expert was once a beginner.",
+  "Invest in yourself. It pays the best interest.",
+  "Learning is a treasure that will follow its owner everywhere.",
+  "The beautiful thing about learning is nobody can take it away from you.",
+  "Education is the passport to the future.",
+  "An investment in knowledge pays the best interest."
+];
+
 export const PdfViewer: React.FC<PdfViewerProps> = ({ courseId }) => {
   const [manifest, setManifest] = useState<PdfViewerManifest | null>(null);
   const [pdfDocument, setPdfDocument] = useState<PdfDocument | null>(null);
@@ -216,10 +226,41 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ courseId }) => {
     });
   }, [courseId]);
 
+  const [quoteIndex, setQuoteIndex] = useState(0);
+
+  useEffect(() => {
+    if (!loading) return;
+    // Set a random initial quote
+    setQuoteIndex(Math.floor(Math.random() * PDF_LOADING_QUOTES.length));
+    
+    const interval = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % PDF_LOADING_QUOTES.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [loading]);
+
   if (loading) {
     return (
-      <section className="secure-pdf-shell">
-        <div className="secure-pdf-status">Opening protected course material...</div>
+      <section className="secure-pdf-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', padding: '3rem', background: '#fff', borderRadius: '16px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}>
+          <div style={{ position: 'relative', width: '64px', height: '64px' }}>
+            <div style={{ position: 'absolute', width: '100%', height: '100%', border: '4px solid #e5e7eb', borderRadius: '50%' }}></div>
+            <div style={{ position: 'absolute', width: '100%', height: '100%', border: '4px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+          </div>
+          
+          <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+            <h3 style={{ fontSize: '1.25rem', color: '#111827', margin: '0 0 0.5rem 0', fontWeight: 600 }}>Opening protected material...</h3>
+            <p style={{ color: '#6b7280', fontSize: '1rem', fontStyle: 'italic', transition: 'opacity 0.5s ease-in-out' }}>
+              "{PDF_LOADING_QUOTES[quoteIndex]}"
+            </p>
+          </div>
+        </div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </section>
     );
   }
