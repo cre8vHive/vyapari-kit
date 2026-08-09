@@ -200,11 +200,11 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
             <div className="elementor-element e-con-full e-flex e-con e-child price-button-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
               <div className="price-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <span className="price-new" style={{ color: '#0b1220', fontSize: '18px', fontWeight: 'bold' }}>
-                  ${course.price.toFixed(2)}
+                  ₹{course.price.toFixed(2)}
                 </span>
                 {course.oldPrice && (
                   <span className="price-old" style={{ textDecoration: 'line-through', opacity: 0.5 }}>
-                    ${course.oldPrice.toFixed(2)}
+                    ₹{course.oldPrice.toFixed(2)}
                   </span>
                 )}
               </div>

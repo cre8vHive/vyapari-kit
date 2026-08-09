@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { AuthUser } from '../services/api';
 import AdminCourseManagement from './AdminCourseManagement';
 import AdminUserManagement from './AdminUserManagement';
+import AdminComplaints from './AdminComplaints';
 
 interface AdminDashboardProps {
   user: AuthUser | null;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
-  const [activeTab, setActiveTab] = useState<'courses' | 'users'>('courses');
+  const [activeTab, setActiveTab] = useState<'courses' | 'users' | 'complaints'>('courses');
 
   if (!user) {
     return (
@@ -45,12 +46,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           >
             User Management
           </button>
+          <button 
+            className={`admin-tab ${activeTab === 'complaints' ? 'active' : ''}`}
+            onClick={() => setActiveTab('complaints')}
+          >
+            Complaints/Grievances
+          </button>
         </div>
       </div>
 
       <div className="admin-tab-content">
         {activeTab === 'courses' && <AdminCourseManagement user={user} />}
         {activeTab === 'users' && <AdminUserManagement user={user} />}
+        {activeTab === 'complaints' && <AdminComplaints />}
       </div>
     </div>
   );

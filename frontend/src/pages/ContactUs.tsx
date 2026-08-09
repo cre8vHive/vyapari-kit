@@ -1,4 +1,5 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { contactApi } from '../services/api';
 
 type ContactFields = {
   firstName: string;
@@ -81,7 +82,7 @@ const ContactUs: React.FC = () => {
     setStatus('idle');
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextErrors = validateContactForm(fields);
     if (Object.keys(nextErrors).length) {
@@ -90,10 +91,15 @@ const ContactUs: React.FC = () => {
       return;
     }
 
-    // API integration point: replace this success state with the contact endpoint when available.
-    setStatus('success');
-    setFields(initialFields);
-    setErrors({});
+    try {
+      await contactApi.submitComplaint(fields);
+      setStatus('success');
+      setFields(initialFields);
+      setErrors({});
+    } catch (error) {
+      console.error(error);
+      setStatus('error');
+    }
   };
 
   const scrollToForm = () => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });

@@ -249,6 +249,21 @@ export interface PdfAccessLogFilters {
   limit?: number;
 }
 
+export interface ComplaintPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+}
+
+export interface ComplaintData extends ComplaintPayload {
+  id: string;
+  isResolved: boolean;
+  createdAt: string;
+}
+
 export const authApi = {
   register: async (payload: { name: string; email: string; password: string }): Promise<{ message: string }> => {
     const response = await apiClient.post<{ message: string }>('/auth/register', payload);
@@ -380,6 +395,21 @@ export const adminApi = {
   },
   triggerPasswordReset: async (userId: string): Promise<{ message: string }> => {
     const response = await apiClient.post<{ message: string }>(`/admin/users/${userId}/trigger-reset`);
+    return response.data;
+  },
+  getComplaints: async (): Promise<ComplaintData[]> => {
+    const response = await apiClient.get<ComplaintData[]>('/admin/complaints');
+    return response.data;
+  },
+  toggleComplaintResolve: async (complaintId: string): Promise<{ ok: boolean, isResolved: boolean }> => {
+    const response = await apiClient.put<{ ok: boolean, isResolved: boolean }>(`/admin/complaints/${complaintId}/resolve`);
+    return response.data;
+  },
+};
+
+export const contactApi = {
+  submitComplaint: async (payload: ComplaintPayload): Promise<{ ok: boolean }> => {
+    const response = await apiClient.post<{ ok: boolean }>('/complaints', payload);
     return response.data;
   },
 };

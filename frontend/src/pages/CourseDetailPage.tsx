@@ -10,7 +10,7 @@ type CourseDetailViewModel = Record<string, any>;
 
 const DEFAULT_LANGUAGE = 'English';
 const DEFAULT_STUDENTS = 'Available now';
-const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80';
+const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NiZDVlMSI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg==';
 
 function formatCurrency(value: number | undefined) {
   if (value === undefined || Number.isNaN(value)) return '';
@@ -139,13 +139,13 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     skills,
     curriculum: course.curriculum?.length
       ? course.curriculum.map((section) => ({
-          title: section.sectionTitle,
-          lessons: section.lessons.map((lesson) => ({
-            title: lesson.title,
-            duration: lesson.duration || '',
-            preview: Boolean(lesson.preview),
-          })),
-        }))
+        title: section.sectionTitle,
+        lessons: section.lessons.map((lesson) => ({
+          title: lesson.title,
+          duration: lesson.duration || '',
+          preview: Boolean(lesson.preview),
+        })),
+      }))
       : toCurriculum(course, highlights, skills),
     requirements,
     audience,
@@ -160,7 +160,7 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     },
     reviews: course.reviews?.length ? course.reviews.map((review) => ({
       ...review,
-      avatar: review.avatar || DEFAULT_AVATAR,
+      avatar: review.avatar,
       title: review.title || 'Student review',
       date: review.date || formatUpdatedDate(course.updatedAt || course.createdAt),
     })) : [

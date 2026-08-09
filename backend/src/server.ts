@@ -15,6 +15,7 @@ import Page from './models/Page';
 import PageTemplate from './models/PageTemplate';
 import PdfAccessLog from './models/PdfAccessLog';
 import User from './models/User';
+import { Complaint } from './models/Complaint';
 import { Logger } from './services/logger.service';
 import { PasswordService } from './services/password.service';
 import { EmailService } from './services/email.service';
@@ -1158,6 +1159,72 @@ app.post('/api/v1/courses/:courseId/pdf/access-log', requireAuth, requireActiveS
 
   await logPdfAccess(req, authUser.sub, String(course._id), 'page-view', pageNumber);
   res.json({ ok: true });
+});
+
+app.post('/api/v1/complaints', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+  
+  try {
+    const { firstName, lastName, email, phone, subject, message } = req.body;
+    if (!firstName || !lastName || !email || !phone || !subject || !message) {
+      res.status(400).json({ message: 'All fields are required.' });
+      return;
+    }
+    
+    await Complaint.create({ firstName, lastName, email, phone, subject, message });
+    res.status(201).json({ ok: true });
+  } catch (err: any) {
+    res.status(400).json({ message: err.message || 'Failed to submit complaint.' });
+  }
+});
+
+app.get('/api/v1/admin/complaints', requireAuth, requireActiveSession, requireAdmin, async (_req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+  
+  try {
+    const complaints = await Complaint.find().sort({ createdAt: -1 }).lean();
+    res.json(complaints.map((c: any) => ({
+      id: String(c._id),
+      firstName: c.firstName,
+      lastName: c.lastName,
+      email: c.email,
+      phone: c.phone,
+      subject: c.subject,
+      message: c.message,
+      isResolved: c.isResolved,
+      createdAt: c.createdAt,
+    })));
+  } catch (err: any) {
+    res.status(400).json({ message: err.message || 'Failed to fetch complaints.' });
+  }
+});
+
+app.put('/api/v1/admin/complaints/:id/resolve', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+  
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+    if (!complaint) {
+      res.status(404).json({ message: 'Complaint not found.' });
+      return;
+    }
+    
+    complaint.isResolved = !complaint.isResolved;
+    await complaint.save();
+    
+    res.json({ ok: true, isResolved: complaint.isResolved });
+  } catch (err: any) {
+    res.status(400).json({ message: err.message || 'Failed to resolve complaint.' });
+  }
 });
 
 app.get('/api/v1/pages/:slug', async (req, res) => {

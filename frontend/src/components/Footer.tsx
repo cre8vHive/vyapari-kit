@@ -46,6 +46,14 @@ const Footer: React.FC = () => {
           {/* Column 4: Connect */}
           <div className="footer-col footer-connect" id="contact-us">
             <h3 className="footer-heading">Connect</h3>
+            <p className="footer-desc" style={{ marginBottom: '10px' }}>
+              <a href="tel:9008778718" style={{ color: 'inherit', textDecoration: 'none', fontWeight: 'bold' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px', marginRight: '6px', verticalAlign: 'text-bottom' }}>
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                +91 9008778718
+              </a>
+            </p>
             <div className="footer-socials">
               <a
                 href="https://www.facebook.com/vyapaarKit1"
@@ -74,9 +82,12 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="footer-bottom">
+        <div className="footer-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div className="footer-copyright">
             &copy; {currentYear} Vyapaar Kit. All rights reserved.
+          </div>
+          <div className="footer-credit" style={{ fontSize: '0.85em', opacity: 0.8 }}>
+            Designed and developed by Cre8v Studio™
           </div>
         </div>
       </div>
