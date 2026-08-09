@@ -62,10 +62,12 @@ img {
   align-items: center;
   width: 240px;
   height: 48px;
+  max-width: 100%;
+  flex-shrink: 0;
   overflow: hidden;
   background-repeat: no-repeat;
-  background-position: -61px -34px;
-  background-size: 360px auto;
+  background-position: center 40%;
+  background-size: 146% auto;
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -2013,7 +2015,36 @@ img {
 }
 
 .course-grid-section-embedded .course-list-container {
+  width: min(100%, 960px);
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;
+}
+
+.course-grid-section-embedded .course-card-wrapper {
   width: 100%;
+  max-width: 100%;
+}
+
+.course-grid-section-embedded .elementor-element-hotspot-container,
+.course-grid-section-embedded .elementor-element-hotspot-container .elementor-widget-container {
+  height: auto;
+  min-height: 0;
+  aspect-ratio: auto;
+  overflow: visible;
+}
+
+.course-grid-section-embedded .course-card-wrapper img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+}
+
+.course-grid-section-embedded .course-card-wrapper:hover img {
+  transform: none;
 }
 
 .course-hub-status,
