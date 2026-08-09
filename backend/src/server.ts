@@ -1116,7 +1116,15 @@ app.get('/api/v1/courses/:courseId/pdf/file', requireAuth, requireActiveSession,
     res.setHeader('X-Content-Type-Options', 'nosniff');
 
     // Stream the web stream to Express response
-    Readable.fromWeb(response.body as any).pipe(res);
+    const readable = Readable.fromWeb(response.body as any);
+    readable.on('error', (err) => {
+      console.warn('PDF stream interrupted:', err.message);
+      if (!res.writableEnded) res.end();
+    });
+    res.on('close', () => {
+      readable.destroy();
+    });
+    readable.pipe(res);
     return;
 
   } else if (pdf.data) {
