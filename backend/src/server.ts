@@ -1267,13 +1267,26 @@ app.get('/api/v1/categories', async (_req, res) => {
   res.json(fallbackCategories);
 });
 
+function normalizeCategoryQuery(value: string | undefined | null) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 app.get('/api/v1/courses', async (req, res) => {
-  const category = String(req.query.category || '').trim().toLowerCase().slice(0, 80);
+  const category = normalizeCategoryQuery(req.query.category as string | undefined);
   const search = String(req.query.search || '').trim().toLowerCase().slice(0, 120);
 
   if (isMongoConnected()) {
     const query: Record<string, any> = { isPublished: true };
-    if (category) query.categoryName = new RegExp(`^${escapeRegex(category)}$`, 'i');
+    if (category) {
+      const terms = category.split('-').map(escapeRegex).filter(Boolean);
+      const pattern = `^${terms.join('[\\s&\\-]*')}$`;
+      query.categoryName = new RegExp(pattern, 'i');
+    }
     if (search) query.title = new RegExp(escapeRegex(search), 'i');
 
     const courses = await Course.find(query).sort({ createdAt: -1 }).lean();
@@ -1282,9 +1295,9 @@ app.get('/api/v1/courses', async (req, res) => {
   }
 
   const filtered = fallbackCourses.filter((course) => {
-    const matchesCategory = !category || course.categoryName.toLowerCase() === category;
-    const matchesSearch = !search || course.title.toLowerCase().includes(search);
-    return matchesCategory && matchesSearch;
+    const categoryMatch = !category || normalizeCategoryQuery(course.categoryName) === category;
+    const searchMatch = !search || course.title.toLowerCase().includes(search);
+    return categoryMatch && searchMatch;
   });
 
   res.json(filtered);
