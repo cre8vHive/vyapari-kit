@@ -3288,6 +3288,59 @@ img {
 .about-details-grid h2 { margin-bottom: 15px; font-size: 22px; }
 .about-details-grid p { color: #64718a; line-height: 1.65; }
 .about-details-grid a { color: #0b7cff; font-weight: 750; }
+.about-social-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 0 18px;
+}
+.about-social-icons a {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  color: #0b7cff;
+  background: #eef6ff;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.about-social-icons a:hover,
+.about-social-icons a:focus-visible {
+  background: #d9edff;
+  transform: translateY(-1px);
+  color: #0759b8;
+}
+.about-social-icons .social-icon {
+  width: 22px;
+  height: 22px;
+}
+@media (max-width: 720px) {
+  .about-social-icons {
+    gap: 12px;
+  }
+  .about-social-icons a {
+    width: 40px;
+    height: 40px;
+  }
+  .about-social-icons .social-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+@media (max-width: 480px) {
+  .about-social-icons {
+    gap: 10px;
+  }
+  .about-social-icons a {
+    width: 36px;
+    height: 36px;
+  }
+  .about-social-icons .social-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
 .about-tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .about-tag-list span { padding: 8px 11px; border-radius: 999px; color: #0b3971; background: #fff; font-size: 13px; font-weight: 700; }
 .about-cta { padding: 90px 0; text-align: center; color: #fff; background: #0b7cff; }
@@ -3316,6 +3369,17 @@ img {
   .about-commitment { padding: 36px 24px; border-radius: 22px; }
   .about-details-section { padding-top: 0; }
   .about-cta { padding: 68px 0; }
+}
+
+.cta-button-wrapper { display: inline-flex; width: 100%; justify-content: flex-start; }
+.cta-button { min-width: 220px; max-width: 100%; width: auto; display: inline-flex; justify-content: center; align-items: center; padding: 0 26px; }
+@media (max-width: 980px) {
+  .cta-button-wrapper { justify-content: center; }
+  .cta-button { width: 100%; max-width: 360px; padding: 0 20px; }
+}
+@media (max-width: 640px) {
+  .cta-button-wrapper { justify-content: center; }
+  .cta-button { width: 100%; max-width: 100%; padding: 0 18px; }
 }
 
 /* Contact Us */

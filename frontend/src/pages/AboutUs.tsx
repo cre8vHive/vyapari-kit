@@ -78,8 +78,8 @@ const AboutUs: React.FC = () => {
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
   useEffect(() => {
-    document.title = 'About Us | Vyapaar Kit';
-    const description = 'Vyapaarkit provides execution-ready business plan PDFs designed for the Indian market, helping aspiring entrepreneurs move from idea to execution.';
+    document.title = 'About Us | Business Kit';
+    const description = 'Business Kit provides execution-ready business plan PDFs designed for the Indian market, helping aspiring entrepreneurs move from idea to execution.';
 
     const setMeta = (selector: string, attribute: 'name' | 'property', key: string, content: string) => {
       let meta = document.head.querySelector<HTMLMetaElement>(selector);
@@ -92,7 +92,7 @@ const AboutUs: React.FC = () => {
     };
 
     setMeta('meta[name="description"]', 'name', 'description', description);
-    setMeta('meta[property="og:title"]', 'property', 'og:title', 'About Us | Vyapaar Kit');
+    setMeta('meta[property="og:title"]', 'property', 'og:title', 'About Us | Business Kit');
     setMeta('meta[property="og:description"]', 'property', 'og:description', description);
     setMeta('meta[property="og:type"]', 'property', 'og:type', 'website');
   }, []);
@@ -107,9 +107,9 @@ const AboutUs: React.FC = () => {
             <span>About Us</span>
           </nav>
           <span className="about-eyebrow">India&apos;s Business Launch Weapon</span>
-          <h1>About Vyapaar Kit</h1>
+          <h1>About Business Kit</h1>
           <p>
-            Vyapaarkit provides execution-ready business plan PDFs that help aspiring entrepreneurs launch
+            Business Kit provides execution-ready business plan PDFs that help aspiring entrepreneurs launch
             businesses with confidence.
           </p>
           <a className="about-primary-button" href={`${basePath}/courses`}>Explore Business Kits</a>
@@ -130,7 +130,7 @@ const AboutUs: React.FC = () => {
               to move from idea to execution.
             </p>
             <p>
-              Whether you&apos;re starting your first business or exploring a new opportunity, Vyapaarkit gives you
+              Whether you&apos;re starting your first business or exploring a new opportunity, Business Kit gives you
               a clear roadmap without unnecessary complexity.
             </p>
           </div>
@@ -140,7 +140,7 @@ const AboutUs: React.FC = () => {
       <section className="about-section about-section-tint about-reveal">
         <div className="about-container">
           <span className="about-section-number">02</span>
-          <h2>Why Choose Vyapaarkit?</h2>
+          <h2>Why Choose Business Kit?</h2>
           <div className="about-card-grid about-benefit-grid">
             {benefits.map((benefit) => (
               <article className="about-card about-benefit-card" key={benefit}>
@@ -158,7 +158,7 @@ const AboutUs: React.FC = () => {
           <h2>What We Offer</h2>
           <div className="about-intro">
             <p>
-              Vyapaarkit is <strong>not an online course</strong>, <strong>not motivational content</strong>, and
+              Business Kit is <strong>not an online course</strong>, <strong>not motivational content</strong>, and
               <strong> not business theory</strong>.
             </p>
             <p>
@@ -182,9 +182,9 @@ const AboutUs: React.FC = () => {
       <section className="about-section about-section-dark about-reveal">
         <div className="about-container">
           <span className="about-section-number">04</span>
-          <h2>What&apos;s Inside Every Vyapaarkit</h2>
+          <h2>What&apos;s Inside Every Business Kit</h2>
           <p className="about-section-copy">
-            Each Vyapaarkit Business Plan is carefully structured to give you practical knowledge that you can apply immediately.
+            Each Business Kit is carefully structured to give you practical knowledge that you can apply immediately.
           </p>
           <div className="about-card-grid about-feature-grid">
             {kitFeatures.map((feature, index) => (
@@ -201,19 +201,19 @@ const AboutUs: React.FC = () => {
       <section className="about-section about-reveal">
         <div className="about-container">
           <span className="about-section-number">05</span>
-          <h2>Who Is Vyapaarkit For?</h2>
-          <p className="about-section-copy">Vyapaarkit is built for people who are ready to take action. Our business plans are ideal for:</p>
+          <h2>Who Is Business Kit For?</h2>
+          <p className="about-section-copy">Business Kit is built for people who are ready to take action. Our business plans are ideal for:</p>
           <div className="about-card-grid about-audience-grid">
             {audiences.map((audience) => <article className="about-card about-audience-card" key={audience}>{audience}</article>)}
           </div>
-          <p className="about-closing-line">If you value clarity, planning, and practical execution, Vyapaarkit is designed for you.</p>
+          <p className="about-closing-line">If you value clarity, planning, and practical execution, Business Kit is designed for you.</p>
         </div>
       </section>
 
       <section className="about-section about-section-tint about-reveal">
         <div className="about-container">
           <span className="about-section-number">06</span>
-          <h2>Why Entrepreneurs Choose Vyapaarkit</h2>
+          <h2>Why Entrepreneurs Choose Business Kit</h2>
           <p className="about-section-copy">Starting a business becomes much easier when you understand what to do before spending your money.</p>
           <div className="about-card-grid about-reason-grid">
             {entrepreneurReasons.map((reason) => (
@@ -227,7 +227,7 @@ const AboutUs: React.FC = () => {
         <div className="about-container about-commitment">
           <span className="about-section-number">07</span>
           <h2>Our Commitment</h2>
-          <p>At Vyapaarkit, we believe business education should be practical, transparent, and easy to understand.</p>
+          <p>At Business Kit, we believe business education should be practical, transparent, and easy to understand.</p>
           <p>
             Every business plan is created with the objective of helping aspiring entrepreneurs make informed
             decisions and start businesses with greater confidence.
@@ -248,9 +248,32 @@ const AboutUs: React.FC = () => {
           </article>
           <article>
             <h2>Connect With Us</h2>
-            <p>Follow Vyapaarkit for new business ideas, updates, and resources.</p>
-            <p>Facebook · Instagram</p>
-            <a href="mailto:contact@vyapaarkit.com">contact@vyapaarkit.com</a>
+            <p>Follow Business Kit for new business ideas, updates, and resources.</p>
+            <div className="about-social-icons">
+              <a
+                href="https://www.facebook.com/vyapaarKit1"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="social-icon">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                </svg>
+              </a>
+              <a
+                href="https://www.instagram.com/vyapaarkit"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="social-icon">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+              </a>
+            </div>
+            <a href="mailto:contact@businesskit.com">contact@businesskit.com</a>
           </article>
         </div>
       </section>
@@ -259,7 +282,7 @@ const AboutUs: React.FC = () => {
         <div className="about-container">
           <span>Start Building Today</span>
           <h2>Ready to Start Your Business Journey?</h2>
-          <p>Every successful business starts with a clear plan. Someone is launching a new business today using a Vyapaarkit blueprint. Now it&apos;s your turn.</p>
+          <p>Every successful business starts with a clear plan. Someone is launching a new business today using a Business Kit blueprint. Now it&apos;s your turn.</p>
           <a className="about-primary-button about-primary-button-light" href={`${basePath}/courses`}>Explore Business Kits</a>
         </div>
       </section>
