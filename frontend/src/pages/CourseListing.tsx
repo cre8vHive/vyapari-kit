@@ -26,7 +26,12 @@ const MOCK_CATEGORIES: CategoryItem[] = [
 ];
 
 function normalizeSlug(value: string | null | undefined) {
-  const normalized = String(value || '').trim().toLowerCase().replace(/\s+/g, '-');
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
   return normalized || ALL_CATEGORY;
 }
 
@@ -139,50 +144,60 @@ export const CourseListing: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchListingData = async () => {
+    const fetchCategories = async () => {
       try {
         setLoading(true);
-        const [catsData, coursesData] = await Promise.all([
-          cmsApi.getCategories(),
-          cmsApi.getCourses(),
-        ]);
+        const catsData = await cmsApi.getCategories();
 
-        const uniqueCatNames = Array.from(new Set(coursesData.map(c => c.categoryName).filter(Boolean))) as string[];
-        const dynamicCats = uniqueCatNames.map((name, i) => {
-          const existing = catsData.find(c => c.name.toLowerCase() === name.toLowerCase());
-          return {
-            id: existing ? existing.id : `dyn-${i}`,
-            name,
-            slug: normalizeSlug(name),
-            iconUrl: existing ? existing.iconUrl : undefined
-          };
-        });
-
-        setCategories(withAllCategory(dynamicCats.length > 0 ? dynamicCats : catsData));
-        setAvailableCourses(coursesData);
-        
-        // Always try to fetch my courses so we can filter them out of available courses
-        try {
-          const myCoursesData = await courseApi.getMyCourses();
-          setMyCourses(myCoursesData);
-        } catch {
-          setMyCourses([]);
-        }
-        setMyCoursesLoaded(true);
-        
+        setCategories(withAllCategory(catsData));
       } catch (err) {
-        console.warn('Unable to load courses from the API.');
+        console.warn('Unable to load categories from the API.');
         setCategories(MOCK_CATEGORIES);
-        setAvailableCourses([]);
-        setMyCourses([]);
-        setMyCoursesLoaded(true);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchListingData();
+    const fetchMyCourses = async () => {
+      try {
+        const myCoursesData = await courseApi.getMyCourses();
+        setMyCourses(myCoursesData);
+      } catch {
+        setMyCourses([]);
+      } finally {
+        setMyCoursesLoaded(true);
+      }
+    };
+
+    fetchCategories();
+    fetchMyCourses();
   }, []);
+
+  useEffect(() => {
+    const fetchFilteredCourses = async () => {
+      try {
+        setLoading(true);
+
+        const params: Record<string, string> = {};
+        if (listingState.category && listingState.category !== ALL_CATEGORY) {
+          params.category = listingState.category;
+        }
+        if (listingState.searchQuery) {
+          params.search = listingState.searchQuery;
+        }
+
+        const coursesData = await cmsApi.getCourses(params);
+        setAvailableCourses(coursesData);
+      } catch (err) {
+        console.warn('Unable to load courses from the API.');
+        setAvailableCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFilteredCourses();
+  }, [listingState.category, listingState.searchQuery]);
 
   return (
     <div className="page-renderer course-listing-template">
@@ -354,11 +369,11 @@ export const CourseListing: React.FC = () => {
               />
             ) : (
               <div className="course-empty-state">
-                <h3>No courses found</h3>
+                <h3>No courses available</h3>
                 <p>
                   {listingState.tab === 'my'
                     ? 'Your enrolled courses will appear here once they match this category.'
-                    : 'No published courses match this category yet.'}
+                    : 'No courses available for this category yet.'}
                 </p>
                 {listingState.tab === 'my' && (
                   <button

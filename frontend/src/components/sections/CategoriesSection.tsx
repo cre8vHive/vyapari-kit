@@ -20,8 +20,17 @@ export interface CategoriesSectionProps {
 
 const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=96&q=80';
 
+function normalizeSlug(value: string | undefined | null) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function toCategorySlug(value: string | undefined | null) {
-  return String(value || '').trim().toLowerCase().replace(/\s+/g, '-');
+  return normalizeSlug(value);
 }
 
 function toCategoryHref(slug: string) {
