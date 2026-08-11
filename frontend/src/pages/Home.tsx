@@ -137,6 +137,22 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
         setLoading(true);
         // Attempt to fetch page content from MongoDB API
         const data = await cmsApi.getPage('home');
+        
+        if (data && data.sections) {
+          data.sections = data.sections.map((section: any) => {
+            if (section.type === 'categories') {
+              return {
+                ...section,
+                config: {
+                  ...section.config,
+                  categories: SHOP_CATEGORY_DATA
+                }
+              };
+            }
+            return section;
+          });
+        }
+
         setPageData(data);
       } catch (err: any) {
         console.warn("API server unavailable, loading local mockup data for development.", err);
