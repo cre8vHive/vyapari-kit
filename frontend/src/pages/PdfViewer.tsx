@@ -101,7 +101,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ courseId }) => {
   const [shieldReason, setShieldReason] = useState('');
   const loggedPagesRef = useRef<Set<number>>(new Set());
   const shieldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  console.log("Waiting");
   const watermarkText = useMemo(() => {
     if (!manifest) return '';
     const { name, email, userId, issuedAt, courseName } = manifest.watermark;
@@ -235,7 +235,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ courseId }) => {
     if (!loading) return;
     // Set a random initial quote
     setQuoteIndex(Math.floor(Math.random() * PDF_LOADING_QUOTES.length));
-    
+
     const interval = setInterval(() => {
       setQuoteIndex((prev) => (prev + 1) % PDF_LOADING_QUOTES.length);
     }, 3500);
@@ -250,7 +250,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ courseId }) => {
             <div style={{ position: 'absolute', width: '100%', height: '100%', border: '4px solid #e5e7eb', borderRadius: '50%' }}></div>
             <div style={{ position: 'absolute', width: '100%', height: '100%', border: '4px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
           </div>
-          
+
           <div style={{ textAlign: 'center', maxWidth: '400px' }}>
             <h3 style={{ fontSize: '1.25rem', color: '#111827', margin: '0 0 0.5rem 0', fontWeight: 600 }}>Opening protected material...</h3>
             <p style={{ color: '#6b7280', fontSize: '1rem', fontStyle: 'italic', transition: 'opacity 0.5s ease-in-out' }}>
