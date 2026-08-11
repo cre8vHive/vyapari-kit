@@ -7,6 +7,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import CourseDetailPage from './pages/CourseDetailPage';
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
+import ImageAssets from './pages/ImageAssets';
 import Footer from './components/Footer';
 import { AuthUser, authApi } from './services/api';
 import vyapaarKitLogo from './assets/vyapaar-kit-logo.jpg';
@@ -174,7 +175,8 @@ const App: React.FC = () => {
         {!path.startsWith('/admin') && !courseViewerMatch && !courseDetailMatch && path.startsWith('/courses') && <CourseListing />}
         {path === '/about-us' && <AboutUs />}
         {path === '/contact-us' && <ContactUs />}
-        {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password') && !path.startsWith('/verify-email') && !path.startsWith('/courses') && path !== '/about-us' && path !== '/contact-us' && <Home user={user} />}
+        {path === '/testimonial-images' && <ImageAssets />}
+        {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password') && !path.startsWith('/verify-email') && !path.startsWith('/courses') && path !== '/about-us' && path !== '/contact-us' && path !== '/testimonial-images' && <Home user={user} />}
       </main>
 
       <Footer />
