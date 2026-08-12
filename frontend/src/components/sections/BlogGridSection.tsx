@@ -53,7 +53,7 @@ const MOCK_BLOGS: BlogItem[] = [
 ];
 
 export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
-  sectionTitle = "Upskill Blog",
+  sectionTitle = "VyapaarKit Blog",
   blogs = MOCK_BLOGS,
   postsPerPage = 3,
   showAuthor = true,
@@ -74,24 +74,24 @@ export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
           </div>
         )}
 
-        <div 
-          className="blog-grid-container elementor-posts-container elementor-posts elementor-posts--skin-classic elementor-grid" 
-          style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-            gap: '30px', 
-            width: '100%' 
+        <div
+          className="blog-grid-container elementor-posts-container elementor-posts elementor-posts--skin-classic elementor-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '30px',
+            width: '100%'
           }}
         >
           {visibleBlogs.map((blog) => (
-            <article 
-              key={blog.id} 
-              className="elementor-post elementor-grid-item" 
-              style={{ 
-                background: '#ffffff', 
-                borderRadius: '12px', 
-                overflow: 'hidden', 
-                display: 'flex', 
+            <article
+              key={blog.id}
+              className="elementor-post elementor-grid-item"
+              style={{
+                background: '#ffffff',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                display: 'flex',
                 flexDirection: 'column',
                 border: '1px solid #dbe7f5',
                 boxShadow: '0 18px 38px rgba(15, 52, 92, 0.08)'
@@ -101,10 +101,10 @@ export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
               {blog.imageUrl && (
                 <div className="blog-post-thumbnail" style={{ height: '200px', overflow: 'hidden' }}>
                   <a href={`/blog/${blog.slug}`}>
-                    <img 
-                      src={blog.imageUrl} 
-                      alt={blog.title} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }} 
+                    <img
+                      src={blog.imageUrl}
+                      alt={blog.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
                       className="blog-img"
                     />
                   </a>
@@ -113,7 +113,7 @@ export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
 
               {/* Blog Details content */}
               <div className="elementor-post__text" style={{ padding: '24px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                
+
                 {/* Meta details */}
                 <div className="elementor-post__meta-data" style={{ display: 'flex', gap: '15px', fontSize: '13px', opacity: 0.75, marginBottom: '12px', color: '#4b5563' }}>
                   {showAuthor && (
@@ -143,9 +143,9 @@ export const BlogGridSection: React.FC<BlogGridSectionProps> = ({
                 </p>
 
                 {/* Read More */}
-                <a 
-                  className="elementor-post__read-more" 
-                  href={`/blog/${blog.slug}`} 
+                <a
+                  className="elementor-post__read-more"
+                  href={`/blog/${blog.slug}`}
                   style={{ color: '#0b7cff', textDecoration: 'none', fontWeight: '600', fontSize: '14px', marginTop: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
                   Read More »

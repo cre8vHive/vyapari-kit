@@ -95,14 +95,14 @@ export const CourseListing: React.FC = () => {
   const [myCoursesLoaded, setMyCoursesLoaded] = useState(false);
 
   const activeCourses = listingState.tab === 'my' ? myCourses : availableCourses;
-    
+
   const filteredCourses = useMemo(
     () => {
       let result = activeCourses.filter((course) => matchesCategory(course, listingState.category));
       if (listingState.searchQuery) {
         const query = listingState.searchQuery.toLowerCase();
-        result = result.filter(course => 
-          course.title.toLowerCase().includes(query) || 
+        result = result.filter(course =>
+          course.title.toLowerCase().includes(query) ||
           (course.instructorName && course.instructorName.toLowerCase().includes(query)) ||
           (course.categoryName && course.categoryName.toLowerCase().includes(query))
         );
@@ -128,7 +128,7 @@ export const CourseListing: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    document.title = 'Course - Upskill';
+    document.title = 'Course - VyapaarKit';
     const initialState = readCourseListingState();
     listingStateRef.current = initialState;
     writeCourseListingState(initialState, true);
@@ -237,15 +237,15 @@ export const CourseListing: React.FC = () => {
 
           <div style={{ padding: '0 2rem', marginTop: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: '250px' }}>
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="20" 
-                height="20" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
                 strokeLinejoin="round"
                 style={{ position: 'absolute', left: '16px', color: '#6b7280' }}
               >
@@ -281,7 +281,7 @@ export const CourseListing: React.FC = () => {
                 }}
               />
             </div>
-            
+
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Category:</span>
@@ -316,34 +316,34 @@ export const CourseListing: React.FC = () => {
 
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Sort by:</span>
-              <select
-                value={listingState.sortBy}
-                onChange={(e) => updateListingState({ sortBy: e.target.value })}
-                style={{
-                  padding: '1rem 2.5rem 1rem 1rem',
-                  borderRadius: '12px',
-                  border: '2px solid #e5e7eb',
-                  backgroundColor: '#fff',
-                  color: '#374151',
-                  fontSize: '1.05rem',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  appearance: 'none',
-                  backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 1rem center',
-                  backgroundSize: '1em',
-                }}
-              >
-                <option value="newest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-              </select>
+                <select
+                  value={listingState.sortBy}
+                  onChange={(e) => updateListingState({ sortBy: e.target.value })}
+                  style={{
+                    padding: '1rem 2.5rem 1rem 1rem',
+                    borderRadius: '12px',
+                    border: '2px solid #e5e7eb',
+                    backgroundColor: '#fff',
+                    color: '#374151',
+                    fontSize: '1.05rem',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    appearance: 'none',
+                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 1rem center',
+                    backgroundSize: '1em',
+                  }}
+                >
+                  <option value="newest">Newest</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
 
           <div className="course-hub-content" role="tabpanel" aria-label={activeTabLabel}>
             <div className="course-hub-heading">

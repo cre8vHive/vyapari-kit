@@ -6,11 +6,11 @@ import { TESTIMONIAL_AVATAR_ONE, TESTIMONIAL_AVATAR_TWO, TESTIMONIAL_AVATAR_THRE
 
 // Local Mock Data Fallbacks for Development
 const MOCK_HOME_PAYLOAD: PageResponse = {
-  title: "Upskill - Online Course",
+  title: "VyapaarKit - Online Course",
   slug: "home",
   seo: {
-    metaTitle: "Upskill - Online Courses, Bootcamp & Lessons",
-    metaDescription: "Upskill is a leading educational platform providing courses in Business, Tech, Language, and Marketing.",
+    metaTitle: "VyapaarKit - Online Courses, Bootcamp & Lessons",
+    metaDescription: "VyapaarKit is a leading educational platform providing courses in Business, Tech, Language, and Marketing.",
     noIndex: false,
   },
   sections: [
@@ -18,7 +18,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
       type: "hero",
       order: 1,
       config: {
-        headline: "Faster Way For Your Grow & Upskill",
+        headline: "Faster Way For Your Grow & VyapaarKit",
         subheading: "Gain access to thousands of educational courses taught by expert instructors.",
         primaryButton: { text: "Subscribe", link: "/register" },
         secondaryButton: { text: "Learn Now", link: "/courses" }
@@ -114,7 +114,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
       type: "cta",
       order: 5,
       config: {
-        title: "Launch Your Career Journey through upskill.",
+        title: "Launch Your Career Journey through VyapaarKit.",
         buttonText: "Register Now",
         buttonLink: "/register",
         illustrationUrl: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80"
@@ -137,15 +137,16 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
         setLoading(true);
         // Attempt to fetch page content from MongoDB API
         const data = await cmsApi.getPage('home');
-        
+
         if (data && data.sections) {
           data.sections = data.sections.map((section: any) => {
-            if (section.type === 'categories') {
+            const mockSection = MOCK_HOME_PAYLOAD.sections.find(s => s.type === section.type);
+            if (mockSection) {
               return {
                 ...section,
                 config: {
                   ...section.config,
-                  categories: SHOP_CATEGORY_DATA
+                  ...mockSection.config
                 }
               };
             }
@@ -187,7 +188,7 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
   if (loading) {
     return (
       <div className="loading-placeholder" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#ffffff', color: '#0b1220' }}>
-        <div className="spinner" style={{ fontSize: '24px' }}>Loading Upskill...</div>
+        <div className="spinner" style={{ fontSize: '24px' }}>Loading Kits...</div>
       </div>
     );
   }

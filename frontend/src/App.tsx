@@ -17,7 +17,7 @@ const HEARTBEAT_INTERVAL_MS = 30_000; // 30 seconds
 const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [user, setUser] = useState<AuthUser | null>(() => {
-    const storedUser = localStorage.getItem('upskill_auth_user');
+    const storedUser = localStorage.getItem('VyapaarKit_auth_user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -32,18 +32,18 @@ const App: React.FC = () => {
 
   // ── Validate token on mount ──
   useEffect(() => {
-    const token = localStorage.getItem('upskill_auth_token');
+    const token = localStorage.getItem('VyapaarKit_auth_token');
     if (!token) return;
 
     authApi.me()
       .then(({ user }) => {
         setUser(user);
-        localStorage.setItem('upskill_auth_user', JSON.stringify(user));
+        localStorage.setItem('VyapaarKit_auth_user', JSON.stringify(user));
       })
       .catch(() => {
         setUser(null);
-        localStorage.removeItem('upskill_auth_user');
-        localStorage.removeItem('upskill_auth_token');
+        localStorage.removeItem('VyapaarKit_auth_user');
+        localStorage.removeItem('VyapaarKit_auth_token');
       });
   }, []);
 
@@ -101,8 +101,8 @@ const App: React.FC = () => {
   const handleAuth = (nextUser: AuthUser, token: string) => {
     setUser(nextUser);
     setSessionExpired(false);
-    localStorage.setItem('upskill_auth_user', JSON.stringify(nextUser));
-    localStorage.setItem('upskill_auth_token', token);
+    localStorage.setItem('VyapaarKit_auth_user', JSON.stringify(nextUser));
+    localStorage.setItem('VyapaarKit_auth_token', token);
   };
 
   const handleLogout = useCallback(async () => {
@@ -113,8 +113,8 @@ const App: React.FC = () => {
       // Even if the backend call fails, clear local state
     }
     setUser(null);
-    localStorage.removeItem('upskill_auth_user');
-    localStorage.removeItem('upskill_auth_token');
+    localStorage.removeItem('VyapaarKit_auth_user');
+    localStorage.removeItem('VyapaarKit_auth_token');
   }, []);
 
   const handleSessionExpiredDismiss = () => {
