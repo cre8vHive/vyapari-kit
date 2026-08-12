@@ -273,7 +273,7 @@ const AboutUs: React.FC = () => {
                 </svg>
               </a>
             </div>
-            <a href="mailto:contact@businesskit.com">contact@businesskit.com</a>
+            <a href="mailto:contact@businesskit.com"></a>
           </article>
         </div>
       </section>
