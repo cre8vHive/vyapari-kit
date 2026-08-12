@@ -204,16 +204,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
           </div>
           <div className="auth-copy-content">
             <span className="auth-kicker">
-              <span className="auth-kicker-dot" /> Upskill Account
+              <span className="auth-kicker-dot" /> VyapaarKit Account
             </span>
             <h1>{isVerify ? 'Verifying\nemail' : isRegister ? 'Start learning\ntoday' : isForgot ? 'Reset your\npassword' : isReset ? 'Set new\npassword' : 'Welcome\nback'}</h1>
             <p>
               {isVerify
                 ? 'Please wait while we confirm your email address.'
                 : isRegister
-                ? 'Create your student account and unlock thousands of expert-led courses, bootcamps, and learning paths.'
-                : isForgot || isReset ? 'Follow the steps to regain access to your account and continue learning.'
-                : 'Sign in to continue your learning journey. Your progress, certificates, and bookmarks are waiting.'}
+                  ? 'Create your student account and unlock thousands of expert-led courses, bootcamps, and learning paths.'
+                  : isForgot || isReset ? 'Follow the steps to regain access to your account and continue learning.'
+                    : 'Sign in to continue your learning journey. Your progress, certificates, and bookmarks are waiting.'}
             </p>
             <div className="auth-stats" aria-hidden="true">
               <div className="auth-stat">
@@ -249,12 +249,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
                 {isVerify
                   ? 'Please wait...'
                   : isRegister
-                  ? 'Fill in your details to get started'
-                  : isForgot
-                  ? 'Enter your email to receive a reset link'
-                  : isReset
-                  ? 'Enter your new password below'
-                  : 'Enter your credentials to continue'}
+                    ? 'Fill in your details to get started'
+                    : isForgot
+                      ? 'Enter your email to receive a reset link'
+                      : isReset
+                        ? 'Enter your new password below'
+                        : 'Enter your credentials to continue'}
               </p>
 
               {/* Name (register only) */}
@@ -294,29 +294,29 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
               {!isForgot && !isVerify && (
                 <div className="auth-field">
                   <label htmlFor="auth-password">{isReset ? 'New Password' : 'Password'}</label>
-                <div className="auth-password-wrapper">
-                  <input
-                    id="auth-password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder={isRegister ? 'Min 8 characters' : '••••••••'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    minLength={8}
-                    autoComplete={isRegister ? 'new-password' : 'current-password'}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="auth-password-toggle"
-                    id="auth-password-toggle"
-                    onClick={() => setShowPassword((v) => !v)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                  </button>
+                  <div className="auth-password-wrapper">
+                    <input
+                      id="auth-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder={isRegister ? 'Min 8 characters' : '••••••••'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      minLength={8}
+                      autoComplete={isRegister ? 'new-password' : 'current-password'}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="auth-password-toggle"
+                      id="auth-password-toggle"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                    </button>
+                  </div>
                 </div>
-              </div>
               )}
 
               {/* Error */}
@@ -387,12 +387,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
 
               {/* Switch mode link */}
               <p className="auth-switch">
-                {isRegister ? 'Already have an account?' : isForgot || isReset ? 'Remember your password?' : 'New to Upskill?'}{' '}
+                {isRegister ? 'Already have an account?' : isForgot || isReset ? 'Remember your password?' : 'New to VyapaarKit?'}{' '}
                 <a href={isRegister || isForgot || isReset ? '/login' : '/register'}>
                   {isRegister || isForgot || isReset ? 'Sign in' : 'Create an account'}
                 </a>
               </p>
-              
+
               {/* Forgot password link */}
               {!isRegister && !isForgot && !isReset && (
                 <p className="auth-switch" style={{ marginTop: '0.5rem' }}>

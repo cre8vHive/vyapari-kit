@@ -84,11 +84,11 @@ export const courses = [
 ];
 
 export const homePage = {
-  title: 'Upskill - Online Course',
+  title: 'VyapaarKit - Online Course',
   slug: 'home',
   seo: {
-    metaTitle: 'Upskill - Online Courses, Bootcamp & Lessons',
-    metaDescription: 'Upskill is a learning platform providing courses in business, tech, language, and marketing.',
+    metaTitle: 'VyapaarKit - Online Courses, Bootcamp & Lessons',
+    metaDescription: 'VyapaarKit is a learning platform providing courses in business, tech, language, and marketing.',
     noIndex: false
   },
   sections: [
@@ -121,7 +121,7 @@ export const homePage = {
       type: 'cta',
       order: 5,
       config: {
-        title: 'Launch Your Career Journey through Upskill.',
+        title: 'Launch Your Career Journey through VyapaarKit.',
         buttonText: 'Register Now',
         buttonLink: '/register'
       }

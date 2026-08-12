@@ -103,6 +103,9 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  
+  const [bulkPrice, setBulkPrice] = useState('');
+  const [bulkOldPrice, setBulkOldPrice] = useState('');
 
   const selectedCourse = useMemo(
     () => courses.find((course) => course.id === selectedCourseId) || null,
@@ -271,6 +274,31 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       setMessage('Course deleted.');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Unable to delete course.');
+    }
+  };
+
+  const handleBulkUpdatePrice = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!window.confirm('Are you sure you want to update the price for ALL courses?')) return;
+    
+    setSaving(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const response = await adminApi.bulkUpdatePrice({
+        price: Number(bulkPrice),
+        oldPrice: bulkOldPrice === '' ? '' : Number(bulkOldPrice)
+      });
+      const courseData = await adminApi.getCourses();
+      setCourses(courseData);
+      setMessage(response.message || `Prices updated for ${response.modifiedCount} courses.`);
+      setBulkPrice('');
+      setBulkOldPrice('');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Unable to update bulk prices.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -568,6 +596,23 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
         </form>
 
         <aside className="admin-side-tools">
+          <div className="admin-tool-panel" style={{ marginBottom: '20px' }}>
+            <h2>Bulk Price Update</h2>
+            <form onSubmit={handleBulkUpdatePrice} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <label>
+                New Price
+                <input type="number" step="0.01" value={bulkPrice} onChange={(e) => setBulkPrice(e.target.value)} required />
+              </label>
+              <label>
+                New Old Price (Optional)
+                <input type="number" step="0.01" value={bulkOldPrice} onChange={(e) => setBulkOldPrice(e.target.value)} />
+              </label>
+              <button className="admin-primary-btn" type="submit" disabled={saving} style={{ marginTop: '10px' }}>
+                {saving ? 'Updating...' : 'Update All Courses'}
+              </button>
+            </form>
+          </div>
+
           <form className="admin-tool-panel" onSubmit={handleEnrollUser}>
             <h2>Enroll User</h2>
             <p>{selectedCourse ? selectedCourse.title : 'Select a course first.'}</p>

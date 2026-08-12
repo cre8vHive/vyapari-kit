@@ -724,6 +724,35 @@ app.post('/api/v1/admin/courses', requireAuth, requireActiveSession, requireAdmi
     res.status(400).json({ message: error.message || 'Unable to create course' });
   }
 });
+app.put('/api/v1/admin/courses/bulk-price', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  try {
+    const { price, oldPrice } = req.body;
+    
+    if (price === undefined || price === null || price === '') {
+      res.status(400).json({ message: 'Price is required' });
+      return;
+    }
+
+    const numPrice = Number(price);
+    
+    const updateData: any = { $set: { price: numPrice } };
+    if (oldPrice !== undefined && oldPrice !== '') {
+      updateData.$set.oldPrice = Number(oldPrice);
+    } else {
+      updateData.$unset = { oldPrice: "" };
+    }
+    
+    const result = await Course.updateMany({}, updateData);
+    res.status(200).json({ message: 'Bulk price update successful', modifiedCount: result.modifiedCount });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message || 'Unable to update bulk prices' });
+  }
+});
 
 app.put('/api/v1/admin/courses/:courseId', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
   if (!isMongoConnected()) {

@@ -6,11 +6,11 @@ import { TESTIMONIAL_AVATAR_ONE, TESTIMONIAL_AVATAR_TWO, TESTIMONIAL_AVATAR_THRE
 
 // Local Mock Data Fallbacks for Development
 const MOCK_HOME_PAYLOAD: PageResponse = {
-  title: "Upskill - Online Course",
+  title: "VyapaarKit - Online Course",
   slug: "home",
   seo: {
-    metaTitle: "Upskill - Online Courses, Bootcamp & Lessons",
-    metaDescription: "Upskill is a leading educational platform providing courses in Business, Tech, Language, and Marketing.",
+    metaTitle: "VyapaarKit - Online Courses, Bootcamp & Lessons",
+    metaDescription: "VyapaarKit is a leading educational platform providing courses in Business, Tech, Language, and Marketing.",
     noIndex: false,
   },
   sections: [
@@ -39,40 +39,40 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
         sectionTitle: "Popular classes",
         courses: [
           {
-            id: "1",
-            slug: "photography-masterclass-guide",
-            title: "Photography Masterclass: A Complete Guide to Photography",
-            instructorName: "Onecontributor",
-            categoryName: "Photography",
-            difficulty: "Beginner",
+            id: '4',
+            slug: 'digital-marketing-course',
+            title: 'The Complete Digital Marketing Course',
+            instructorName: 'Onecontributor',
+            categoryName: 'Marketing',
+            difficulty: 'Beginner',
+            price: 18.99,
+            oldPrice: 20.99,
+            rating: 4.6,
+            imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80'
+          },
+          {
+            id: '5',
+            slug: 'business-startup-guide',
+            title: 'The Business Startup Guide to Become an Entrepreneur',
+            instructorName: 'Onecontributor',
+            categoryName: 'Business',
+            difficulty: 'Beginner',
             price: 18.99,
             oldPrice: 30.99,
             rating: 4.8,
-            imageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80"
+            imageUrl: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80'
           },
           {
-            id: "2",
-            slug: "wordpress-developer-course",
-            title: "Complete WordPress Developer Course 2024",
-            instructorName: "Onecontributor",
-            categoryName: "Development",
-            difficulty: "Beginner",
+            id: '6',
+            slug: 'german-language-course',
+            title: 'Best Way to Learn German Language: Full Beginner',
+            instructorName: 'Onecontributor',
+            categoryName: 'Language',
+            difficulty: 'Beginner',
             price: 18.99,
             oldPrice: 20.99,
-            rating: 4.8,
-            imageUrl: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80"
-          },
-          {
-            id: "3",
-            slug: "personal-finance-course",
-            title: "The Complete Personal Finance Course",
-            instructorName: "Onecontributor",
-            categoryName: "Finance",
-            difficulty: "Beginner",
-            price: 17.99,
-            oldPrice: 40.99,
-            rating: 4.8,
-            imageUrl: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=80"
+            rating: 4.9,
+            imageUrl: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80'
           }
         ]
       }
@@ -135,8 +135,40 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
     const fetchPage = async () => {
       try {
         setLoading(true);
-        // Attempt to fetch page content from MongoDB API
-        const data = await cmsApi.getPage('home');
+        // Attempt to fetch page content and courses from MongoDB API
+        const [data, fetchedCourses] = await Promise.all([
+          cmsApi.getPage('home'),
+          cmsApi.getCourses()
+        ]);
+
+        if (data && data.sections) {
+          data.sections = data.sections.map((section: any) => {
+            const mockSection = MOCK_HOME_PAYLOAD.sections.find(s => s.type === section.type);
+            
+            if (section.type === 'course-grid') {
+              return {
+                ...section,
+                config: {
+                  ...section.config,
+                  ...(mockSection ? mockSection.config : {}),
+                  courses: fetchedCourses.slice(0, 3) // Inject real courses from DB
+                }
+              };
+            }
+
+            if (mockSection) {
+              return {
+                ...section,
+                config: {
+                  ...section.config,
+                  ...mockSection.config
+                }
+              };
+            }
+            return section;
+          });
+        }
+
         setPageData(data);
       } catch (err: any) {
         console.warn("API server unavailable, loading local mockup data for development.", err);
@@ -171,9 +203,7 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
   if (loading) {
     return (
       <div className="loading-placeholder" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#ffffff', color: '#0b1220' }}>
-        <div className="spinner" style={{ fontSize: '24px' }}>Loading VyapaarKit...</div>
-      </div>
-    );
+          <div className="spinner" style={{ fontSize: '24px' }}>Loading VyapaarKit...</div>
   }
 
   if (error || !pageData) {

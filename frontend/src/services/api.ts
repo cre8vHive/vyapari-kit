@@ -21,7 +21,7 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('upskill_auth_token');
+  const token = localStorage.getItem('VyapaarKit_auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -36,8 +36,8 @@ apiClient.interceptors.response.use(
       error.response?.status === 403 &&
       error.response?.data?.code === 'SESSION_EXPIRED'
     ) {
-      localStorage.removeItem('upskill_auth_user');
-      localStorage.removeItem('upskill_auth_token');
+      localStorage.removeItem('VyapaarKit_auth_user');
+      localStorage.removeItem('VyapaarKit_auth_token');
       window.dispatchEvent(new CustomEvent('session-expired'));
     }
     return Promise.reject(error);
@@ -355,6 +355,10 @@ export const adminApi = {
     const response = await apiClient.put<{ course: AdminCourse }>(`/admin/courses/${courseId}`, payload);
     return response.data;
   },
+  bulkUpdatePrice: async (payload: { price: number; oldPrice?: number | '' }): Promise<{ message: string; modifiedCount: number }> => {
+    const response = await apiClient.put<{ message: string; modifiedCount: number }>('/admin/courses/bulk-price', payload);
+    return response.data;
+  },
   deleteCourse: async (courseId: string): Promise<void> => {
     await apiClient.delete(`/admin/courses/${courseId}`);
   },
@@ -415,7 +419,7 @@ export const contactApi = {
 };
 
 export const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('upskill_auth_token');
+  const token = localStorage.getItem('VyapaarKit_auth_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
