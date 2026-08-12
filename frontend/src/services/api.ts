@@ -355,6 +355,10 @@ export const adminApi = {
     const response = await apiClient.put<{ course: AdminCourse }>(`/admin/courses/${courseId}`, payload);
     return response.data;
   },
+  bulkUpdatePrice: async (payload: { price: number; oldPrice?: number | '' }): Promise<{ message: string; modifiedCount: number }> => {
+    const response = await apiClient.put<{ message: string; modifiedCount: number }>('/admin/courses/bulk-price', payload);
+    return response.data;
+  },
   deleteCourse: async (courseId: string): Promise<void> => {
     await apiClient.delete(`/admin/courses/${courseId}`);
   },
