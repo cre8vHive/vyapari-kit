@@ -3604,6 +3604,18 @@ img {
     width: 100%;
   }
 
+  .elementor-element-5a24cb2 .elementor-button-wrapper,
+  .elementor-element-5a24cb2 .hero-primary-button {
+    width: auto !important;
+  }
+
+  .elementor-element-5a24cb2 .hero-primary-button {
+    min-width: 110px;
+    min-height: 36px;
+    padding: 10px 16px;
+    font-size: 0.92rem;
+  }
+
   .hero-mobile-image {
     display: block;
     width: 100%;
