@@ -203,7 +203,9 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
   if (loading) {
     return (
       <div className="loading-placeholder" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#ffffff', color: '#0b1220' }}>
-          <div className="spinner" style={{ fontSize: '24px' }}>Loading VyapaarKit...</div>
+        <div className="spinner" style={{ fontSize: '24px' }}>Loading VyapaarKit...</div>
+      </div>
+    );
   }
 
   if (error || !pageData) {
