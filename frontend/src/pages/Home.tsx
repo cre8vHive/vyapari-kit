@@ -85,7 +85,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
         testimonials: [
           {
             id: "1",
-            name: "Sophia Morgan",
+            name: "Arjun Reddy",
             role: "Customers",
             reviewText: "Incredible experience with VyapaarKit. Expert-led courses equipped me with vital skills. Highly recommended investment.",
             avatarUrl: TESTIMONIAL_AVATAR_ONE,
@@ -93,7 +93,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
           },
           {
             id: "2",
-            name: "Benjamin Reed",
+            name: "Manohar",
             role: "Customers",
             reviewText: "VyapaarKit's training exceeded expectations. Exceptional instructors, real-world focus. A pivotal step toward career advancement.",
             avatarUrl: TESTIMONIAL_AVATAR_TWO,
@@ -101,7 +101,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
           },
           {
             id: "3",
-            name: "Olivia Carter",
+            name: "Anikitha Kapoor",
             role: "Customers",
             reviewText: "Thrilled with VyapaarKit's program. Invaluable knowledge, seamless delivery. Elevate your skills and future prospects confidently.",
             avatarUrl: TESTIMONIAL_AVATAR_THREE,
@@ -203,7 +203,7 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
   if (loading) {
     return (
       <div className="loading-placeholder" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#ffffff', color: '#0b1220' }}>
-        <div className="spinner" style={{ fontSize: '24px' }}>Loading Kits...</div>
+        <div className="spinner" style={{ fontSize: '24px' }}>Loading VyapaarKit...</div>
       </div>
     );
   }

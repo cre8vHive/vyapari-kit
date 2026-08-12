@@ -79,7 +79,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     <div className="elementor-widget-container">
                       <div className="elementor-button-wrapper">
                         <a 
-                          className="elementor-button elementor-button-link elementor-size-sm" 
+                          className="elementor-button elementor-button-link elementor-size-sm hero-primary-button" 
                           href={primaryButton.link}
                         >
                           <span className="elementor-button-content-wrapper">

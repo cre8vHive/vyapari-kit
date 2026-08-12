@@ -1,8 +1,8 @@
 import React from 'react';
 
-export const TESTIMONIAL_AVATAR_ONE = 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=96&q=80';
-export const TESTIMONIAL_AVATAR_TWO = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=96&q=80';
-export const TESTIMONIAL_AVATAR_THREE = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=96&q=80';
+export const TESTIMONIAL_AVATAR_ONE = '/images/testimonials/testimonial-1.png';
+export const TESTIMONIAL_AVATAR_TWO = '/images/testimonials/testimonial-2.png';
+export const TESTIMONIAL_AVATAR_THREE = '/images/testimonials/testimonial-3.png';
 
 const ImageAssets: React.FC = () => {
   return (
