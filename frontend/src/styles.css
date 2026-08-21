@@ -3650,6 +3650,29 @@ img {
   .auth-panel {
     min-width: 0;
   }
+
+  .elementor-element-c7c68fa {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 10px;
+  }
+
+  .category-tile-wrapper .jkit-icon-box-wrapper {
+    padding: 14px 6px;
+    border-radius: 12px;
+  }
+
+  .category-tile-wrapper img {
+    width: clamp(38px, 9vw, 48px);
+    height: clamp(38px, 9vw, 48px);
+    margin: 0 auto 8px;
+  }
+
+  .category-tile-wrapper h4 {
+    font-size: clamp(10.5px, 2.7vw, 13.5px);
+    line-height: 1.25;
+    word-break: break-word;
+    hyphens: auto;
+  }
 }
 
 @media (max-width: 380px) {

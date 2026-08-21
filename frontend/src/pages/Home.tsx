@@ -135,10 +135,11 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
     const fetchPage = async () => {
       try {
         setLoading(true);
-        // Attempt to fetch page content and courses from MongoDB API
-        const [data, fetchedCourses] = await Promise.all([
+        // Attempt to fetch page content, courses, and categories from API
+        const [data, fetchedCourses, fetchedCategories] = await Promise.all([
           cmsApi.getPage('home'),
-          cmsApi.getCourses()
+          cmsApi.getCourses(),
+          cmsApi.getCategories()
         ]);
 
         if (data && data.sections) {
@@ -151,7 +152,17 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
                 config: {
                   ...section.config,
                   ...(mockSection ? mockSection.config : {}),
-                  courses: fetchedCourses.slice(0, 3) // Inject real courses from DB
+                  courses: fetchedCourses && fetchedCourses.length > 0 ? fetchedCourses.slice(0, 3) : (mockSection ? mockSection.config.courses : [])
+                }
+              };
+            }
+
+            if (section.type === 'categories') {
+              return {
+                ...section,
+                config: {
+                  ...section.config,
+                  categories: SHOP_CATEGORY_DATA
                 }
               };
             }
@@ -172,7 +183,6 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
         setPageData(data);
       } catch (err: any) {
         console.warn("API server unavailable, loading local mockup data for development.", err);
-        // Fallback to mock data so layout renders for evaluation
         setPageData(MOCK_HOME_PAYLOAD);
       } finally {
         setLoading(false);

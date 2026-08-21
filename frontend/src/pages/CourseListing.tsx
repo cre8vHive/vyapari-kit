@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import CategoriesSection, { CategoryItem } from '../components/sections/CategoriesSection';
+import CategoriesSection, { CategoryItem, SHOP_CATEGORY_DATA } from '../components/sections/CategoriesSection';
 import CourseGridSection, { CourseItem } from '../components/sections/CourseGridSection';
 import { cmsApi, courseApi } from '../services/api';
 
@@ -16,13 +16,22 @@ const ALL_CATEGORY = 'all';
 
 const MOCK_CATEGORIES: CategoryItem[] = [
   { id: 'all', name: 'All', slug: ALL_CATEGORY, iconUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=96&q=80' },
-  { id: '1', name: 'Business', slug: 'business', iconUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=96&q=80' },
-  { id: '2', name: 'Design', slug: 'design', iconUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=96&q=80' },
-  { id: '3', name: 'Development', slug: 'development', iconUrl: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=96&q=80' },
-  { id: '4', name: 'Finance', slug: 'finance', iconUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=96&q=80' },
-  { id: '5', name: 'Language', slug: 'language', iconUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=96&q=80' },
-  { id: '6', name: 'Marketing', slug: 'marketing', iconUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=96&q=80' },
-  { id: '7', name: 'Photography', slug: 'photography', iconUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=96&q=80' },
+  { id: 'business-tools', name: 'Business Tools', slug: 'business-tools' },
+  { id: 'business-plans', name: 'Business Plans', slug: 'business-plans' },
+  { id: 'business-in-the-box', name: 'Business in the Box', slug: 'business-in-the-box' },
+  { id: 'technology', name: 'Technology', slug: 'technology' },
+  { id: 'food-and-beverage', name: 'Food & Beverage', slug: 'food-and-beverage' },
+  { id: 'manufacturing', name: 'Manufacturing', slug: 'manufacturing' },
+  { id: 'service', name: 'Service', slug: 'service' },
+  { id: 'commerce', name: 'Commerce', slug: 'commerce' },
+  { id: 'agriculture', name: 'Agriculture', slug: 'agriculture' },
+  { id: 'business', name: 'Business', slug: 'business' },
+  { id: 'design', name: 'Design', slug: 'design' },
+  { id: 'development', name: 'Development', slug: 'development' },
+  { id: 'finance', name: 'Finance', slug: 'finance' },
+  { id: 'language', name: 'Language', slug: 'language' },
+  { id: 'marketing', name: 'Marketing', slug: 'marketing' },
+  { id: 'photography', name: 'Photography', slug: 'photography' },
 ];
 
 function normalizeSlug(value: string | null | undefined) {
@@ -68,21 +77,47 @@ function writeCourseListingState(nextState: CourseListingState, replace = false)
   }
 }
 
-function matchesCategory(course: CourseItem, category: string) {
-  if (category === ALL_CATEGORY) return true;
-  return normalizeSlug(course.categoryName) === category;
+function matchesCategory(course: CourseItem, categorySlug: string) {
+  if (!categorySlug || categorySlug === ALL_CATEGORY) return true;
+  const courseCatSlug = normalizeSlug(course.categoryName);
+  if (courseCatSlug === categorySlug) return true;
+  if (courseCatSlug.includes(categorySlug) || categorySlug.includes(courseCatSlug)) return true;
+
+  // Match parent category to child subcategories (e.g. business-tools matches manufacturing, technology, etc.)
+  const parentCat = SHOP_CATEGORY_DATA.find(c => c.slug === categorySlug || normalizeSlug(c.name) === categorySlug);
+  if (parentCat && parentCat.children) {
+    const childSlugs = parentCat.children.map(ch => normalizeSlug(ch));
+    if (childSlugs.some(ch => courseCatSlug.includes(ch) || ch.includes(courseCatSlug))) return true;
+  }
+  return false;
 }
 
-function withAllCategory(categories: CategoryItem[]): CategoryItem[] {
-  const normalizedCategories = categories.map((category) => ({
-    ...category,
-    slug: normalizeSlug(category.slug || category.name),
-  }));
+function withAllCategory(categories: CategoryItem[], activeCategorySlug?: string): CategoryItem[] {
+  const map = new Map<string, CategoryItem>();
+  map.set(ALL_CATEGORY, { id: 'all', name: 'All', slug: ALL_CATEGORY });
 
-  return [
-    MOCK_CATEGORIES[0],
-    ...normalizedCategories.filter((category) => category.slug !== ALL_CATEGORY),
-  ];
+  MOCK_CATEGORIES.forEach((cat) => {
+    if (cat.slug) map.set(cat.slug, cat);
+  });
+
+  (categories || []).forEach((category) => {
+    const slug = normalizeSlug(category.slug || category.name);
+    map.set(slug, {
+      ...category,
+      slug,
+      name: category.name || slug,
+    });
+  });
+
+  if (activeCategorySlug && activeCategorySlug !== ALL_CATEGORY && !map.has(activeCategorySlug)) {
+    const formattedName = activeCategorySlug
+      .split('-')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+    map.set(activeCategorySlug, { id: activeCategorySlug, name: formattedName, slug: activeCategorySlug });
+  }
+
+  return Array.from(map.values());
 }
 
 export const CourseListing: React.FC = () => {
@@ -98,7 +133,10 @@ export const CourseListing: React.FC = () => {
 
   const filteredCourses = useMemo(
     () => {
-      let result = activeCourses.filter((course) => matchesCategory(course, listingState.category));
+      let result = listingState.tab === 'my'
+        ? activeCourses.filter((course) => matchesCategory(course, listingState.category))
+        : activeCourses;
+
       if (listingState.searchQuery) {
         const query = listingState.searchQuery.toLowerCase();
         result = result.filter(course =>
@@ -116,7 +154,7 @@ export const CourseListing: React.FC = () => {
       }
       return result;
     },
-    [activeCourses, listingState.category, listingState.searchQuery, listingState.sortBy]
+    [activeCourses, listingState.tab, listingState.category, listingState.searchQuery, listingState.sortBy]
   );
   const activeTabLabel = listingState.tab === 'my' ? 'My Courses' : 'Available Courses';
 
@@ -149,10 +187,10 @@ export const CourseListing: React.FC = () => {
         setLoading(true);
         const catsData = await cmsApi.getCategories();
 
-        setCategories(withAllCategory(catsData));
+        setCategories(withAllCategory(catsData, listingStateRef.current.category));
       } catch (err) {
         console.warn('Unable to load categories from the API.');
-        setCategories(MOCK_CATEGORIES);
+        setCategories(withAllCategory(MOCK_CATEGORIES, listingStateRef.current.category));
       } finally {
         setLoading(false);
       }

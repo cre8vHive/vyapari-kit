@@ -732,21 +732,21 @@ app.put('/api/v1/admin/courses/bulk-price', requireAuth, requireActiveSession, r
 
   try {
     const { price, oldPrice } = req.body;
-    
+
     if (price === undefined || price === null || price === '') {
       res.status(400).json({ message: 'Price is required' });
       return;
     }
 
     const numPrice = Number(price);
-    
+
     const updateData: any = { $set: { price: numPrice } };
     if (oldPrice !== undefined && oldPrice !== '') {
       updateData.$set.oldPrice = Number(oldPrice);
     } else {
       updateData.$unset = { oldPrice: "" };
     }
-    
+
     const result = await Course.updateMany({}, updateData);
     res.status(200).json({ message: 'Bulk price update successful', modifiedCount: result.modifiedCount });
   } catch (error: any) {
@@ -1002,8 +1002,8 @@ app.post('/api/v1/admin/courses/:courseId/enrollments', requireAuth, requireActi
   }
 
   const [course, user] = await Promise.all([
-    Course.findById(courseId).select('_id').lean(),
-    User.findById(userId).select('_id').lean(),
+    Course.findById(courseId).select('_id title').lean(),
+    User.findById(userId).select('_id name email').lean(),
   ]);
 
   if (!course || !user) {
@@ -1025,6 +1025,12 @@ app.post('/api/v1/admin/courses/:courseId/enrollments', requireAuth, requireActi
     },
     { new: true, upsert: true }
   );
+
+  try {
+    await EmailService.sendCoursePurchase({ name: user.name, email: user.email }, course.title);
+  } catch (err) {
+    Logger.error('Failed to send course enrollment email', err);
+  }
 
   res.status(201).json({
     enrollment: {
@@ -1208,14 +1214,14 @@ app.post('/api/v1/complaints', async (req, res) => {
     res.status(503).json({ message: 'Database is not connected' });
     return;
   }
-  
+
   try {
     const { firstName, lastName, email, phone, subject, message } = req.body;
     if (!firstName || !lastName || !email || !phone || !subject || !message) {
       res.status(400).json({ message: 'All fields are required.' });
       return;
     }
-    
+
     await Complaint.create({ firstName, lastName, email, phone, subject, message });
     res.status(201).json({ ok: true });
   } catch (err: any) {
@@ -1228,7 +1234,7 @@ app.get('/api/v1/admin/complaints', requireAuth, requireActiveSession, requireAd
     res.status(503).json({ message: 'Database is not connected' });
     return;
   }
-  
+
   try {
     const complaints = await Complaint.find().sort({ createdAt: -1 }).lean();
     res.json(complaints.map((c: any) => ({
@@ -1252,17 +1258,17 @@ app.put('/api/v1/admin/complaints/:id/resolve', requireAuth, requireActiveSessio
     res.status(503).json({ message: 'Database is not connected' });
     return;
   }
-  
+
   try {
     const complaint = await Complaint.findById(req.params.id);
     if (!complaint) {
       res.status(404).json({ message: 'Complaint not found.' });
       return;
     }
-    
+
     complaint.isResolved = !complaint.isResolved;
     await complaint.save();
-    
+
     res.json({ ok: true, isResolved: complaint.isResolved });
   } catch (err: any) {
     res.status(400).json({ message: err.message || 'Failed to resolve complaint.' });
@@ -1306,33 +1312,46 @@ function normalizeCategoryQuery(value: string | undefined | null) {
 }
 
 app.get('/api/v1/courses', async (req, res) => {
+  const rawCategory = String(req.query.category || '').trim();
   const category = normalizeCategoryQuery(req.query.category as string | undefined);
   const search = String(req.query.search || '').trim().toLowerCase().slice(0, 120);
+
+  console.log(`[GET /api/v1/courses] Incoming request - category: "${rawCategory}" (normalized: "${category}"), search: "${search}"`);
 
   if (isMongoConnected()) {
     const query: Record<string, any> = { isPublished: true };
     if (category) {
-      const terms = category.split('-').map(escapeRegex).filter(Boolean);
-      const pattern = `^${terms.join('[\\s&\\-]*')}$`;
+      const terms = category.split('-').map((term) => {
+        const escaped = escapeRegex(term);
+        if (term === 'and') {
+          return '(?:and|&|\\+)';
+        }
+        return escaped;
+      }).filter(Boolean);
+      const pattern = `^${terms.join('[\\s&\\-]*')}`;
       query.categoryName = new RegExp(pattern, 'i');
     }
     if (search) query.title = new RegExp(escapeRegex(search), 'i');
 
     const courses = await Course.find(query).sort({ createdAt: -1 }).lean();
+    console.log(`[GET /api/v1/courses] Returning ${courses.length} courses matching category "${category}"`);
     res.json(courses.map(publicCourse));
     return;
   }
 
   const filtered = fallbackCourses.filter((course) => {
-    const categoryMatch = !category || normalizeCategoryQuery(course.categoryName) === category;
+    const courseCat = normalizeCategoryQuery(course.categoryName);
+    const categoryMatch = !category || courseCat.includes(category) || category.includes(courseCat);
     const searchMatch = !search || course.title.toLowerCase().includes(search);
     return categoryMatch && searchMatch;
   });
 
+  console.log(`[GET /api/v1/courses] (Fallback Memory) Returning ${filtered.length} courses for category "${category}"`);
   res.json(filtered);
 });
 
 app.get('/api/v1/courses/:slug', async (req, res) => {
+  console.log(`[GET /api/v1/courses/:slug] Fetching course by slug: "${req.params.slug}"`);
   if (isMongoConnected()) {
     const course = await Course.findOne({ slug: req.params.slug.toLowerCase(), isPublished: true }).lean();
     if (course) {
