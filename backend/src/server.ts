@@ -1311,42 +1311,159 @@ function normalizeCategoryQuery(value: string | undefined | null) {
     .replace(/^-+|-+$/g, '');
 }
 
+const DOMAIN_KEYWORD_MAP: Record<string, string[]> = {
+  // General & Business in the Box categories
+  'food-and-beverage': ['food', 'beverage', 'cafe', 'cloud kitchen', 'kitchen', 'bakery', 'juice', 'dairy', 'restaurant', 'fssai'],
+  'agriculture-and-livestock': ['agriculture', 'agri', 'farming', 'farm', 'poultry', 'dairy', 'goat', 'fish', 'mushroom', 'organic', 'nursery', 'plant', 'livestock'],
+  'services-and-events': ['service', 'services', 'event', 'wedding', 'planning', 'management'],
+  'health-wellness-and-beauty': ['beauty', 'salon', 'fitness', 'health', 'wellness'],
+  'technology-and-ai': ['technology', 'tech', 'ai', 'saas', 'mobile app', 'software', 'digital', 'automation'],
+  'master-toolkit': ['business-in-a-box', 'toolkit', 'box'],
+
+  // Business Tools categories
+  'strategy-and-launch': ['validation', 'idea', 'startup', 'launch', 'checklist'],
+  'marketing-and-sales': ['customer acquisition', 'digital marketing', 'growth', 'sales funnel', 'influencer'],
+  'e-commerce-and-digital-commerce': ['d2c', 'e-commerce', 'ecommerce', 'marketplace'],
+  'finance-and-profitability': ['pricing', 'profit', 'finance'],
+  'supply-chain-and-operations': ['inventory', 'vendor', 'supply chain'],
+  'operations-sop-and-automation': ['sop', 'automation', 'operations'],
+  'hr-and-team-management': ['hiring', 'employee', 'hr', 'team'],
+  'franchise-and-scaling': ['franchise', 'scaling', 'expansion'],
+
+  // Business Plans categories
+  'manufacturing-fmcg-and-industrial': ['manufacturing', 'factory', 'fmcg', 'industrial', 'agarbatti', 'biopackaging', 'cleanfmcg', 'corrugation', 'dehydration', 'detergents', 'flyash', 'greenpack', 'paperware', 'stationery', 'tissue', 'mass production', 'raw material'],
+  'food-agriculture-and-compliance': ['food', 'agriculture', 'fssai', 'compliance', 'packaging'],
+  'digital-e-commerce-and-media': ['digital', 'e-commerce', 'commerce', 'shorts', 'affiliate', 'import export', 'sku'],
+  'retail-and-personal-services': ['home salon', 'laundry', 'sneaker', 'studio', 'thrift', 'retail'],
+  'strategy-and-growth-playbooks': ['systems', 'profit framework', 'expansion', 'multi-location', 'selection', 'smart pricing'],
+};
+
 app.get('/api/v1/courses', async (req, res) => {
+  const type = String(req.query.type || '').trim().toLowerCase();
   const rawCategory = String(req.query.category || '').trim();
   const category = normalizeCategoryQuery(req.query.category as string | undefined);
   const search = String(req.query.search || '').trim().toLowerCase().slice(0, 120);
 
-  console.log(`[GET /api/v1/courses] Incoming request - category: "${rawCategory}" (normalized: "${category}"), search: "${search}"`);
+  console.log(`[GET /api/v1/courses] Incoming request - type: "${type}", category: "${rawCategory}" (normalized: "${category}"), search: "${search}"`);
+
+  const activeType = type || (['business-tools', 'business-plans', 'business-in-the-box'].includes(category) ? category : '');
 
   if (isMongoConnected()) {
-    const query: Record<string, any> = { isPublished: true };
-    if (category) {
-      const terms = category.split('-').map((term) => {
-        const escaped = escapeRegex(term);
-        if (term === 'and') {
-          return '(?:and|&|\\+)';
-        }
-        return escaped;
-      }).filter(Boolean);
-      const pattern = `^${terms.join('[\\s&\\-]*')}`;
-      query.categoryName = new RegExp(pattern, 'i');
-    }
-    if (search) query.title = new RegExp(escapeRegex(search), 'i');
+    const andConditions: Record<string, any>[] = [{ isPublished: true }];
 
+    // 1. Parent Type Filter
+    const toolsPattern = 'Framework|Playbook|Blueprint|Checklist|SOP|Automation|Validation|Funnel|Hiring|System';
+    const boxPattern = 'Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|Business-in-a-Box';
+
+    if (activeType === 'business-tools') {
+      andConditions.push({
+        $and: [
+          {
+            $or: [
+              { categoryName: new RegExp('Business Toolkit|Business Tools', 'i') },
+              { title: new RegExp(toolsPattern, 'i') },
+            ],
+          },
+          { title: { $not: new RegExp('Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|100 ', 'i') } },
+        ],
+      });
+    } else if (activeType === 'business-in-the-box') {
+      andConditions.push({
+        $or: [
+          { title: new RegExp(boxPattern, 'i') },
+          { categoryName: new RegExp('Business-in-a-Box', 'i') },
+        ],
+      });
+    } else if (activeType === 'business-plans') {
+      andConditions.push({
+        $and: [
+          {
+            $or: [
+              { categoryName: new RegExp('Business Plan', 'i') },
+              { title: new RegExp('BUSINESS PLAN|Ideas|Playbook|Guide|System', 'i') },
+            ],
+          },
+          { title: { $not: new RegExp(boxPattern, 'i') } },
+          {
+            $or: [
+              { title: new RegExp('100 |BUSINESS PLAN|Playbook|Guide|Compliance|FSSAI|Production|Sourcing', 'i') },
+              { categoryName: new RegExp('Business Plan', 'i') },
+            ],
+          },
+        ],
+      });
+    }
+
+    // 2. Subcategory Domain Filter
+    if (category && category !== 'business-tools' && category !== 'business-plans' && category !== 'business-in-the-box') {
+      const keywords = DOMAIN_KEYWORD_MAP[category];
+      if (keywords && keywords.length > 0) {
+        const pattern = keywords.map(escapeRegex).join('|');
+        andConditions.push({
+          $or: [
+            { categoryName: new RegExp(pattern, 'i') },
+            { title: new RegExp(pattern, 'i') },
+          ],
+        });
+      } else {
+        const terms = category.split('-').map(escapeRegex).filter(Boolean);
+        const pattern = terms.join('[\\s&\\-]*');
+        andConditions.push({
+          $or: [
+            { categoryName: new RegExp(pattern, 'i') },
+            { title: new RegExp(pattern, 'i') },
+          ],
+        });
+      }
+    }
+
+    // 3. Search Filter
+    if (search) {
+      andConditions.push({ title: new RegExp(escapeRegex(search), 'i') });
+    }
+
+    const query = andConditions.length > 1 ? { $and: andConditions } : andConditions[0];
     const courses = await Course.find(query).sort({ createdAt: -1 }).lean();
-    console.log(`[GET /api/v1/courses] Returning ${courses.length} courses matching category "${category}"`);
+    console.log(`[GET /api/v1/courses] Returning ${courses.length} courses matching type "${activeType}" & category "${category}"`);
     res.json(courses.map(publicCourse));
     return;
   }
 
+  // Fallback Memory Filtering
   const filtered = fallbackCourses.filter((course) => {
     const courseCat = normalizeCategoryQuery(course.categoryName);
-    const categoryMatch = !category || courseCat.includes(category) || category.includes(courseCat);
-    const searchMatch = !search || course.title.toLowerCase().includes(search);
-    return categoryMatch && searchMatch;
+    const titleLower = course.title.toLowerCase();
+
+    // Type Match
+    let typeMatch = true;
+    const boxKeywords = ['cloud kitchen', 'café', 'dairy', 'organic farming', 'poultry', 'event management', 'wedding planning', 'fitness', 'beauty salon', 'ai business', 'business-in-a-box'];
+    const isBoxCourse = boxKeywords.some(kw => titleLower.includes(kw));
+
+    if (activeType === 'business-tools') {
+      typeMatch = (courseCat.includes('toolkit') || courseCat.includes('tools') || /framework|playbook|blueprint|checklist|sop|automation|validation|funnel|hiring|system/i.test(titleLower)) && !isBoxCourse && !titleLower.includes('100 ');
+    } else if (activeType === 'business-in-the-box') {
+      typeMatch = isBoxCourse;
+    } else if (activeType === 'business-plans') {
+      typeMatch = !isBoxCourse && (courseCat.includes('plan') || titleLower.includes('business plan') || titleLower.includes('100 ') || titleLower.includes('playbook') || titleLower.includes('guide'));
+    }
+
+    // Category Match
+    let categoryMatch = true;
+    if (category && category !== 'business-tools' && category !== 'business-plans' && category !== 'business-in-the-box') {
+      const keywords = DOMAIN_KEYWORD_MAP[category];
+      if (keywords) {
+        categoryMatch = keywords.some(kw => courseCat.includes(kw) || titleLower.includes(kw));
+      } else {
+        categoryMatch = courseCat.includes(category) || category.includes(courseCat);
+      }
+    }
+
+    // Search Match
+    const searchMatch = !search || titleLower.includes(search);
+    return typeMatch && categoryMatch && searchMatch;
   });
 
-  console.log(`[GET /api/v1/courses] (Fallback Memory) Returning ${filtered.length} courses for category "${category}"`);
+  console.log(`[GET /api/v1/courses] (Fallback Memory) Returning ${filtered.length} courses for type "${activeType}" & category "${category}"`);
   res.json(filtered);
 });
 

@@ -34,7 +34,12 @@ function toCategorySlug(value: string | undefined | null) {
 }
 
 function toCategoryHref(slug: string) {
-  return `/courses?category=${encodeURIComponent(slug)}`;
+  return `/courses?tab=available&type=${encodeURIComponent(slug)}`;
+}
+
+function toSubcategoryHref(parentSlug: string, categoryName: string) {
+  const categorySlug = toCategorySlug(categoryName);
+  return `/courses?tab=available&type=${encodeURIComponent(parentSlug)}&category=${encodeURIComponent(categorySlug)}`;
 }
 
 export const SHOP_CATEGORY_DATA: CategoryItem[] = [
@@ -43,21 +48,43 @@ export const SHOP_CATEGORY_DATA: CategoryItem[] = [
     name: 'BUSINESS TOOLS',
     slug: 'business-tools',
     iconUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=96&q=80',
-    children: ['Technology', 'Food & Beverage', 'Manufacturing', 'Service', 'Commerce', 'Agriculture'],
+    children: [
+      'Strategy & Launch',
+      'Marketing & Sales',
+      'E-Commerce & Digital Commerce',
+      'Finance & Profitability',
+      'Supply Chain & Operations',
+      'Operations, SOP & Automation',
+      'HR & Team Management',
+      'Franchise & Scaling',
+    ],
   },
   {
     id: 'business-plans',
     name: 'BUSINESS PLANS',
     slug: 'business-plans',
     iconUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=96&q=80',
-    children: ['Technology', 'Food & Beverage', 'Manufacturing', 'Service', 'Commerce', 'Agriculture'],
+    children: [
+      'Manufacturing, FMCG & Industrial',
+      'Food, Agriculture & Compliance',
+      'Digital, E-Commerce & Media',
+      'Retail & Personal Services',
+      'Strategy & Growth Playbooks',
+    ],
   },
   {
     id: 'business-in-the-box',
     name: 'BUSINESS IN THE BOX',
     slug: 'business-in-the-box',
     iconUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=96&q=80',
-    children: ['Technology', 'Food & Beverage', 'Manufacturing', 'Service', 'Commerce', 'Agriculture'],
+    children: [
+      'Food & Beverage',
+      'Agriculture & Livestock',
+      'Services & Events',
+      'Health, Wellness & Beauty',
+      'Technology & AI',
+      'Master Toolkit',
+    ],
   },
 ];
 
@@ -79,6 +106,19 @@ export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
     e.preventDefault();
     setExpandedParentId(null);
     const targetUrl = toCategoryHref(slug);
+    window.history.pushState(null, '', targetUrl);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
+  const handleSubcategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, parentSlug: string, childName: string) => {
+    if (onCategorySelect) {
+      e.preventDefault();
+      onCategorySelect(toCategorySlug(childName));
+      return;
+    }
+    e.preventDefault();
+    setExpandedParentId(null);
+    const targetUrl = toSubcategoryHref(parentSlug, childName);
     window.history.pushState(null, '', targetUrl);
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
@@ -207,50 +247,50 @@ export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
                               left: '50%',
                               transform: 'translateX(-50%)',
                               width: 'max-content',
-                              minWidth: '200px',
-                              maxWidth: '260px',
+                              minWidth: '220px',
+                              maxWidth: '300px',
+                              maxHeight: '380px',
+                              overflowY: 'auto',
                               zIndex: 90,
                               background: '#ffffff',
-                              borderRadius: '14px',
-                              boxShadow: '0 16px 36px rgba(11, 24, 44, 0.16), 0 4px 12px rgba(11, 124, 255, 0.08)',
-                              border: '1px solid rgba(11, 124, 255, 0.2)',
+                              borderRadius: '16px',
+                              boxShadow: '0 20px 45px rgba(11, 24, 44, 0.18), 0 6px 16px rgba(11, 124, 255, 0.1)',
+                              border: '1px solid rgba(11, 124, 255, 0.25)',
                               padding: '8px',
-                              display: 'grid',
+                              display: 'flex',
+                              flexDirection: 'column',
                               gap: '4px',
                             }}
                           >
-                            <div style={{ padding: '4px 8px 4px', fontSize: '11px', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid #f3f4f6', marginBottom: '2px' }}>
-                              Select Subcategory
+                            <div style={{ padding: '6px 10px 4px', fontSize: '11px', fontWeight: 800, color: '#0b7cff', textTransform: 'uppercase', letterSpacing: '0.6px', borderBottom: '1px solid #eef2ff', background: '#f8fafc', borderRadius: '6px', marginBottom: '2px' }}>
+                              Select Category
                             </div>
-                            {cat.children!.map((child, childIndex) => {
-                              const childSlug = toCategorySlug(child);
-                              return (
-                                <a
-                                  key={`${cat.id}-${child}-${childIndex}`}
-                                  href={toCategoryHref(childSlug)}
-                                  className="category-popover-item"
-                                  onClick={(e) => handleCategoryClick(e, childSlug)}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '8px 12px',
-                                    borderRadius: '8px',
-                                    color: '#0b1220',
-                                    fontSize: '13px',
-                                    fontWeight: 600,
-                                    textDecoration: 'none',
-                                    background: 'transparent',
-                                    transition: 'background-color 0.15s ease',
-                                  }}
-                                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(11, 124, 255, 0.08)')}
-                                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                                >
-                                  <span>{child}</span>
-                                  <span style={{ fontSize: '13px', color: '#0b7cff', fontWeight: 700 }}>→</span>
-                                </a>
-                              );
-                            })}
+                            {cat.children!.map((child, childIndex) => (
+                              <a
+                                key={`${cat.id}-${child}-${childIndex}`}
+                                href={toSubcategoryHref(slug, child)}
+                                className="category-popover-item"
+                                onClick={(e) => handleSubcategoryClick(e, slug, child)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '8px 12px',
+                                  borderRadius: '8px',
+                                  color: '#0b1220',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  textDecoration: 'none',
+                                  background: 'transparent',
+                                  transition: 'background-color 0.15s ease',
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(11, 124, 255, 0.08)')}
+                                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                              >
+                                <span>{child}</span>
+                                <span style={{ fontSize: '13px', color: '#0b7cff', fontWeight: 700, marginLeft: '8px' }}>→</span>
+                              </a>
+                            ))}
                           </div>
                         </>
                       )}

@@ -7,6 +7,7 @@ type CourseTab = 'available' | 'my';
 
 interface CourseListingState {
   tab: CourseTab;
+  type: string;
   category: string;
   searchQuery: string;
   sortBy: string;
@@ -50,6 +51,7 @@ function readCourseListingState(): CourseListingState {
 
   return {
     tab,
+    type: params.get('type') || '',
     category: normalizeSlug(params.get('category')),
     searchQuery: params.get('search') || '',
     sortBy: params.get('sort') || 'newest',
@@ -59,6 +61,9 @@ function readCourseListingState(): CourseListingState {
 function writeCourseListingState(nextState: CourseListingState, replace = false) {
   const params = new URLSearchParams();
   params.set('tab', nextState.tab);
+  if (nextState.type) {
+    params.set('type', nextState.type);
+  }
   params.set('category', nextState.category);
   if (nextState.searchQuery) {
     params.set('search', nextState.searchQuery);
@@ -217,6 +222,9 @@ export const CourseListing: React.FC = () => {
         setLoading(true);
 
         const params: Record<string, string> = {};
+        if (listingState.type) {
+          params.type = listingState.type;
+        }
         if (listingState.category && listingState.category !== ALL_CATEGORY) {
           params.category = listingState.category;
         }
@@ -235,16 +243,54 @@ export const CourseListing: React.FC = () => {
     };
 
     fetchFilteredCourses();
-  }, [listingState.category, listingState.searchQuery]);
+  }, [listingState.type, listingState.category, listingState.searchQuery]);
+
+  const availableCategoryOptions = useMemo(() => {
+    if (listingState.type === 'business-tools') {
+      return [
+        { id: 'all', name: 'All Categories', slug: ALL_CATEGORY },
+        { id: 'strategy-and-launch', name: 'Strategy & Launch', slug: 'strategy-and-launch' },
+        { id: 'marketing-and-sales', name: 'Marketing & Sales', slug: 'marketing-and-sales' },
+        { id: 'e-commerce-and-digital-commerce', name: 'E-Commerce & Digital Commerce', slug: 'e-commerce-and-digital-commerce' },
+        { id: 'finance-and-profitability', name: 'Finance & Profitability', slug: 'finance-and-profitability' },
+        { id: 'supply-chain-and-operations', name: 'Supply Chain & Operations', slug: 'supply-chain-and-operations' },
+        { id: 'operations-sop-and-automation', name: 'Operations, SOP & Automation', slug: 'operations-sop-and-automation' },
+        { id: 'hr-and-team-management', name: 'HR & Team Management', slug: 'hr-and-team-management' },
+        { id: 'franchise-and-scaling', name: 'Franchise & Scaling', slug: 'franchise-and-scaling' },
+      ];
+    }
+    if (listingState.type === 'business-plans') {
+      return [
+        { id: 'all', name: 'All Categories', slug: ALL_CATEGORY },
+        { id: 'manufacturing-fmcg-and-industrial', name: 'Manufacturing, FMCG & Industrial', slug: 'manufacturing-fmcg-and-industrial' },
+        { id: 'food-agriculture-and-compliance', name: 'Food, Agriculture & Compliance', slug: 'food-agriculture-and-compliance' },
+        { id: 'digital-e-commerce-and-media', name: 'Digital, E-Commerce & Media', slug: 'digital-e-commerce-and-media' },
+        { id: 'retail-and-personal-services', name: 'Retail & Personal Services', slug: 'retail-and-personal-services' },
+        { id: 'strategy-and-growth-playbooks', name: 'Strategy & Growth Playbooks', slug: 'strategy-and-growth-playbooks' },
+      ];
+    }
+    if (listingState.type === 'business-in-the-box') {
+      return [
+        { id: 'all', name: 'All Categories', slug: ALL_CATEGORY },
+        { id: 'food-and-beverage', name: 'Food & Beverage', slug: 'food-and-beverage' },
+        { id: 'agriculture-and-livestock', name: 'Agriculture & Livestock', slug: 'agriculture-and-livestock' },
+        { id: 'services-and-events', name: 'Services & Events', slug: 'services-and-events' },
+        { id: 'health-wellness-and-beauty', name: 'Health, Wellness & Beauty', slug: 'health-wellness-and-beauty' },
+        { id: 'technology-and-ai', name: 'Technology & AI', slug: 'technology-and-ai' },
+        { id: 'master-toolkit', name: 'Master Toolkit', slug: 'master-toolkit' },
+      ];
+    }
+    return categories;
+  }, [categories, listingState.type]);
 
   const selectedCategoryValue = useMemo(() => {
     const target = listingState.category;
     if (!target || target === ALL_CATEGORY) return ALL_CATEGORY;
-    const match = categories.find(
+    const match = availableCategoryOptions.find(
       (c) => c.slug === target || (c.slug && (target.includes(c.slug) || c.slug.includes(target)))
     );
     return match ? match.slug || target : target;
-  }, [categories, listingState.category]);
+  }, [availableCategoryOptions, listingState.category]);
 
   return (
     <div className="page-renderer course-listing-template">
@@ -331,6 +377,36 @@ export const CourseListing: React.FC = () => {
 
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Type:</span>
+                <select
+                  value={listingState.type}
+                  onChange={(e) => updateListingState({ type: e.target.value, category: ALL_CATEGORY })}
+                  style={{
+                    padding: '1rem 2.5rem 1rem 1rem',
+                    borderRadius: '12px',
+                    border: '2px solid #e5e7eb',
+                    backgroundColor: '#fff',
+                    color: '#374151',
+                    fontSize: '1.05rem',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    appearance: 'none',
+                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 1rem center',
+                    backgroundSize: '1em',
+                    maxWidth: '220px'
+                  }}
+                >
+                  <option value="">All Types</option>
+                  <option value="business-tools">Business Tools</option>
+                  <option value="business-plans">Business Plans</option>
+                  <option value="business-in-the-box">Business in the Box</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Category:</span>
                 <select
                   value={selectedCategoryValue}
@@ -353,7 +429,7 @@ export const CourseListing: React.FC = () => {
                     maxWidth: '250px'
                   }}
                 >
-                  {categories.map((cat) => (
+                  {availableCategoryOptions.map((cat) => (
                     <option key={cat.id || cat.slug || cat.name} value={cat.slug || 'all'}>
                       {cat.name}
                     </option>
