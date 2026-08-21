@@ -237,6 +237,15 @@ export const CourseListing: React.FC = () => {
     fetchFilteredCourses();
   }, [listingState.category, listingState.searchQuery]);
 
+  const selectedCategoryValue = useMemo(() => {
+    const target = listingState.category;
+    if (!target || target === ALL_CATEGORY) return ALL_CATEGORY;
+    const match = categories.find(
+      (c) => c.slug === target || (c.slug && (target.includes(c.slug) || c.slug.includes(target)))
+    );
+    return match ? match.slug || target : target;
+  }, [categories, listingState.category]);
+
   return (
     <div className="page-renderer course-listing-template">
       <section className="course-page-hero">
@@ -252,28 +261,28 @@ export const CourseListing: React.FC = () => {
 
       <section className="course-hub-section">
         <div className="course-hub-card">
-          <div className="course-hub-tabs" role="tablist" aria-label="Course views">
+          <div className="course-hub-tabs" role="tablist">
             <button
-              className={`course-hub-tab${listingState.tab === 'my' ? ' active' : ''}`}
               type="button"
               role="tab"
               aria-selected={listingState.tab === 'my'}
+              className={`course-hub-tab${listingState.tab === 'my' ? ' active' : ''}`}
               onClick={() => updateListingState({ tab: 'my' })}
             >
               My Courses
             </button>
             <button
-              className={`course-hub-tab${listingState.tab === 'available' ? ' active' : ''}`}
               type="button"
               role="tab"
               aria-selected={listingState.tab === 'available'}
+              className={`course-hub-tab${listingState.tab === 'available' ? ' active' : ''}`}
               onClick={() => updateListingState({ tab: 'available' })}
             >
               Available Courses
             </button>
           </div>
 
-          <div style={{ padding: '0 2rem', marginTop: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="course-hub-toolbar" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: '250px' }}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -320,11 +329,11 @@ export const CourseListing: React.FC = () => {
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Category:</span>
                 <select
-                  value={listingState.category}
+                  value={selectedCategoryValue}
                   onChange={(e) => updateListingState({ category: e.target.value })}
                   style={{
                     padding: '1rem 2.5rem 1rem 1rem',

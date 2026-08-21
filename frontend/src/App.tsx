@@ -26,8 +26,26 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleLocationChange = () => setCurrentPath(window.location.pathname);
+
+    const originalPush = window.history.pushState;
+    const originalReplace = window.history.replaceState;
+
+    window.history.pushState = function (...args) {
+      originalPush.apply(this, args);
+      handleLocationChange();
+    };
+
+    window.history.replaceState = function (...args) {
+      originalReplace.apply(this, args);
+      handleLocationChange();
+    };
+
     window.addEventListener('popstate', handleLocationChange);
-    return () => window.removeEventListener('popstate', handleLocationChange);
+    return () => {
+      window.history.pushState = originalPush;
+      window.history.replaceState = originalReplace;
+      window.removeEventListener('popstate', handleLocationChange);
+    };
   }, []);
 
   // ── Validate token on mount ──

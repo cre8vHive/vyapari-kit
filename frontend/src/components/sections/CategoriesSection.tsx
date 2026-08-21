@@ -70,6 +70,19 @@ export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
 }) => {
   const [expandedParentId, setExpandedParentId] = useState<string | null>(null);
 
+  const handleCategoryClick = (e: React.MouseEvent<HTMLAnchorElement>, slug: string) => {
+    if (onCategorySelect) {
+      e.preventDefault();
+      onCategorySelect(slug);
+      return;
+    }
+    e.preventDefault();
+    setExpandedParentId(null);
+    const targetUrl = toCategoryHref(slug);
+    window.history.pushState(null, '', targetUrl);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
   const normalizedCategories = useMemo(() => {
     const source = categories && categories.length > 0 ? categories : SHOP_CATEGORY_DATA;
 
@@ -148,7 +161,12 @@ export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
                           </div>
                         </button>
                       ) : (
-                        <a href={toCategoryHref(slug)} className="icon-box-link" aria-label={cat.name}>
+                        <a
+                          href={toCategoryHref(slug)}
+                          className="icon-box-link"
+                          aria-label={cat.name}
+                          onClick={(e) => handleCategoryClick(e, slug)}
+                        >
                           <div className="jkit-icon-box-wrapper hover-from-left">
                             <div className="icon-box icon-box-header elementor-animation-">
                               <div className="icon style-color">
@@ -211,6 +229,7 @@ export const CategoriesSection: React.FC<CategoriesSectionProps> = ({
                                   key={`${cat.id}-${child}-${childIndex}`}
                                   href={toCategoryHref(childSlug)}
                                   className="category-popover-item"
+                                  onClick={(e) => handleCategoryClick(e, childSlug)}
                                   style={{
                                     display: 'flex',
                                     alignItems: 'center',
