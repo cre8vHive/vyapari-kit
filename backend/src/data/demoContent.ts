@@ -239,7 +239,7 @@ export const homePage = {
       }
     },
     { type: 'categories', order: 2, config: { sectionTitle: 'All Categories', categories } },
-    { type: 'course-grid', order: 3, config: { sectionTitle: 'Popular classes', courses: courses.slice(0, 3) } },
+    { type: 'course-grid', order: 3, config: { sectionTitle: 'Popular Courseses', courses: courses.slice(0, 3) } },
     {
       type: 'testimonials',
       order: 4,

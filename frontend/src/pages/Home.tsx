@@ -36,7 +36,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
       type: "course-grid",
       order: 3,
       config: {
-        sectionTitle: "Popular classes",
+        sectionTitle: "Popular Courses",
         courses: [
           {
             id: '4',
@@ -145,7 +145,7 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
         if (data && data.sections) {
           data.sections = data.sections.map((section: any) => {
             const mockSection = MOCK_HOME_PAYLOAD.sections.find(s => s.type === section.type);
-            
+
             if (section.type === 'course-grid') {
               return {
                 ...section,
