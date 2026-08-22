@@ -874,15 +874,18 @@ img {
   box-shadow: 0 16px 28px rgba(255, 255, 255, 0.14);
 }
 
-.elementor-element-1438c1b,
-.elementor-element-c96ecd5,
 .elementor-element-15a0cc1 {
   padding: 64px 0;
 }
 
 .elementor-element-1438c1b {
-  padding-top: 30px;
-  padding-bottom: 72px;
+  padding-top: 24px;
+  padding-bottom: 12px;
+}
+
+.elementor-element-c96ecd5 {
+  padding-top: 16px;
+  padding-bottom: 48px;
 }
 
 .elementor-element-c7c68fa {
@@ -3686,6 +3689,16 @@ img {
   .course-card,
   .auth-panel {
     min-width: 0;
+  }
+
+  .elementor-element-1438c1b {
+    padding-top: 16px;
+    padding-bottom: 8px;
+  }
+
+  .elementor-element-c96ecd5 {
+    padding-top: 12px;
+    padding-bottom: 32px;
   }
 
   .elementor-element-c7c68fa {
