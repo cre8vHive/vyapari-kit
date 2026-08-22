@@ -724,6 +724,81 @@ app.post('/api/v1/admin/courses', requireAuth, requireActiveSession, requireAdmi
     res.status(400).json({ message: error.message || 'Unable to create course' });
   }
 });
+
+app.post('/api/v1/admin/courses/bulk', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  try {
+    const authUser = res.locals.user;
+    const { type, category, defaultPrice, defaultOldPrice, defaultInstructor, defaultDifficulty, isPublished, courses: courseList } = req.body;
+
+    if (!Array.isArray(courseList) || courseList.length === 0) {
+      res.status(400).json({ message: 'Courses array is required and must not be empty' });
+      return;
+    }
+
+    let targetCategoryName = 'Business Toolkit';
+    if (type === 'business-plans') {
+      targetCategoryName = 'Business Plan';
+    } else if (type === 'business-in-the-box') {
+      targetCategoryName = 'Business-in-a-Box';
+    } else if (type === 'business-tools') {
+      targetCategoryName = 'Business Toolkit';
+    } else if (category) {
+      targetCategoryName = category;
+    }
+
+    const createdDocs = [];
+
+    for (const item of courseList) {
+      if (!item.title || !item.title.trim()) continue;
+
+      const slugBase = item.title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      const uniqueSlug = `${slugBase}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`;
+
+      const courseDoc = {
+        slug: uniqueSlug,
+        title: item.title.trim(),
+        instructorName: item.instructorName || defaultInstructor || 'VyapariKit Team',
+        categoryName: item.categoryName || targetCategoryName,
+        difficulty: item.difficulty || defaultDifficulty || 'Beginner',
+        price: item.price !== undefined && item.price !== '' ? Number(item.price) : Number(defaultPrice || 0),
+        oldPrice: item.oldPrice !== undefined && item.oldPrice !== '' ? Number(item.oldPrice) : (defaultOldPrice !== undefined && defaultOldPrice !== '' ? Number(defaultOldPrice) : undefined),
+        rating: item.rating ? Number(item.rating) : 4.9,
+        imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80',
+        isPublished: item.isPublished !== undefined ? Boolean(item.isPublished) : (isPublished !== undefined ? Boolean(isPublished) : true),
+        subtitle: item.subtitle || '',
+        language: item.language || 'English',
+        includes: Array.isArray(item.includes) ? item.includes : [],
+        learningHighlights: Array.isArray(item.learningHighlights) ? item.learningHighlights : [],
+        description: Array.isArray(item.description) ? item.description : (item.description ? [item.description] : [item.title]),
+        skills: Array.isArray(item.skills) ? item.skills : [],
+        requirements: Array.isArray(item.requirements) ? item.requirements : [],
+        audience: Array.isArray(item.audience) ? item.audience : [],
+        faqs: Array.isArray(item.faqs) ? item.faqs : [],
+        createdBy: authUser.sub,
+        updatedBy: authUser.sub,
+      };
+
+      const created = await Course.create(courseDoc);
+      if (item.pdfUrl) {
+        await upsertCoursePdf(String(created._id), { assetUrl: item.pdfUrl }, authUser.sub);
+      }
+      createdDocs.push(created);
+    }
+
+    res.status(201).json({
+      message: `Successfully uploaded ${createdDocs.length} courses for type "${type || 'custom'}"`,
+      createdCount: createdDocs.length,
+    });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message || 'Unable to bulk upload courses' });
+  }
+});
+
 app.put('/api/v1/admin/courses/bulk-price', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
   if (!isMongoConnected()) {
     res.status(503).json({ message: 'Database is not connected' });
@@ -731,7 +806,7 @@ app.put('/api/v1/admin/courses/bulk-price', requireAuth, requireActiveSession, r
   }
 
   try {
-    const { price, oldPrice } = req.body;
+    const { price, oldPrice, type, category } = req.body;
 
     if (price === undefined || price === null || price === '') {
       res.status(400).json({ message: 'Price is required' });
@@ -747,7 +822,37 @@ app.put('/api/v1/admin/courses/bulk-price', requireAuth, requireActiveSession, r
       updateData.$unset = { oldPrice: "" };
     }
 
-    const result = await Course.updateMany({}, updateData);
+    const filter: any = {};
+    if (type === 'business-tools') {
+      filter.$and = [
+        {
+          $or: [
+            { categoryName: new RegExp('Business Toolkit|Business Tools', 'i') },
+            { title: new RegExp('Framework|Playbook|Blueprint|Checklist|SOP|Automation|Validation|Funnel|Hiring|System', 'i') },
+          ],
+        },
+        { title: { $not: new RegExp('Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|100 ', 'i') } },
+      ];
+    } else if (type === 'business-in-the-box') {
+      filter.$or = [
+        { title: new RegExp('Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|Business-in-a-Box', 'i') },
+        { categoryName: new RegExp('Business-in-a-Box', 'i') },
+      ];
+    } else if (type === 'business-plans') {
+      filter.$and = [
+        {
+          $or: [
+            { categoryName: new RegExp('Business Plan', 'i') },
+            { title: new RegExp('BUSINESS PLAN|Ideas|Playbook|Guide|System', 'i') },
+          ],
+        },
+        { title: { $not: new RegExp('Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|Business-in-a-Box', 'i') } },
+      ];
+    } else if (category) {
+      filter.categoryName = new RegExp(category, 'i');
+    }
+
+    const result = await Course.updateMany(filter, updateData);
     res.status(200).json({ message: 'Bulk price update successful', modifiedCount: result.modifiedCount });
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Unable to update bulk prices' });

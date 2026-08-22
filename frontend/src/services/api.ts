@@ -342,6 +342,17 @@ export const paymentApi = {
   }
 };
 
+export interface BulkCoursePayload {
+  type: string;
+  category?: string;
+  defaultPrice?: number;
+  defaultOldPrice?: number | '';
+  defaultInstructor?: string;
+  defaultDifficulty?: string;
+  isPublished?: boolean;
+  courses: Partial<CourseSavePayload>[];
+}
+
 export const adminApi = {
   getCourses: async (): Promise<AdminCourse[]> => {
     const response = await apiClient.get<AdminCourse[]>('/admin/courses');
@@ -355,7 +366,11 @@ export const adminApi = {
     const response = await apiClient.put<{ course: AdminCourse }>(`/admin/courses/${courseId}`, payload);
     return response.data;
   },
-  bulkUpdatePrice: async (payload: { price: number; oldPrice?: number | '' }): Promise<{ message: string; modifiedCount: number }> => {
+  bulkCreateCourses: async (payload: BulkCoursePayload): Promise<{ message: string; createdCount: number }> => {
+    const response = await apiClient.post<{ message: string; createdCount: number }>('/admin/courses/bulk', payload);
+    return response.data;
+  },
+  bulkUpdatePrice: async (payload: { price: number; oldPrice?: number | ''; type?: string; category?: string }): Promise<{ message: string; modifiedCount: number }> => {
     const response = await apiClient.put<{ message: string; modifiedCount: number }>('/admin/courses/bulk-price', payload);
     return response.data;
   },

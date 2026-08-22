@@ -88,6 +88,37 @@ function courseToForm(course: AdminCourse): CourseFormState {
   };
 }
 
+const BULK_TYPE_CATEGORIES: Record<string, { label: string; value: string }[]> = {
+  'business-tools': [
+    { label: 'All Business Tools Subcategories', value: '' },
+    { label: 'Strategy & Launch', value: 'strategy-and-launch' },
+    { label: 'Marketing & Sales', value: 'marketing-and-sales' },
+    { label: 'E-Commerce & Digital Commerce', value: 'e-commerce-and-digital-commerce' },
+    { label: 'Finance & Profitability', value: 'finance-and-profitability' },
+    { label: 'Supply Chain & Operations', value: 'supply-chain-and-operations' },
+    { label: 'Operations, SOP & Automation', value: 'operations-sop-and-automation' },
+    { label: 'HR & Team Management', value: 'hr-and-team-management' },
+    { label: 'Franchise & Scaling', value: 'franchise-and-scaling' },
+  ],
+  'business-plans': [
+    { label: 'All Business Plans Subcategories', value: '' },
+    { label: 'Manufacturing, FMCG & Industrial', value: 'manufacturing-fmcg-and-industrial' },
+    { label: 'Food, Agriculture & Compliance', value: 'food-agriculture-and-compliance' },
+    { label: 'Digital, E-Commerce & Media', value: 'digital-e-commerce-and-media' },
+    { label: 'Retail & Personal Services', value: 'retail-and-personal-services' },
+    { label: 'Strategy & Growth Playbooks', value: 'strategy-and-growth-playbooks' },
+  ],
+  'business-in-the-box': [
+    { label: 'All Business in the Box Subcategories', value: '' },
+    { label: 'Food & Beverage', value: 'food-and-beverage' },
+    { label: 'Agriculture & Livestock', value: 'agriculture-and-livestock' },
+    { label: 'Services & Events', value: 'services-and-events' },
+    { label: 'Health, Wellness & Beauty', value: 'health-wellness-and-beauty' },
+    { label: 'Technology & AI', value: 'technology-and-ai' },
+    { label: 'Master Toolkit', value: 'master-toolkit' },
+  ],
+};
+
 export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ user }) => {
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [users, setUsers] = useState<AuthUser[]>([]);
@@ -103,9 +134,20 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  
+
   const [bulkPrice, setBulkPrice] = useState('');
   const [bulkOldPrice, setBulkOldPrice] = useState('');
+  const [bulkPriceType, setBulkPriceType] = useState('');
+
+  // Bulk Upload for Single Type State
+  const [bulkUploadType, setBulkUploadType] = useState<'business-tools' | 'business-plans' | 'business-in-the-box'>('business-tools');
+  const [bulkUploadCategory, setBulkUploadCategory] = useState('');
+  const [bulkUploadDefaultPrice, setBulkUploadDefaultPrice] = useState('49.99');
+  const [bulkUploadDefaultOldPrice, setBulkUploadDefaultOldPrice] = useState('99.99');
+  const [bulkUploadDefaultInstructor, setBulkUploadDefaultInstructor] = useState('VyapariKit Team');
+  const [bulkUploadInputMode, setBulkUploadInputMode] = useState<'json' | 'titles'>('titles');
+  const [bulkUploadText, setBulkUploadText] = useState('');
+  const [bulkUploading, setBulkUploading] = useState(false);
 
   const selectedCourse = useMemo(
     () => courses.find((course) => course.id === selectedCourseId) || null,
@@ -279,7 +321,8 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
 
   const handleBulkUpdatePrice = async (event: FormEvent) => {
     event.preventDefault();
-    if (!window.confirm('Are you sure you want to update the price for ALL courses?')) return;
+    const targetText = bulkPriceType ? bulkPriceType.toUpperCase().replace(/-/g, ' ') : 'ALL';
+    if (!window.confirm(`Are you sure you want to update the price for ${targetText} courses?`)) return;
     
     setSaving(true);
     setMessage('');
@@ -288,7 +331,8 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     try {
       const response = await adminApi.bulkUpdatePrice({
         price: Number(bulkPrice),
-        oldPrice: bulkOldPrice === '' ? '' : Number(bulkOldPrice)
+        oldPrice: bulkOldPrice === '' ? '' : Number(bulkOldPrice),
+        type: bulkPriceType,
       });
       const courseData = await adminApi.getCourses();
       setCourses(courseData);
@@ -299,6 +343,81 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       setError(err.response?.data?.message || 'Unable to update bulk prices.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleInsertSampleJson = () => {
+    const typeLabel = bulkUploadType === 'business-tools' ? 'Business Tools' : (bulkUploadType === 'business-plans' ? 'Business Plan' : 'Business in the Box');
+    const sample = [
+      {
+        title: `Sample ${typeLabel} Course 1`,
+        subtitle: `Actionable playbook and system for ${typeLabel}`,
+        price: Number(bulkUploadDefaultPrice || 49.99),
+        oldPrice: Number(bulkUploadDefaultOldPrice || 99.99),
+        instructorName: bulkUploadDefaultInstructor || 'VyapariKit Team',
+        difficulty: 'Beginner',
+        pdfUrl: 'https://example.com/sample-guide.pdf'
+      },
+      {
+        title: `Sample ${typeLabel} Course 2`,
+        subtitle: `Complete framework and execution checklist`,
+        price: Number(bulkUploadDefaultPrice || 49.99),
+        oldPrice: Number(bulkUploadDefaultOldPrice || 99.99),
+        instructorName: bulkUploadDefaultInstructor || 'VyapariKit Team',
+        difficulty: 'Intermediate'
+      }
+    ];
+    setBulkUploadText(JSON.stringify(sample, null, 2));
+    setBulkUploadInputMode('json');
+  };
+
+  const handleBulkUploadSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!bulkUploadText.trim()) {
+      setError('Please provide course titles or JSON content for bulk upload.');
+      return;
+    }
+
+    setBulkUploading(true);
+    setMessage('');
+    setError('');
+
+    try {
+      let parsedCourses: any[] = [];
+
+      if (bulkUploadInputMode === 'json') {
+        try {
+          parsedCourses = JSON.parse(bulkUploadText.trim());
+          if (!Array.isArray(parsedCourses)) {
+            throw new Error('JSON input must be an array of course objects.');
+          }
+        } catch (jsonErr: any) {
+          setError(`Invalid JSON: ${jsonErr.message}`);
+          setBulkUploading(false);
+          return;
+        }
+      } else {
+        const lines = bulkUploadText.split('\n').map((l) => l.trim()).filter(Boolean);
+        parsedCourses = lines.map((title) => ({ title }));
+      }
+
+      const response = await adminApi.bulkCreateCourses({
+        type: bulkUploadType,
+        category: bulkUploadCategory,
+        defaultPrice: Number(bulkUploadDefaultPrice || 0),
+        defaultOldPrice: bulkUploadDefaultOldPrice === '' ? '' : Number(bulkUploadDefaultOldPrice),
+        defaultInstructor: bulkUploadDefaultInstructor || 'VyapariKit Team',
+        courses: parsedCourses,
+      });
+
+      const updated = await adminApi.getCourses();
+      setCourses(updated);
+      setMessage(response.message || `Successfully created ${response.createdCount} courses!`);
+      setBulkUploadText('');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Unable to perform bulk course upload.');
+    } finally {
+      setBulkUploading(false);
     }
   };
 
@@ -596,9 +715,22 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
         </form>
 
         <aside className="admin-side-tools">
-          <div className="admin-tool-panel" style={{ marginBottom: '20px' }}>
+<div className="admin-tool-panel" style={{ marginBottom: '20px' }}>
             <h2>Bulk Price Update</h2>
             <form onSubmit={handleBulkUpdatePrice} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <label>
+                Target Type Filter
+                <select
+                  value={bulkPriceType}
+                  onChange={(e) => setBulkPriceType(e.target.value)}
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', marginTop: '4px' }}
+                >
+                  <option value="">All Course Types</option>
+                  <option value="business-tools">Business Tools Only</option>
+                  <option value="business-plans">Business Plans Only</option>
+                  <option value="business-in-the-box">Business in the Box Only</option>
+                </select>
+              </label>
               <label>
                 New Price
                 <input type="number" step="0.01" value={bulkPrice} onChange={(e) => setBulkPrice(e.target.value)} required />
@@ -608,7 +740,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
                 <input type="number" step="0.01" value={bulkOldPrice} onChange={(e) => setBulkOldPrice(e.target.value)} />
               </label>
               <button className="admin-primary-btn" type="submit" disabled={saving} style={{ marginTop: '10px' }}>
-                {saving ? 'Updating...' : 'Update All Courses'}
+                {saving ? 'Updating...' : `Update Prices (${bulkPriceType ? bulkPriceType.toUpperCase().replace(/-/g, ' ') : 'ALL'})`}
               </button>
             </form>
           </div>
