@@ -11,9 +11,11 @@ export interface IUser extends Document, IAudit {
   failedLoginAttempts: number;
   lockedUntil: Date | null;
   isEmailVerified: boolean;
+  isGuest: boolean;
   verificationToken?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  passwordSetupToken?: string;
 }
 
 const UserSchema = new Schema<any>({
@@ -32,7 +34,7 @@ const UserSchema = new Schema<any>({
   },
   passwordHash: {
     type: String,
-    required: true,
+    required: false,
     select: false,
   },
   role: {
@@ -60,9 +62,14 @@ const UserSchema = new Schema<any>({
     type: Boolean,
     default: false,
   },
+  isGuest: {
+    type: Boolean,
+    default: false,
+  },
   verificationToken: String,
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  passwordSetupToken: String,
   isDeleted: AuditSchema.path('isDeleted'),
   deletedAt: AuditSchema.path('deletedAt'),
   deletedBy: AuditSchema.path('deletedBy'),

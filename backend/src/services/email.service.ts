@@ -1,6 +1,6 @@
 import { config } from '../config';
 import { Logger } from './logger.service';
-import { welcomeTemplate, verificationTemplate, passwordResetTemplate, coursePurchaseTemplate } from './email.templates';
+import { welcomeTemplate, verificationTemplate, passwordResetTemplate, coursePurchaseTemplate, guestCoursePurchaseTemplate } from './email.templates';
 
 export class EmailService {
   private static readonly BREVO_URL = 'https://api.brevo.com/v3/smtp/email';
@@ -62,6 +62,19 @@ export class EmailService {
     const frontendUrl = config.clientOrigins[0] || 'http://localhost:5173';
     const link = `${frontendUrl}/courses`;
     const html = coursePurchaseTemplate(user.name, courseTitle, link);
+    await this.send(user, `Purchase Confirmation: ${courseTitle}`, html);
+  }
+
+  static async sendGuestCoursePurchase(
+    user: { name: string; email: string },
+    courseTitle: string,
+    accessToken: string,
+    passwordSetupToken: string
+  ) {
+    const frontendUrl = config.clientOrigins[0] || 'http://localhost:5173';
+    const accessLink = `${frontendUrl}/course-access/${accessToken}`;
+    const setPasswordLink = `${frontendUrl}/set-password?token=${passwordSetupToken}`;
+    const html = guestCoursePurchaseTemplate(user.name, courseTitle, accessLink, setPasswordLink);
     await this.send(user, `Purchase Confirmation: ${courseTitle}`, html);
   }
 }

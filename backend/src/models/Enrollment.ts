@@ -6,6 +6,7 @@ export interface IEnrollment extends Document, IAudit {
   course: mongoose.Types.ObjectId;
   status: 'active' | 'revoked' | 'refunded';
   enrolledAt: Date;
+  accessToken?: string;
 }
 
 const EnrollmentSchema = new Schema<any>({
@@ -32,6 +33,10 @@ const EnrollmentSchema = new Schema<any>({
     default: Date.now,
     required: true,
   },
+  accessToken: {
+    type: String,
+    trim: true,
+  },
   isDeleted: AuditSchema.path('isDeleted'),
   deletedAt: AuditSchema.path('deletedAt'),
   deletedBy: AuditSchema.path('deletedBy'),
@@ -44,6 +49,7 @@ const EnrollmentSchema = new Schema<any>({
 EnrollmentSchema.index({ user: 1, course: 1 }, { unique: true });
 EnrollmentSchema.index({ status: 1 });
 EnrollmentSchema.index({ isDeleted: 1 });
+EnrollmentSchema.index({ accessToken: 1 }, { unique: true, sparse: true });
 
 EnrollmentSchema.pre(/^find/, function (this: mongoose.Query<any, any>, next) {
   const query = this.getQuery();

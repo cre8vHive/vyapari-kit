@@ -378,8 +378,37 @@ app.post('/api/v1/auth/register', async (req, res) => {
     return;
   }
 
-  const existingUser = await User.findOne({ email }).select('_id').lean();
+  const existingUser = await User.findOne({ email }).select('_id isGuest').lean();
   if (existingUser) {
+    if (existingUser.isGuest) {
+      // Upgrade guest user to full account
+      const sessionId = generateSessionId();
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+
+      await User.findByIdAndUpdate(existingUser._id, {
+        $set: {
+          name,
+          passwordHash: hashPassword(password),
+          role: isConfiguredAdminEmail(email) ? 'admin' : 'student',
+          isGuest: false,
+          activeSessionId: sessionId,
+          lastHeartbeat: new Date(),
+          verificationToken,
+          isEmailVerified: false,
+          passwordSetupToken: undefined,
+        },
+      });
+
+      Logger.info('Guest user upgraded to full account', { ...Logger.extractReqContext(req), userId: existingUser._id });
+
+      EmailService.sendVerification({ name, email }, verificationToken).catch(err => Logger.error('Verification email failed', err));
+
+      res.status(201).json({
+        message: 'Account activated successfully. Please check your email to verify your account.',
+      });
+      return;
+    }
+
     Logger.warn('Registration attempt with existing email', Logger.extractReqContext(req));
     res.status(409).json({ message: 'An account with this email already exists' });
     return;
@@ -597,6 +626,56 @@ app.post('/api/v1/auth/reset-password', async (req, res) => {
 
   Logger.info('Password reset successfully', { ...Logger.extractReqContext(req), userId: user._id });
   res.json({ message: 'Password has been reset successfully' });
+});
+
+app.post('/api/v1/auth/set-password', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const token = String(req.body.token || '');
+  const password = String(req.body.password || '');
+
+  if (!token || !password) {
+    res.status(400).json({ message: 'Token and password are required' });
+    return;
+  }
+
+  const user = await User.findOne({ passwordSetupToken: token }).select('+passwordHash');
+  if (!user) {
+    res.status(400).json({ message: 'Invalid or expired setup token' });
+    return;
+  }
+
+  const passwordErrors = PasswordService.validate(password, { email: user.email, name: user.name });
+  if (passwordErrors.length > 0) {
+    res.status(400).json({ message: 'Password does not meet requirements', errors: passwordErrors });
+    return;
+  }
+
+  const sessionId = generateSessionId();
+
+  user.passwordHash = hashPassword(password);
+  user.isGuest = false;
+  user.isEmailVerified = true;
+  user.passwordSetupToken = undefined;
+  user.activeSessionId = sessionId;
+  user.lastHeartbeat = new Date();
+  await user.save();
+
+  const jwt = createToken(
+    { id: String(user._id), email: user.email, name: user.name, role: user.role },
+    sessionId
+  );
+
+  Logger.info('Guest user set password and activated account', { ...Logger.extractReqContext(req), userId: user._id });
+
+  res.json({
+    message: 'Password set successfully. You are now logged in.',
+    user: publicUser(user),
+    token: jwt,
+  });
 });
 
 app.post('/api/v1/auth/logout-all', async (req, res) => {
@@ -1235,10 +1314,24 @@ app.get('/api/v1/courses/:courseId/pdf/file', requireAuth, requireActiveSession,
       return;
     }
     const safeExternalUrl = await validateExternalPdfUrl(pdf.externalUrl);
-    const response = await fetch(safeExternalUrl, {
+    let response = await fetch(safeExternalUrl, {
       redirect: 'error',
       signal: AbortSignal.timeout(config.externalPdfFetchTimeoutMs),
     });
+    if (!response.ok || !response.body) {
+      Logger.warn(`PDF not found at ${safeExternalUrl}, trying default fallback PDF`);
+      const fallbackUrl = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/uploads/pdfs/1.pdf';
+      try {
+        const fallbackResponse = await fetch(fallbackUrl, {
+          signal: AbortSignal.timeout(config.externalPdfFetchTimeoutMs),
+        });
+        if (fallbackResponse.ok && fallbackResponse.body) {
+          response = fallbackResponse;
+        }
+      } catch {
+        // ignore
+      }
+    }
     if (!response.ok || !response.body) {
       res.status(502).json({ message: 'Unable to retrieve secure PDF asset' });
       return;
@@ -1647,10 +1740,11 @@ app.post('/api/v1/courses/:courseId/verify-payment', requireAuth, requireActiveS
       .update(sign.toString())
       .digest('hex');
 
-    const isDevBypass = req.body.bypass === true;
+    if (razorpay_signature !== expectedSign) {
+      return res.status(400).json({ message: 'Invalid payment signature.' });
+    }
 
-    if (razorpay_signature === expectedSign || isDevBypass) {
-      const course = await Course.findOne({ _id: req.params.courseId, isDeleted: false }).lean();
+    const course = await Course.findOne({ _id: req.params.courseId, isDeleted: false }).lean();
       if (!course) {
         return res.status(404).json({ message: 'Course not found' });
       }
@@ -1681,12 +1775,373 @@ app.post('/api/v1/courses/:courseId/verify-payment', requireAuth, requireActiveS
       }
 
       return res.json({ message: 'Payment verified successfully.' });
-    } else {
-      return res.status(400).json({ message: 'Invalid payment signature.' });
-    }
   } catch (error) {
     Logger.error('Payment verification failed:', error);
     res.status(500).json({ message: 'Failed to verify payment.' });
+  }
+});
+
+// ── Guest Purchase Flow ──
+
+function createGuestToken(email: string, courseId: string): string {
+  const payload = JSON.stringify({ email, courseId, exp: Date.now() + 15 * 60 * 1000 });
+  const encoded = Buffer.from(payload).toString('base64url');
+  const sig = crypto.createHmac('sha256', config.authSecret || 'local-development-auth-secret')
+    .update(encoded).digest('base64url');
+  return `${encoded}.${sig}`;
+}
+
+function verifyGuestToken(token: string): { email: string; courseId: string } | null {
+  try {
+    const [encoded, sig] = token.split('.');
+    if (!encoded || !sig) return null;
+    const expectedSig = crypto.createHmac('sha256', config.authSecret || 'local-development-auth-secret')
+      .update(encoded).digest('base64url');
+    if (sig !== expectedSig) return null;
+    const payload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+    if (!payload.email || !payload.courseId || payload.exp < Date.now()) return null;
+    return { email: payload.email, courseId: payload.courseId };
+  } catch {
+    return null;
+  }
+}
+
+app.post('/api/v1/courses/:courseId/guest-purchase', async (req, res) => {
+  try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({ message: 'Database is not connected' });
+    }
+
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const name = String(req.body.name || '').trim() || 'Guest User';
+    const courseId = String(req.params.courseId);
+
+    if (!emailPattern.test(email)) {
+      return res.status(400).json({ message: 'A valid email is required' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(courseId)) {
+      return res.status(400).json({ message: 'Invalid course ID' });
+    }
+
+    const course = await Course.findOne({ _id: courseId, isPublished: true, isDeleted: { $ne: true } }).lean();
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Check if already enrolled
+    const existingUser = await User.findOne({ email }).select('_id').lean();
+    if (existingUser) {
+      const existingEnrollment = await Enrollment.findOne({
+        user: existingUser._id,
+        course: courseId,
+        status: 'active',
+      }).select('_id').lean();
+      if (existingEnrollment) {
+        return res.status(409).json({ message: 'You are already enrolled in this course.' });
+      }
+    }
+
+    if (!config.razorpayKeyId || !config.razorpayKeySecret) {
+      return res.status(500).json({ message: 'Payment gateway is not configured.' });
+    }
+
+    const priceAmount = Number(course.price) * 100;
+    const instance = new Razorpay({
+      key_id: config.razorpayKeyId,
+      key_secret: config.razorpayKeySecret,
+    });
+
+    const order = await instance.orders.create({
+      amount: Math.round(priceAmount),
+      currency: 'INR',
+      receipt: `rcpt_guest_${Date.now()}`,
+    });
+
+    const guestToken = createGuestToken(email, courseId);
+
+    Logger.info('Guest purchase order created', { email, courseId, orderId: order.id });
+
+    res.json({
+      ...order,
+      guestToken,
+    });
+  } catch (error) {
+    Logger.error('Guest order creation failed:', error);
+    res.status(500).json({ message: 'Failed to initiate payment.' });
+  }
+});
+
+app.post('/api/v1/courses/:courseId/guest-verify-payment', async (req, res) => {
+  try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({ message: 'Database is not connected' });
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, guestToken } = req.body;
+
+    if (!guestToken) {
+      return res.status(400).json({ message: 'Guest token is required' });
+    }
+
+    const guestData = verifyGuestToken(guestToken);
+    if (!guestData) {
+      return res.status(400).json({ message: 'Invalid or expired guest token' });
+    }
+
+    const courseId = String(req.params.courseId);
+    if (guestData.courseId !== courseId) {
+      return res.status(400).json({ message: 'Token does not match course' });
+    }
+
+    if (!config.razorpayKeySecret) {
+      return res.status(500).json({ message: 'Payment gateway is not configured.' });
+    }
+
+    // Verify Razorpay signature
+    const sign = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac('sha256', config.razorpayKeySecret)
+      .update(sign.toString())
+      .digest('hex');
+
+    if (razorpay_signature !== expectedSign) {
+      return res.status(400).json({ message: 'Invalid payment signature.' });
+    }
+
+    const course = await Course.findOne({ _id: courseId, isDeleted: { $ne: true } }).lean();
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+
+    // Find or create guest user
+    let user = await User.findOne({ email: guestData.email }).select('_id name email isGuest passwordSetupToken');
+    const passwordSetupToken = crypto.randomBytes(32).toString('hex');
+
+    if (!user) {
+      user = await User.create({
+        name: req.body.name || 'Guest User',
+        email: guestData.email,
+        role: 'student',
+        isGuest: true,
+        isEmailVerified: false,
+        passwordSetupToken,
+      });
+      Logger.info('Guest user auto-created', { email: guestData.email, userId: user._id });
+    } else if (user.isGuest && !user.passwordSetupToken) {
+      // Update password setup token for existing guest
+      user.passwordSetupToken = passwordSetupToken;
+      await user.save();
+    }
+
+    // Create enrollment with access token
+    const accessToken = crypto.randomBytes(32).toString('hex');
+
+    await Enrollment.findOneAndUpdate(
+      { user: user._id, course: course._id },
+      {
+        $set: {
+          user: user._id,
+          course: course._id,
+          status: 'active',
+          enrolledAt: new Date(),
+          accessToken,
+          isDeleted: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    // Send guest purchase email
+    const effectiveToken = user.passwordSetupToken || passwordSetupToken;
+    try {
+      await EmailService.sendGuestCoursePurchase(
+        { name: user.name, email: user.email },
+        course.title,
+        accessToken,
+        effectiveToken
+      );
+    } catch (err) {
+      Logger.error('Failed to send guest course purchase email', err);
+    }
+
+    const frontendUrl = config.clientOrigins[0] || 'http://localhost:5173';
+    const accessUrl = `${frontendUrl}/course-access/${accessToken}`;
+
+    Logger.info('Guest payment verified and enrolled', { email: guestData.email, courseId });
+
+    return res.json({ message: 'Payment verified successfully.', accessUrl });
+  } catch (error) {
+    Logger.error('Guest payment verification failed:', error);
+    res.status(500).json({ message: 'Failed to verify payment.' });
+  }
+});
+
+// ── Token-based Course Access (for guest users) ──
+
+app.get('/api/v1/courses/access/:accessToken', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const accessToken = String(req.params.accessToken);
+  if (!accessToken || accessToken.length < 32) {
+    res.status(400).json({ message: 'Invalid access token' });
+    return;
+  }
+
+  const enrollment = await Enrollment.findOne({ accessToken, status: 'active' })
+    .populate('user', 'name email')
+    .populate('course')
+    .lean();
+
+  if (!enrollment || !enrollment.user || !enrollment.course) {
+    res.status(404).json({ message: 'Invalid or revoked access link. Please contact support.' });
+    return;
+  }
+
+  const course = enrollment.course as any;
+  const user = enrollment.user as any;
+
+  if (!course.isPublished) {
+    res.status(404).json({ message: 'This course is no longer available.' });
+    return;
+  }
+
+  const pdf = await CoursePdf.findOne({ course: course._id }).select('filename fileSize storageType').lean();
+  if (!pdf) {
+    res.status(404).json({ message: 'No PDF is attached to this course' });
+    return;
+  }
+
+  await logPdfAccess(req, String(user._id), String(course._id), 'manifest');
+
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    course: publicCourse(course),
+    pdf: {
+      filename: pdf.filename,
+      fileSize: pdf.fileSize,
+      streamUrl: `/api/v1/courses/access/${accessToken}/file`,
+    },
+    watermark: {
+      name: user.name || 'Guest',
+      email: user.email,
+      userId: String(user._id),
+      courseName: course.title,
+      issuedAt: new Date().toISOString(),
+    },
+  });
+});
+
+app.get('/api/v1/courses/access/:accessToken/file', async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const accessToken = String(req.params.accessToken);
+  if (!accessToken || accessToken.length < 32) {
+    res.status(400).json({ message: 'Invalid access token' });
+    return;
+  }
+
+  const enrollment = await Enrollment.findOne({ accessToken, status: 'active' })
+    .select('user course')
+    .lean();
+
+  if (!enrollment) {
+    res.status(404).json({ message: 'Invalid or revoked access link.' });
+    return;
+  }
+
+  const course = await Course.findOne({ _id: enrollment.course, isPublished: true }).select('_id title').lean();
+  if (!course) {
+    res.status(404).json({ message: 'Course not found' });
+    return;
+  }
+
+  const pdf = await CoursePdf.findOne({ course: course._id }).select('+data +externalUrl filename mimeType fileSize storageType').lean();
+  if (!pdf) {
+    res.status(404).json({ message: 'No PDF is attached to this course' });
+    return;
+  }
+
+  await logPdfAccess(req, String(enrollment.user), String(course._id), 'stream');
+
+  if (pdf.storageType === 'external') {
+    if (!pdf.externalUrl) {
+      res.status(404).json({ message: 'PDF URL is missing' });
+      return;
+    }
+    const safeExternalUrl = await validateExternalPdfUrl(pdf.externalUrl);
+    let response = await fetch(safeExternalUrl, {
+      redirect: 'error',
+      signal: AbortSignal.timeout(config.externalPdfFetchTimeoutMs),
+    });
+    if (!response.ok || !response.body) {
+      Logger.warn(`Guest PDF not found at ${safeExternalUrl}, trying default fallback PDF`);
+      const fallbackUrl = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/uploads/pdfs/1.pdf';
+      try {
+        const fallbackResponse = await fetch(fallbackUrl, {
+          signal: AbortSignal.timeout(config.externalPdfFetchTimeoutMs),
+        });
+        if (fallbackResponse.ok && fallbackResponse.body) {
+          response = fallbackResponse;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (!response.ok || !response.body) {
+      res.status(502).json({ message: 'Unable to retrieve secure PDF asset' });
+      return;
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    const contentLength = response.headers.get('content-length');
+    if (contentLength) {
+      res.setHeader('Content-Length', contentLength);
+    }
+    res.setHeader('Content-Disposition', `inline; filename="${safePdfFilename(pdf.filename)}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    const readable = Readable.fromWeb(response.body as any);
+    readable.on('error', (err) => {
+      console.warn('PDF stream interrupted:', err.message);
+      if (!res.writableEnded) res.end();
+    });
+    res.on('close', () => {
+      readable.destroy();
+    });
+    readable.pipe(res);
+    return;
+  } else if (pdf.data) {
+    const storedBuffer = pdfDataToBuffer(pdf.data);
+    if (!storedBuffer) {
+      res.status(500).json({ message: 'Stored PDF data could not be read' });
+      return;
+    }
+    if (storedBuffer.length > config.maxPdfUploadBytes || storedBuffer.subarray(0, 5).toString('utf8') !== '%PDF-') {
+      res.status(502).json({ message: 'Secure PDF asset failed validation' });
+      return;
+    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', String(storedBuffer.length));
+    res.setHeader('Content-Disposition', `inline; filename="${safePdfFilename(pdf.filename)}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(storedBuffer);
+  } else {
+    res.status(404).json({ message: 'PDF data is missing' });
   }
 });
 

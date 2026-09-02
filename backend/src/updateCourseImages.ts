@@ -61,7 +61,7 @@ async function main() {
     const number = courseBlocks[i];
     const block = courseBlocks[i + 1];
 
-    const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+    const lines = block.split('\n').map((l: string) => l.trim()).filter((l: string) => l);
 
     let currentSection = '';
     let title = '';

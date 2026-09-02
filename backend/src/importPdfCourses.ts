@@ -28,7 +28,7 @@ async function main() {
   console.log(`Found ${courseBlocks.length} courses to parse.`);
 
   for (const block of courseBlocks) {
-    const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+    const lines = block.split('\n').map((l: string) => l.trim()).filter((l: string) => l);
 
     const courseObj: any = {
       isPublished: true,

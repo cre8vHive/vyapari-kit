@@ -298,6 +298,10 @@ export const authApi = {
     const response = await apiClient.post<AuthResponse & { message: string }>('/auth/verify-email', { token });
     return response.data;
   },
+  setPassword: async (payload: { token: string; password: string }): Promise<AuthResponse & { message: string }> => {
+    const response = await apiClient.post<AuthResponse & { message: string }>('/auth/set-password', payload);
+    return response.data;
+  },
 };
 
 export const uploadApi = {
@@ -339,7 +343,25 @@ export const paymentApi = {
   verifyPayment: async (courseId: string, payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }): Promise<{ message: string }> => {
     const response = await apiClient.post<{ message: string }>(`/courses/${courseId}/verify-payment`, payload);
     return response.data;
-  }
+  },
+  createGuestOrder: async (courseId: string, email: string, name?: string): Promise<any> => {
+    const response = await apiClient.post(`/courses/${courseId}/guest-purchase`, { email, name });
+    return response.data;
+  },
+  verifyGuestPayment: async (
+    courseId: string,
+    payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; guestToken: string }
+  ): Promise<{ message: string; accessUrl: string }> => {
+    const response = await apiClient.post<{ message: string; accessUrl: string }>(`/courses/${courseId}/guest-verify-payment`, payload);
+    return response.data;
+  },
+};
+
+export const guestAccessApi = {
+  getManifest: async (accessToken: string): Promise<PdfViewerManifest> => {
+    const response = await apiClient.get<PdfViewerManifest>(`/courses/access/${accessToken}`);
+    return response.data;
+  },
 };
 
 export interface BulkCoursePayload {

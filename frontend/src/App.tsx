@@ -9,6 +9,8 @@ import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 import ImageAssets from './pages/ImageAssets';
 import Footer from './components/Footer';
+import GuestCourseAccess from './pages/GuestCourseAccess';
+import SetPassword from './pages/SetPassword';
 import { AuthUser, authApi } from './services/api';
 import vyapaarKitLogo from './assets/vyapaar-kit-logo.jpg';
 
@@ -112,6 +114,7 @@ const App: React.FC = () => {
   const withBase = (path: string) => `${basePath}${path}`;
   const courseViewerMatch = path.match(/^\/courses\/([^/]+)\/viewer$/);
   const courseDetailMatch = path.match(/^\/courses\/([^/]+)\/?$/);
+  const courseAccessMatch = path.match(/^\/course-access\/([^/]+)\/?$/);
   const isActivePath = (href: string) => href === '/'
     ? path === '/'
     : path === href || path.startsWith(`${href}/`);
@@ -187,14 +190,16 @@ const App: React.FC = () => {
         {path.startsWith('/forgot-password') && <AuthPage mode="forgot-password" onAuth={handleAuth} />}
         {path.startsWith('/reset-password') && <AuthPage mode="reset-password" onAuth={handleAuth} />}
         {path.startsWith('/verify-email') && <AuthPage mode="verify-email" onAuth={handleAuth} />}
+        {path.startsWith('/set-password') && <SetPassword onAuth={handleAuth} />}
         {path.startsWith('/admin') && <AdminDashboard user={user} />}
+        {courseAccessMatch && <GuestCourseAccess accessToken={courseAccessMatch[1]} />}
         {courseViewerMatch && <PdfViewer courseId={courseViewerMatch[1]} />}
-        {courseDetailMatch && !courseViewerMatch && <CourseDetailPage courseIdOrSlug={decodeURIComponent(courseDetailMatch[1])} />}
-        {!path.startsWith('/admin') && !courseViewerMatch && !courseDetailMatch && path.startsWith('/courses') && <CourseListing />}
+        {courseDetailMatch && !courseViewerMatch && !courseAccessMatch && <CourseDetailPage courseIdOrSlug={decodeURIComponent(courseDetailMatch[1])} />}
+        {!path.startsWith('/admin') && !courseViewerMatch && !courseDetailMatch && !courseAccessMatch && path.startsWith('/courses') && <CourseListing />}
         {path === '/about-us' && <AboutUs />}
         {path === '/contact-us' && <ContactUs />}
         {path === '/testimonial-images' && <ImageAssets />}
-        {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password') && !path.startsWith('/verify-email') && !path.startsWith('/courses') && path !== '/about-us' && path !== '/contact-us' && path !== '/testimonial-images' && <Home user={user} />}
+        {!path.startsWith('/admin') && !path.startsWith('/login') && !path.startsWith('/register') && !path.startsWith('/forgot-password') && !path.startsWith('/reset-password') && !path.startsWith('/verify-email') && !path.startsWith('/set-password') && !path.startsWith('/courses') && !courseAccessMatch && path !== '/about-us' && path !== '/contact-us' && path !== '/testimonial-images' && <Home user={user} />}
       </main>
 
       <Footer />

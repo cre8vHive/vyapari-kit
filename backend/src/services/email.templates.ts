@@ -63,3 +63,17 @@ export const coursePurchaseTemplate = (name: string, courseTitle: string, link: 
   <a href="${link}" class="btn">Go to My Courses</a>
   <p>Happy learning!</p>
 `);
+
+export const guestCoursePurchaseTemplate = (name: string, courseTitle: string, accessLink: string, setPasswordLink: string) => baseTemplate(`
+  <h2 style="margin-top: 0;">Purchase Successful!</h2>
+  <p>Hi ${name || 'there'},</p>
+  <p>Thank you for purchasing <strong>${courseTitle}</strong>. Your course is ready to access!</p>
+  <a href="${accessLink}" class="btn">Access Your Course</a>
+  <p>Or copy and paste this link into your browser:</p>
+  <p style="word-break: break-all; color: #4f46e5;">${accessLink}</p>
+  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+  <h3 style="margin-top: 0;">Set Up Your Account</h3>
+  <p>Want to manage your purchases and access all your courses from one place? Set a password to activate your full account:</p>
+  <a href="${setPasswordLink}" class="btn" style="background-color: #059669;">Set Your Password</a>
+  <p style="font-size: 13px; color: #6b7280;">You can always set your password later — your course access link above will continue to work.</p>
+`);
