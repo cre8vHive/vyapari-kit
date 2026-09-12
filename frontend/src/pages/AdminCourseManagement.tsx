@@ -19,6 +19,7 @@ interface CourseFormState {
   pdfUrl: string;
   pdfFile: File | null;
   subtitle: string;
+  editionNote: string;
   language: string;
   includes: string;
   learningHighlights: string;
@@ -43,6 +44,7 @@ const emptyCourseForm: CourseFormState = {
   pdfUrl: '',
   pdfFile: null,
   subtitle: '',
+  editionNote: '',
   language: '',
   includes: '',
   learningHighlights: '',
@@ -77,6 +79,7 @@ function courseToForm(course: AdminCourse): CourseFormState {
     pdfUrl: '',
     pdfFile: null,
     subtitle: course.subtitle || '',
+    editionNote: course.editionNote || '',
     language: course.language || '',
     includes: course.includes?.join('\\n') || '',
     learningHighlights: course.learningHighlights?.join('\\n') || '',
@@ -230,6 +233,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       imageUrl: form.imageUrl,
       isPublished: form.isPublished,
       subtitle: form.subtitle,
+      editionNote: form.editionNote?.trim() || '',
       language: form.language,
       includes: form.includes.split('\\n').map(s => s.trim()).filter(Boolean),
       learningHighlights: form.learningHighlights.split('\\n').map(s => s.trim()).filter(Boolean),
@@ -630,6 +634,17 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
           <label className="admin-full-field">
             Subtitle
             <input value={form.subtitle} onChange={(event) => updateForm('subtitle', event.target.value)} />
+          </label>
+          <label className="admin-full-field">
+            Edition Note / Badge (e.g. "Updated 2026 edition")
+            <input 
+              value={form.editionNote} 
+              onChange={(event) => updateForm('editionNote', event.target.value)} 
+              placeholder="e.g. Updated 2026 edition"
+            />
+            <small style={{ color: 'var(--color-muted)', display: 'block', marginTop: '4px' }}>
+              Displayed on the course/kit sales page and thumbnail. Leave empty to hide.
+            </small>
           </label>
           <label className="admin-full-field">
             Language

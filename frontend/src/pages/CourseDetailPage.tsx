@@ -132,6 +132,7 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
       old: oldPrice,
     },
     thumbnail: course.bannerImage || course.thumbnail || course.imageUrl,
+    editionNote: course.editionNote || '',
     includes,
     learningHighlights: highlights,
     description: descriptionOrFallback(course),

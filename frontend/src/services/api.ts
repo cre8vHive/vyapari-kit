@@ -126,6 +126,7 @@ export interface CourseSummary {
   description?: string | string[];
   thumbnail?: string;
   bannerImage?: string;
+  editionNote?: string;
   duration?: string;
   lessons?: number;
   certificate?: boolean;
@@ -212,6 +213,7 @@ export interface CourseSavePayload {
   imageUrl: string;
   isPublished: boolean;
   subtitle?: string;
+  editionNote?: string;
   language?: string;
   includes?: string[];
   learningHighlights?: string[];

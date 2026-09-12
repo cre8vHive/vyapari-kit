@@ -39,16 +39,16 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
         sectionTitle: "Popular Courses",
         courses: [
           {
-            id: '4',
-            slug: 'digital-marketing-course',
-            title: 'The Complete Digital Marketing Course',
-            instructorName: 'Onecontributor',
-            categoryName: 'Marketing',
+            id: '1',
+            slug: 'business-in-a-box-complete-entrepreneur',
+            title: 'Business-in-a-Box | MSME Entrepreneur Toolkit & DPR (2026)',
+            instructorName: 'VyapaarKit Experts',
+            categoryName: 'Business in the Box',
             difficulty: 'Beginner',
-            price: 18.99,
-            oldPrice: 20.99,
-            rating: 4.6,
-            imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80'
+            price: 199,
+            oldPrice: 1999,
+            rating: 4.9,
+            imageUrl: '/images/products/vyapaarkit-bundle-hero.jpg'
           },
           {
             id: '5',
@@ -60,7 +60,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             price: 18.99,
             oldPrice: 30.99,
             rating: 4.8,
-            imageUrl: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80'
+            imageUrl: '/images/products/vyapaarkit-financial-model.jpg'
           },
           {
             id: '6',

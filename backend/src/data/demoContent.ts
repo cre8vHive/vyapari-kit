@@ -43,10 +43,11 @@ export const courses = [
     instructorName: 'VyapaarKit Experts',
     categoryName: 'Business in the Box',
     difficulty: 'Beginner' as const,
-    price: 49.99,
-    oldPrice: 99.99,
+    price: 199,
+    oldPrice: 1999,
     rating: 4.9,
-    imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80'
+    imageUrl: '/images/products/vyapaarkit-bundle-hero.jpg',
+    editionNote: 'UPDATED 2026 EDITION'
   },
   {
     id: '2',

@@ -115,6 +115,7 @@ function publicCourse(course: any) {
     curriculum: course.curriculum,
     faqs: course.faqs,
     reviews: course.reviews,
+    editionNote: course.editionNote || '',
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
   };
@@ -152,6 +153,7 @@ function courseInput(body: any) {
     imageUrl: String(body.imageUrl || '').trim(),
     isPublished: body.isPublished !== false,
     subtitle: typeof body.subtitle === 'string' ? body.subtitle.trim() : undefined,
+    editionNote: typeof body.editionNote === 'string' ? body.editionNote.trim() : '',
     language: typeof body.language === 'string' ? body.language.trim() : undefined,
     includes: Array.isArray(body.includes) ? body.includes : undefined,
     learningHighlights: Array.isArray(body.learningHighlights) ? body.learningHighlights : undefined,

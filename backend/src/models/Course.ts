@@ -22,6 +22,7 @@ export interface ICourse extends Document, IAudit {
   requirements?: string[];
   audience?: string[];
   faqs?: { question: string; answer: string }[];
+  editionNote?: string;
 }
 
 const LessonSchema = new Schema({
@@ -96,6 +97,7 @@ const CourseSchema = new Schema<any>({
   description: { type: Schema.Types.Mixed },
   thumbnail: { type: String, trim: true },
   bannerImage: { type: String, trim: true },
+  editionNote: { type: String, trim: true, default: '' },
   duration: { type: String, trim: true },
   lessons: { type: Number, min: 0 },
   language: { type: String, trim: true },

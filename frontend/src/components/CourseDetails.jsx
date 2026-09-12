@@ -9,6 +9,72 @@ import RelatedCourses from './RelatedCourses';
 import StickyPurchaseCard from './StickyPurchaseCard';
 import { paymentApi } from '../services/api';
 
+const MobileStickyBuyBar = ({ course, onPurchase }) => {
+  const currentPrice = typeof course.price === 'object'
+    ? course.price?.current
+    : (typeof course.price === 'number' ? `₹${course.price}` : String(course.price || ''));
+
+  const oldPrice = typeof course.price === 'object'
+    ? course.price?.old
+    : (course.oldPrice ? `₹${course.oldPrice}` : null);
+
+  const thumbnail = course.thumbnail && !course.thumbnail.includes('unsplash')
+    ? course.thumbnail
+    : '/images/products/vyapaarkit-bundle-hero.jpg';
+
+  const formatDisplayAmount = (priceVal) => {
+    if (!priceVal) return '';
+    const num = parseFloat(String(priceVal).replace(/[^0-9.]/g, ''));
+    if (isNaN(num)) return priceVal;
+    return `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const formattedCurPrice = formatDisplayAmount(currentPrice) || currentPrice;
+  const formattedOldPrice = formatDisplayAmount(oldPrice) || oldPrice;
+
+  let discountPercentage = null;
+  if (currentPrice && oldPrice) {
+    const curVal = parseFloat(String(currentPrice).replace(/[^0-9.]/g, ''));
+    const oldVal = parseFloat(String(oldPrice).replace(/[^0-9.]/g, ''));
+    if (!isNaN(curVal) && !isNaN(oldVal) && oldVal > curVal && curVal > 0) {
+      discountPercentage = Math.round(((oldVal - curVal) / oldVal) * 100);
+    }
+  }
+
+  return (
+    <aside className="mobile-sticky-buy-bar" aria-label="Mobile quick purchase">
+      <div className="mobile-sticky-top-row">
+        <img
+          src={thumbnail}
+          alt={course.title}
+          className="mobile-sticky-thumb"
+        />
+        <div className="mobile-sticky-info">
+          <h4 className="mobile-sticky-title">{course.title}</h4>
+          <div className="mobile-sticky-prices">
+            {formattedOldPrice && (
+              <span className="mobile-sticky-old-price">{formattedOldPrice}</span>
+            )}
+            <span className="mobile-sticky-cur-price">{formattedCurPrice}</span>
+            {discountPercentage && (
+              <span className="mobile-sticky-discount-badge">{discountPercentage}% OFF</span>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="mobile-sticky-actions">
+        <button
+          type="button"
+          className="mobile-sticky-cta-btn"
+          onClick={onPurchase}
+        >
+          Enroll Now
+        </button>
+      </div>
+    </aside>
+  );
+};
+
 const CourseDetails = ({ course, onBack }) => {
   const goBack = onBack || (() => {
     window.location.href = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses`;
@@ -298,6 +364,9 @@ const CourseDetails = ({ course, onBack }) => {
           </div>
         </div>
       )}
+
+      {/* Persistent Mobile Bottom Sticky Buy / Enroll Bar */}
+      <MobileStickyBuyBar course={course} onPurchase={handlePurchase} />
     </div>
   );
 };
