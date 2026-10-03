@@ -258,7 +258,7 @@ export const GuestCourseAccess: React.FC<GuestCourseAccessProps> = ({ accessToke
           <h1>Access Unavailable</h1>
           <p style={{ maxWidth: '400px', margin: '0 auto', lineHeight: 1.6 }}>{error || 'This access link is invalid or has been revoked.'}</p>
           <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="/courses" className="btn btn-primary" style={{ textDecoration: 'none' }}>Browse Courses</a>
+            <a href="/courses" className="btn btn-primary" style={{ textDecoration: 'none' }}>Browse Business Solutions</a>
             <a href="/contact-us" className="btn btn-secondary" style={{ textDecoration: 'none' }}>Contact Support</a>
           </div>
         </div>

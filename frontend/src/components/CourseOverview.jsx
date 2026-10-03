@@ -17,7 +17,7 @@ const CourseOverview = ({ course }) => {
         </div>
 
         <div>
-          <h2>Course description</h2>
+          <h2>Solution description</h2>
           {course.description.map((paragraph, index) => (
             <p key={index}>{paragraph}</p>
           ))}

@@ -11,12 +11,35 @@ import ImageAssets from './pages/ImageAssets';
 import Footer from './components/Footer';
 import GuestCourseAccess from './pages/GuestCourseAccess';
 import SetPassword from './pages/SetPassword';
+import CartDrawer from './components/CartDrawer';
+import { CartProvider, useCart } from './context/CartContext';
 import { AuthUser, authApi } from './services/api';
 import vyapaarKitLogo from './assets/vyapaar-kit-logo.jpg';
 
 const HEARTBEAT_INTERVAL_MS = 30_000; // 30 seconds
 
-const App: React.FC = () => {
+const HeaderCartButton: React.FC = () => {
+  const { totalCount, toggleCart } = useCart();
+
+  return (
+    <button
+      className="site-cart-btn"
+      type="button"
+      onClick={toggleCart}
+      aria-label={`Shopping Cart with ${totalCount} items`}
+      title="View Cart"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
+      {totalCount > 0 && <span className="site-cart-badge">{totalCount}</span>}
+    </button>
+  );
+};
+
+const AppContent: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [user, setUser] = useState<AuthUser | null>(() => {
     const storedUser = localStorage.getItem('VyapaarKit_auth_user');
@@ -167,22 +190,25 @@ const App: React.FC = () => {
         </button>
         <nav id="primary-navigation" className={`site-nav${isMenuOpen ? ' is-open' : ''}`} aria-label="Primary navigation">
           <a href={withBase('/')} aria-current={isActivePath('/') ? 'page' : undefined}>Home</a>
-          <a href={withBase('/courses')} aria-current={isActivePath('/courses') ? 'page' : undefined}>Course</a>
+          <a href={withBase('/courses')} aria-current={isActivePath('/courses') ? 'page' : undefined}>Business Solutions</a>
           <a href={withBase('/about-us')} aria-current={isActivePath('/about-us') ? 'page' : undefined}>About Us</a>
           <a href={withBase('/contact-us')} aria-current={isActivePath('/contact-us') ? 'page' : undefined}>Contact Us</a>
           {user?.role === 'admin' && <a href={withBase('/admin')}>Admin</a>}
         </nav>
-        {user ? (
-          <div className="site-actions site-user-actions" aria-label="Account actions">
-            <span className="site-user-name">{user.name}</span>
-            <button className="site-action site-action-secondary" type="button" onClick={handleLogout}>Logout</button>
-          </div>
-        ) : (
-          <div className="site-actions" aria-label="Account actions">
-            <a className="site-action site-action-secondary" href={withBase('/login')}>Login</a>
-            <a className="site-action site-action-primary" href={withBase('/register')}>Register</a>
-          </div>
-        )}
+        <div className="site-actions-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
+          {user ? (
+            <div className="site-actions site-user-actions" aria-label="Account actions">
+              <span className="site-user-name">{user.name}</span>
+              <button className="site-action site-action-secondary" type="button" onClick={handleLogout}>Logout</button>
+            </div>
+          ) : (
+            <div className="site-actions" aria-label="Account actions">
+              <a className="site-action site-action-secondary" href={withBase('/login')}>Login</a>
+              <a className="site-action site-action-primary" href={withBase('/register')}>Register</a>
+            </div>
+          )}
+          <HeaderCartButton />
+        </div>
       </header>
       <main>
         {path.startsWith('/login') && <AuthPage mode="login" onAuth={handleAuth} />}
@@ -203,6 +229,7 @@ const App: React.FC = () => {
       </main>
 
       <Footer />
+      <CartDrawer />
 
       {/* ── Session Expired Modal ── */}
       {sessionExpired && (
@@ -229,6 +256,14 @@ const App: React.FC = () => {
         </div>
       )}
     </>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <CartProvider>
+      <AppContent />
+    </CartProvider>
   );
 };
 

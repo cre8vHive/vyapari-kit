@@ -6,6 +6,7 @@ export interface ICourse extends Document, IAudit {
   slug: string;
   instructorName: string;
   categoryName: string;
+  packageType: 'business-plans' | 'business-tools' | 'business-in-the-box';
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   price: number;
   oldPrice?: number;
@@ -66,6 +67,12 @@ const CourseSchema = new Schema<any>({
     type: String,
     required: [true, 'Category name is required'],
     trim: true,
+  },
+  packageType: {
+    type: String,
+    enum: ['business-plans', 'business-tools', 'business-in-the-box'],
+    default: 'business-plans',
+    required: true,
   },
   difficulty: {
     type: String,
@@ -148,7 +155,9 @@ const CourseSchema = new Schema<any>({
 });
 
 CourseSchema.index({ slug: 1 }, { unique: true });
+CourseSchema.index({ packageType: 1 });
 CourseSchema.index({ categoryName: 1 });
+CourseSchema.index({ packageType: 1, categoryName: 1 });
 CourseSchema.index({ title: 'text' }, { language_override: 'dummyLanguageField' });
 CourseSchema.index({ isDeleted: 1 });
 

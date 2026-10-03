@@ -9,6 +9,7 @@ interface CourseFormState {
   title: string;
   instructorName: string;
   categoryName: string;
+  packageType: 'business-plans' | 'business-tools' | 'business-in-the-box' | string;
   difficulty: string;
   price: string;
   oldPrice: string;
@@ -34,6 +35,7 @@ const emptyCourseForm: CourseFormState = {
   title: '',
   instructorName: '',
   categoryName: '',
+  packageType: 'business-plans',
   difficulty: 'Beginner',
   price: '0',
   oldPrice: '',
@@ -69,6 +71,7 @@ function courseToForm(course: AdminCourse): CourseFormState {
     title: course.title,
     instructorName: course.instructorName,
     categoryName: course.categoryName,
+    packageType: course.packageType || 'business-plans',
     difficulty: course.difficulty,
     price: String(course.price),
     oldPrice: course.oldPrice === undefined ? '' : String(course.oldPrice),
@@ -91,35 +94,20 @@ function courseToForm(course: AdminCourse): CourseFormState {
   };
 }
 
+const UNIFIED_ADMIN_SUBCATEGORIES = [
+  { label: 'All Subcategories', value: '' },
+  { label: 'Agriculture', value: 'Agriculture' },
+  { label: 'Commerce', value: 'Commerce' },
+  { label: 'Digital', value: 'Digital' },
+  { label: 'F&B', value: 'F&B' },
+  { label: 'Manufacturing', value: 'Manufacturing' },
+  { label: 'Services', value: 'Services' },
+];
+
 const BULK_TYPE_CATEGORIES: Record<string, { label: string; value: string }[]> = {
-  'business-tools': [
-    { label: 'All Business Tools Subcategories', value: '' },
-    { label: 'Strategy & Launch', value: 'strategy-and-launch' },
-    { label: 'Marketing & Sales', value: 'marketing-and-sales' },
-    { label: 'E-Commerce & Digital Commerce', value: 'e-commerce-and-digital-commerce' },
-    { label: 'Finance & Profitability', value: 'finance-and-profitability' },
-    { label: 'Supply Chain & Operations', value: 'supply-chain-and-operations' },
-    { label: 'Operations, SOP & Automation', value: 'operations-sop-and-automation' },
-    { label: 'HR & Team Management', value: 'hr-and-team-management' },
-    { label: 'Franchise & Scaling', value: 'franchise-and-scaling' },
-  ],
-  'business-plans': [
-    { label: 'All Business Plans Subcategories', value: '' },
-    { label: 'Manufacturing, FMCG & Industrial', value: 'manufacturing-fmcg-and-industrial' },
-    { label: 'Food, Agriculture & Compliance', value: 'food-agriculture-and-compliance' },
-    { label: 'Digital, E-Commerce & Media', value: 'digital-e-commerce-and-media' },
-    { label: 'Retail & Personal Services', value: 'retail-and-personal-services' },
-    { label: 'Strategy & Growth Playbooks', value: 'strategy-and-growth-playbooks' },
-  ],
-  'business-in-the-box': [
-    { label: 'All Business in the Box Subcategories', value: '' },
-    { label: 'Food & Beverage', value: 'food-and-beverage' },
-    { label: 'Agriculture & Livestock', value: 'agriculture-and-livestock' },
-    { label: 'Services & Events', value: 'services-and-events' },
-    { label: 'Health, Wellness & Beauty', value: 'health-wellness-and-beauty' },
-    { label: 'Technology & AI', value: 'technology-and-ai' },
-    { label: 'Master Toolkit', value: 'master-toolkit' },
-  ],
+  'business-tools': UNIFIED_ADMIN_SUBCATEGORIES,
+  'business-plans': UNIFIED_ADMIN_SUBCATEGORIES,
+  'business-in-the-box': UNIFIED_ADMIN_SUBCATEGORIES,
 };
 
 export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ user }) => {
@@ -226,6 +214,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       title: form.title,
       instructorName: form.instructorName,
       categoryName: form.categoryName,
+      packageType: form.packageType || 'business-plans',
       difficulty: form.difficulty,
       price: Number(form.price || 0),
       oldPrice: form.oldPrice === '' ? '' : Number(form.oldPrice),
@@ -351,7 +340,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
   };
 
   const handleInsertSampleJson = () => {
-    const typeLabel = bulkUploadType === 'business-tools' ? 'Business Tools' : (bulkUploadType === 'business-plans' ? 'Business Plan' : 'Business in the Box');
+    const typeLabel = bulkUploadType === 'business-tools' ? 'Business Playbooks' : (bulkUploadType === 'business-plans' ? 'Business Plan' : 'Business in the Box');
     const sample = [
       {
         title: `Sample ${typeLabel} Course 1`,
@@ -531,22 +520,22 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       )}
 
       <div className="admin-layout">
-        <aside className="admin-course-list" aria-label="Courses">
+        <aside className="admin-course-list" aria-label="Business Solutions">
           <div className="admin-panel-heading">
-            <h2>Courses</h2>
+            <h2>Business Solutions</h2>
             <span>{filteredCourses.length} / {courses.length}</span>
           </div>
-          <div className="admin-course-filters" aria-label="Filter courses">
+          <div className="admin-course-filters" aria-label="Filter business solutions">
             <input
               value={courseFilters.search}
               onChange={(event) => setCourseFilters((current) => ({ ...current, search: event.target.value }))}
-              placeholder="Search courses"
+              placeholder="Search business solutions"
               type="search"
             />
             <select
               value={courseFilters.category}
               onChange={(event) => setCourseFilters((current) => ({ ...current, category: event.target.value }))}
-              aria-label="Filter courses by category"
+              aria-label="Filter solutions by category"
             >
               <option value="">All categories</option>
               {categories.map((category) => (
@@ -568,14 +557,14 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
                 </small>
               </button>
             ))}
-            {courses.length === 0 && <p className="admin-empty">No courses yet.</p>}
-            {courses.length > 0 && filteredCourses.length === 0 && <p className="admin-empty">No courses match this filter.</p>}
+            {courses.length === 0 && <p className="admin-empty">No business solutions yet.</p>}
+            {courses.length > 0 && filteredCourses.length === 0 && <p className="admin-empty">No business solutions match this filter.</p>}
           </div>
         </aside>
 
         <form className="admin-course-form" onSubmit={handleSaveCourse}>
           <div className="admin-panel-heading">
-            <h2>{selectedCourse ? 'Edit Course' : 'Create Course'}</h2>
+            <h2>{selectedCourse ? 'Edit Business Solution' : 'Create Business Solution'}</h2>
             {selectedCourse?.pdf && <span>{selectedCourse.pdf.filename}</span>}
           </div>
 
@@ -589,11 +578,24 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
               <input value={form.instructorName} onChange={(event) => updateForm('instructorName', event.target.value)} required />
             </label>
             <label>
+              Package Type
+              <select value={form.packageType} onChange={(event) => updateForm('packageType', event.target.value)}>
+                <option value="business-plans">Business Plans</option>
+                <option value="business-tools">Business Tools</option>
+                <option value="business-in-the-box">Business in a Box</option>
+              </select>
+            </label>
+            <label>
               Category
-              <input list="admin-categories" value={form.categoryName} onChange={(event) => updateForm('categoryName', event.target.value)} required />
-              <datalist id="admin-categories">
-                {categories.map((category) => <option key={category.id} value={category.name} />)}
-              </datalist>
+              <select value={form.categoryName} onChange={(event) => updateForm('categoryName', event.target.value)} required>
+                <option value="">Select Category</option>
+                <option value="Agriculture">Agriculture</option>
+                <option value="Commerce">Commerce</option>
+                <option value="Digital">Digital</option>
+                <option value="F&B">F&B</option>
+                <option value="Manufacturing">Manufacturing</option>
+                <option value="Services">Services</option>
+              </select>
             </label>
             <label>
               Difficulty
@@ -622,7 +624,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
           </div>
 
           <label className="admin-full-field">
-            Course Image (upload only png)
+            Solution Image (upload only png)
             <input 
               type="file" 
               accept=".png" 
@@ -721,7 +723,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
 
           <div className="admin-form-actions">
             <button className="admin-primary-btn" type="submit" disabled={saving}>
-              {saving ? 'Saving...' : selectedCourse ? 'Update Course' : 'Create Course'}
+              {saving ? 'Saving...' : selectedCourse ? 'Update Solution' : 'Create Business Solution'}
             </button>
             {selectedCourse && (
               <button className="admin-danger-btn" type="button" onClick={handleDeleteCourse}>Delete</button>
@@ -740,9 +742,9 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
                   onChange={(e) => setBulkPriceType(e.target.value)}
                   style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', marginTop: '4px' }}
                 >
-                  <option value="">All Course Types</option>
-                  <option value="business-tools">Business Tools Only</option>
+                  <option value="">All Solution Types</option>
                   <option value="business-plans">Business Plans Only</option>
+                  <option value="business-tools">Business Tools Only</option>
                   <option value="business-in-the-box">Business in the Box Only</option>
                 </select>
               </label>

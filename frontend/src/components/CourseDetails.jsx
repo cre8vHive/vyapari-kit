@@ -7,9 +7,11 @@ import ReviewSection from './ReviewSection';
 import FAQSection from './FAQSection';
 import RelatedCourses from './RelatedCourses';
 import StickyPurchaseCard from './StickyPurchaseCard';
+import BundleItemsSection from './BundleItemsSection';
 import { paymentApi } from '../services/api';
+import { useCart } from '../context/CartContext';
 
-const MobileStickyBuyBar = ({ course, onPurchase }) => {
+const MobileStickyBuyBar = ({ course, onPurchase, onAddToCart, isInCart }) => {
   const currentPrice = typeof course.price === 'object'
     ? course.price?.current
     : (typeof course.price === 'number' ? `₹${course.price}` : String(course.price || ''));
@@ -41,6 +43,8 @@ const MobileStickyBuyBar = ({ course, onPurchase }) => {
     }
   }
 
+  const isBusinessInABox = course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
+
   return (
     <aside className="mobile-sticky-buy-bar" aria-label="Mobile quick purchase">
       <div className="mobile-sticky-top-row">
@@ -50,6 +54,20 @@ const MobileStickyBuyBar = ({ course, onPurchase }) => {
           className="mobile-sticky-thumb"
         />
         <div className="mobile-sticky-info">
+          {isBusinessInABox && (
+            <span style={{
+              background: '#f59e0b',
+              color: '#fff',
+              fontSize: '10px',
+              fontWeight: 800,
+              padding: '2px 6px',
+              borderRadius: '4px',
+              display: 'inline-block',
+              marginBottom: '2px'
+            }}>
+              📦 Business in a Box Bundle
+            </span>
+          )}
           <h4 className="mobile-sticky-title">{course.title}</h4>
           <div className="mobile-sticky-prices">
             {formattedOldPrice && (
@@ -65,10 +83,27 @@ const MobileStickyBuyBar = ({ course, onPurchase }) => {
       <div className="mobile-sticky-actions">
         <button
           type="button"
+          className="mobile-sticky-cart-btn"
+          onClick={onAddToCart}
+          style={{
+            padding: '12px 14px',
+            background: isInCart ? '#dcfce7' : '#f1f5f9',
+            color: isInCart ? '#166534' : '#0f172a',
+            border: '1px solid #cbd5e1',
+            borderRadius: '6px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+          }}
+        >
+          {isInCart ? 'In Cart' : 'Add to Cart'}
+        </button>
+        <button
+          type="button"
           className="mobile-sticky-cta-btn"
           onClick={onPurchase}
         >
-          Enroll Now
+          Buy Now
         </button>
       </div>
     </aside>
@@ -87,6 +122,33 @@ const CourseDetails = ({ course, onBack }) => {
   const [guestLoading, setGuestLoading] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [purchaseAccessUrl, setPurchaseAccessUrl] = useState('');
+
+  const { addToCart, isInCart, openCart } = useCart();
+
+  const handleAddToCart = () => {
+    if (isInCart(course.id)) {
+      openCart();
+      return;
+    }
+    const numPrice = typeof course.price === 'object'
+      ? parseFloat(String(course.price?.current || '').replace(/[^0-9.]/g, '')) || 0
+      : Number(course.price) || 0;
+    const numOldPrice = typeof course.price === 'object'
+      ? parseFloat(String(course.price?.old || '').replace(/[^0-9.]/g, '')) || undefined
+      : Number(course.oldPrice) || undefined;
+
+    addToCart({
+      id: course.id,
+      slug: course.slug,
+      title: course.title,
+      price: numPrice,
+      oldPrice: numOldPrice,
+      imageUrl: course.thumbnail,
+      categoryName: course.category,
+      packageType: course.packageType,
+      instructorName: course.instructor?.name || course.instructorName,
+    });
+  };
 
   const isLoggedIn = !!localStorage.getItem('VyapaarKit_auth_token');
 
@@ -116,11 +178,15 @@ const CourseDetails = ({ course, onBack }) => {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             });
-            alert('Payment successful and enrolled!');
-            window.location.href = '/courses';
+            window.location.href = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses?tab=my`;
           } catch (err) {
             alert('Payment verification failed.');
           }
+        },
+        modal: {
+          ondismiss: function () {
+            // Dismissed by user
+          },
         },
         theme: {
           color: '#0b6cff',
@@ -129,7 +195,7 @@ const CourseDetails = ({ course, onBack }) => {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        alert('Payment failed: ' + response.error.description);
+        alert('Payment failed: ' + (response.error?.description || 'Transaction failed or was cancelled.'));
       });
       rzp.open();
     } catch (err) {
@@ -172,6 +238,7 @@ const CourseDetails = ({ course, onBack }) => {
           name: guestName || undefined,
         },
         handler: async function (response) {
+          setShowGuestModal(false);
           try {
             const result = await paymentApi.verifyGuestPayment(courseId, {
               razorpay_order_id: response.razorpay_order_id,
@@ -181,15 +248,16 @@ const CourseDetails = ({ course, onBack }) => {
             });
             setPurchaseAccessUrl(result.accessUrl || '');
             setPurchaseSuccess(true);
-            setShowGuestModal(false);
           } catch (err) {
-            setGuestError(err.response?.data?.message || 'Payment verification failed. Please contact support.');
+            alert(err.response?.data?.message || 'Payment verification failed. Please contact support.');
+          } finally {
+            setGuestLoading(false);
           }
-          setGuestLoading(false);
         },
         modal: {
           ondismiss: function () {
             setGuestLoading(false);
+            setShowGuestModal(false);
           },
         },
         theme: {
@@ -199,8 +267,9 @@ const CourseDetails = ({ course, onBack }) => {
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        setGuestError('Payment failed: ' + response.error.description);
         setGuestLoading(false);
+        setShowGuestModal(false);
+        alert('Payment failed: ' + (response.error?.description || 'Transaction was cancelled or failed.'));
       });
       rzp.open();
     } catch (err) {
@@ -214,19 +283,35 @@ const CourseDetails = ({ course, onBack }) => {
       <div className="course-details-shell">
         <div className="details-header">
           <button type="button" className="details-back" onClick={goBack}>
-            ← Back to Courses
+            ← Back to Business Solutions
           </button>
           <div className="details-actions">
+            {(course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box')) && (
+              <span className="details-pill" style={{
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: '#ffffff',
+                fontWeight: 800,
+                border: 'none',
+              }}>
+                📦 Business in a Box Bundle
+              </span>
+            )}
             <span className="details-pill">{course.category}</span>
             <button type="button" className="details-action">♡ Wishlist</button>
             <button type="button" className="details-action">↗ Share</button>
           </div>
         </div>
 
-        <CourseHero course={course} onPurchase={handlePurchase} />
+        <CourseHero
+          course={course}
+          onPurchase={handlePurchase}
+          onAddToCart={handleAddToCart}
+          isInCart={isInCart(course.id)}
+        />
 
         <div className="course-details-layout">
           <main className="course-details-main">
+            <BundleItemsSection course={course} />
             <CourseOverview course={course} />
             <CourseCurriculum curriculum={course.curriculum} />
             <div className="details-grid-two">
@@ -239,7 +324,7 @@ const CourseDetails = ({ course, onBack }) => {
                 </ul>
               </section>
               <section className="info-panel">
-                <h2>Who this course is for</h2>
+                <h2>Who this business solution is for</h2>
                 <ul>
                   {course.audience.map((item) => (
                     <li key={item}>{item}</li>
@@ -253,7 +338,12 @@ const CourseDetails = ({ course, onBack }) => {
             <RelatedCourses courses={course.relatedCourses} />
           </main>
           <aside className="course-details-aside">
-            <StickyPurchaseCard course={course} onPurchase={handlePurchase} />
+            <StickyPurchaseCard
+              course={course}
+              onPurchase={handlePurchase}
+              onAddToCart={handleAddToCart}
+              isInCart={isInCart(course.id)}
+            />
           </aside>
         </div>
       </div>
@@ -261,7 +351,26 @@ const CourseDetails = ({ course, onBack }) => {
       {/* Guest Email Modal */}
       {showGuestModal && (
         <div className="session-modal-backdrop" onClick={() => setShowGuestModal(false)}>
-          <div className="session-modal" style={{ maxWidth: '420px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="session-modal" style={{ maxWidth: '420px', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setShowGuestModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '20px',
+                color: '#6b7280',
+                cursor: 'pointer',
+                lineHeight: 1,
+                padding: '4px 8px',
+              }}
+              aria-label="Close"
+            >
+              ✕
+            </button>
             <div className="session-modal-icon" aria-hidden="true">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0b6cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -270,7 +379,7 @@ const CourseDetails = ({ course, onBack }) => {
             </div>
             <h2 style={{ marginBottom: '4px' }}>Quick Checkout</h2>
             <p style={{ color: '#6b7280', fontSize: '14px', marginTop: '0', marginBottom: '20px' }}>
-              Enter your email to purchase. We'll send you a link to access the course.
+              Enter your email to purchase. We'll send you a link to access your business solution.
             </p>
             <form onSubmit={handleGuestPurchase}>
               <div style={{ marginBottom: '12px' }}>
@@ -305,14 +414,33 @@ const CourseDetails = ({ course, onBack }) => {
                   ? course.price?.current || ''
                   : (typeof course.price === 'number' ? `₹${course.price}` : String(course.price || ''));
                 return (
-                  <button
-                    className="session-modal-btn"
-                    type="submit"
-                    disabled={guestLoading || !guestEmail}
-                    style={{ width: '100%', opacity: guestLoading ? 0.7 : 1 }}
-                  >
-                    {guestLoading ? 'Processing...' : `Pay ${displayPrice}`}
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowGuestModal(false)}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: '1px solid #d1d5db',
+                        background: '#fff',
+                        color: '#374151',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="session-modal-btn"
+                      type="submit"
+                      disabled={guestLoading || !guestEmail}
+                      style={{ flex: 2, margin: 0, opacity: guestLoading ? 0.7 : 1 }}
+                    >
+                      {guestLoading ? 'Processing...' : `Pay ${displayPrice}`}
+                    </button>
+                  </div>
                 );
               })()}
               <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '12px', textAlign: 'center' }}>
@@ -339,7 +467,7 @@ const CourseDetails = ({ course, onBack }) => {
               Thank you for purchasing <strong>{course.title}</strong>. We've sent an access link to <strong>{guestEmail}</strong>.
             </p>
             <p style={{ color: '#6b7280', fontSize: '14px' }}>
-              Check your email to access your course. You can also set a password to manage your account.
+              Check your email to access your business solution. You can also set a password to manage your account.
             </p>
             {purchaseAccessUrl && (
               <a
@@ -347,7 +475,7 @@ const CourseDetails = ({ course, onBack }) => {
                 className="session-modal-btn"
                 style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginBottom: '8px' }}
               >
-                Access Course Now
+                Access Business Solution Now
               </a>
             )}
             <button
@@ -355,18 +483,23 @@ const CourseDetails = ({ course, onBack }) => {
               type="button"
               onClick={() => {
                 setPurchaseSuccess(false);
-                window.location.href = '/courses';
+                window.location.href = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses`;
               }}
               style={{ width: '100%', background: '#f3f4f6', color: '#374151' }}
             >
-              Back to Courses
+              Back to Business Solutions
             </button>
           </div>
         </div>
       )}
 
       {/* Persistent Mobile Bottom Sticky Buy / Enroll Bar */}
-      <MobileStickyBuyBar course={course} onPurchase={handlePurchase} />
+      <MobileStickyBuyBar
+        course={course}
+        onPurchase={handlePurchase}
+        onAddToCart={handleAddToCart}
+        isInCart={isInCart(course.id)}
+      />
     </div>
   );
 };

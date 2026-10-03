@@ -6,11 +6,11 @@ import { TESTIMONIAL_AVATAR_ONE, TESTIMONIAL_AVATAR_TWO, TESTIMONIAL_AVATAR_THRE
 
 // Local Mock Data Fallbacks for Development
 const MOCK_HOME_PAYLOAD: PageResponse = {
-  title: "VyapaarKit - Online Course",
+  title: "VyapaarKit - Business Solutions",
   slug: "home",
   seo: {
-    metaTitle: "VyapaarKit - Online Courses, Bootcamp & Lessons",
-    metaDescription: "VyapaarKit is a leading educational platform providing courses in Business, Tech, Language, and Marketing.",
+    metaTitle: "VyapaarKit - Business Solutions, Playbooks & Kits",
+    metaDescription: "VyapaarKit is a leading platform providing business solutions, playbooks, and toolkits for entrepreneurs.",
     noIndex: false,
   },
   sections: [
@@ -18,10 +18,11 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
       type: "hero",
       order: 1,
       config: {
-        headline: "Faster Way For Your Grow & VyapaarKit",
-        subheading: "Gain access to thousands of educational courses taught by expert instructors.",
-        primaryButton: { text: "Subscribe", link: "/register" },
-        secondaryButton: { text: "Learn Now", link: "/courses" }
+        eyebrow: "IDEAS → PLAYBOOKS → PLANS → GROWTH",
+        headline: "Everything You Need to Start & Grow Your Business",
+        subheading: "Ready-to-use business playbooks, plans & kits — built to save you time and help you move faster.",
+        primaryButton: { text: "Explore Business Solutions", link: "/courses" },
+        secondaryButton: { text: "See What's Inside", link: "#categories" }
       }
     },
     {
@@ -36,7 +37,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
       type: "course-grid",
       order: 3,
       config: {
-        sectionTitle: "Popular Courses",
+        sectionTitle: "Popular Business Solutions",
         courses: [
           {
             id: '1',
@@ -81,13 +82,13 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
       type: "testimonials",
       order: 4,
       config: {
-        sectionTitle: "What Our Students Say",
+        sectionTitle: "What Our Entrepreneurs Say",
         testimonials: [
           {
             id: "1",
             name: "Arjun Reddy",
-            role: "Customers",
-            reviewText: "Incredible experience with VyapaarKit. Expert-led courses equipped me with vital skills. Highly recommended investment.",
+            role: "Entrepreneur",
+            reviewText: "Incredible experience with VyapaarKit. Expert business solutions equipped me with vital execution skills. Highly recommended investment.",
             avatarUrl: TESTIMONIAL_AVATAR_ONE,
             rating: 5
           },

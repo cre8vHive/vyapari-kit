@@ -5,8 +5,8 @@ const ReviewSection = ({ reviews, rating }) => {
     <section className="review-section rounded-[28px] border border-slate-200 bg-white p-6 shadow-lg transition-all duration-300">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Student reviews</h2>
-          <p className="mt-2 text-sm text-slate-500">What learners are saying about this course.</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Entrepreneur reviews</h2>
+          <p className="mt-2 text-sm text-slate-500">What entrepreneurs are saying about this business solution.</p>
         </div>
         <div className="rounded-3xl bg-slate-50 px-4 py-3 text-center">
           <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Average rating</p>

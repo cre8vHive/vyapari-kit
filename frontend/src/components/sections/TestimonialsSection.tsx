@@ -15,7 +15,7 @@ export interface TestimonialsSectionProps {
 }
 
 export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({
-  sectionTitle = "What Our Students Say",
+  sectionTitle = "What Our Entrepreneurs Say",
   testimonials,
 }) => {
   return (

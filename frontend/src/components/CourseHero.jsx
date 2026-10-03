@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const CourseHero = ({ course, onPurchase }) => {
+const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
 
@@ -38,11 +38,29 @@ const CourseHero = ({ course, onPurchase }) => {
   const gallery = (course.gallery && course.gallery.length > 0) ? course.gallery : defaultGallery;
   const currentImage = gallery[activeImageIndex] || gallery[0];
 
+  const isBusinessInABox = course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
+
   return (
     <section className="course-hero">
       {/* 1. Header Block: Tags, Title, Subtitle */}
       <div className="hero-header-block">
         <div className="hero-tags">
+          {isBusinessInABox && (
+            <span className="hero-chip hero-chip-box-bundle" style={{
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#ffffff',
+              fontWeight: 800,
+              padding: '6px 14px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(217, 119, 6, 0.3)',
+              letterSpacing: '0.5px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              📦 Business in a Box Bundle
+            </span>
+          )}
           <span className="hero-chip hero-chip-accent">{course.category}</span>
           <span className="hero-chip">{course.difficulty}</span>
           {course.editionNote && (
@@ -51,6 +69,32 @@ const CourseHero = ({ course, onPurchase }) => {
         </div>
         <h1 className="hero-title">{course.title}</h1>
         <p className="hero-copy">{course.subtitle}</p>
+
+        {isBusinessInABox && (
+          <div style={{
+            margin: '18px 0 8px 0',
+            padding: '16px 20px',
+            borderRadius: '14px',
+            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+            border: '2px solid #f59e0b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            boxShadow: '0 4px 14px rgba(245, 158, 11, 0.15)'
+          }}>
+            <div style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>
+              🎁
+            </div>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                All-In-One Box Bundle
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#78350f', marginTop: '2px', lineHeight: 1.4 }}>
+                Includes this full <strong>Business Plan</strong> + ALL <strong>Business Tools & Playbooks</strong> in {course.category}!
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 2. Product Gallery Block (Prominent on both Desktop & Mobile) */}
@@ -130,7 +174,7 @@ const CourseHero = ({ course, onPurchase }) => {
             <strong>{course.rating} ★</strong>
           </article>
           <article className="hero-card">
-            <span>Students</span>
+            <span>Entrepreneurs</span>
             <strong>{course.students}</strong>
           </article>
           <article className="hero-card">
@@ -166,7 +210,13 @@ const CourseHero = ({ course, onPurchase }) => {
             {course.price.old && <span>{course.price.old}</span>}
           </div>
           <div className="hero-actions">
-            <button type="button" className="btn btn-primary" onClick={onPurchase}>Enroll Now</button>
+            <button
+              type="button"
+              className={`btn btn-primary${isInCart ? ' btn-in-cart' : ''}`}
+              onClick={onAddToCart}
+            >
+              {isInCart ? 'In Cart (View)' : 'Add to cart'}
+            </button>
             <button type="button" className="btn btn-secondary" onClick={onPurchase}>Buy Now</button>
           </div>
           <div className="hero-include-list">

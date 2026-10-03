@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
               <img src={vyapaarKitLogo} alt="Vyapaar Kit" />
             </a>
             <p className="footer-desc">
-              Empowering businesses with cutting-edge tools to streamline operations, enhance growth, and achieve success in the modern digital landscape.
+              Empowering businesses with cutting-edge playbooks to streamline operations, enhance growth, and achieve success in the modern digital landscape.
             </p>
           </div>
 
@@ -26,7 +26,7 @@ const Footer: React.FC = () => {
             <h3 className="footer-heading">Company</h3>
             <ul className="footer-links">
               <li><a href={withBase('/about-us')}>About Us</a></li>
-              <li><a href={withBase('/courses')}>Courses</a></li>
+              <li><a href={withBase('/courses')}>Business Solutions</a></li>
               <li><a href={withBase('/blog')}>Blog</a></li>
               <li><a href={withBase('/contact-us')}>Contact Us</a></li>
             </ul>

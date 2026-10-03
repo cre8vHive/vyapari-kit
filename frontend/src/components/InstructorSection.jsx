@@ -18,11 +18,11 @@ const InstructorSection = ({ instructor }) => {
           <strong>{instructor.rating} ★</strong>
         </div>
         <div>
-          <span>Students</span>
+          <span>Entrepreneurs</span>
           <strong>{instructor.students}</strong>
         </div>
         <div>
-          <span>Courses</span>
+          <span>Solutions</span>
           <strong>{instructor.courses}</strong>
         </div>
       </div>

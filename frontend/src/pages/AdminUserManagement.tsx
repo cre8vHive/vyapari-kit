@@ -149,7 +149,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ user: 
               onChange={(event) => setFilters((current) => ({ ...current, role: event.target.value }))}
             >
               <option value="">All Roles</option>
-              <option value="student">Student</option>
+              <option value="student">Entrepreneur (User)</option>
               <option value="admin">Admin</option>
             </select>
             <select
@@ -174,7 +174,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ user: 
                 >
                   <span>{u.name}</span>
                   <small>
-                    {u.role} - {u.isDeleted ? 'Deleted' : isLocked ? 'Blocked' : 'Active'}
+                    {(u.role === 'student' ? 'Entrepreneur' : u.role)} - {u.isDeleted ? 'Deleted' : isLocked ? 'Blocked' : 'Active'}
                   </small>
                 </button>
               );
@@ -204,7 +204,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ user: 
                       onChange={(e) => handleRoleChange(e.target.value)}
                       style={{ padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--color-border)' }}
                     >
-                      <option value="student">Student</option>
+                      <option value="student">Entrepreneur (User)</option>
                       <option value="admin">Admin</option>
                     </select>
                   )}

@@ -4,8 +4,8 @@ const RelatedCourses = ({ courses }) => {
   if (!courses || courses.length === 0) return null;
 
   return (
-    <section className="related-courses" aria-label="Related courses">
-      <h2>Related courses</h2>
+    <section className="related-courses" aria-label="Related business solutions">
+      <h2>Related business solutions</h2>
       <div className="related-courses-banners">
         {courses.map((item) => (
           <a
@@ -29,7 +29,7 @@ const RelatedCourses = ({ courses }) => {
               <div className="related-banner-action">
                 <span className="related-banner-price">{item.price}</span>
                 <span className="related-banner-btn">
-                  View Course
+                  View Solution
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>

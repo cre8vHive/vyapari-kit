@@ -17,22 +17,12 @@ const ALL_CATEGORY = 'all';
 
 const MOCK_CATEGORIES: CategoryItem[] = [
   { id: 'all', name: 'All', slug: ALL_CATEGORY, iconUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=96&q=80' },
-  { id: 'business-tools', name: 'Business Tools', slug: 'business-tools' },
-  { id: 'business-plans', name: 'Business Plans', slug: 'business-plans' },
-  { id: 'business-in-the-box', name: 'Business in the Box', slug: 'business-in-the-box' },
-  { id: 'technology', name: 'Technology', slug: 'technology' },
-  { id: 'food-and-beverage', name: 'Food & Beverage', slug: 'food-and-beverage' },
-  { id: 'manufacturing', name: 'Manufacturing', slug: 'manufacturing' },
-  { id: 'service', name: 'Service', slug: 'service' },
-  { id: 'commerce', name: 'Commerce', slug: 'commerce' },
   { id: 'agriculture', name: 'Agriculture', slug: 'agriculture' },
-  { id: 'business', name: 'Business', slug: 'business' },
-  { id: 'design', name: 'Design', slug: 'design' },
-  { id: 'development', name: 'Development', slug: 'development' },
-  { id: 'finance', name: 'Finance', slug: 'finance' },
-  { id: 'language', name: 'Language', slug: 'language' },
-  { id: 'marketing', name: 'Marketing', slug: 'marketing' },
-  { id: 'photography', name: 'Photography', slug: 'photography' },
+  { id: 'commerce', name: 'Commerce', slug: 'commerce' },
+  { id: 'digital', name: 'Digital', slug: 'digital' },
+  { id: 'f-and-b', name: 'F&B', slug: 'f-and-b' },
+  { id: 'manufacturing', name: 'Manufacturing', slug: 'manufacturing' },
+  { id: 'services', name: 'Services', slug: 'services' },
 ];
 
 function normalizeSlug(value: string | null | undefined) {
@@ -85,16 +75,7 @@ function writeCourseListingState(nextState: CourseListingState, replace = false)
 function matchesCategory(course: CourseItem, categorySlug: string) {
   if (!categorySlug || categorySlug === ALL_CATEGORY) return true;
   const courseCatSlug = normalizeSlug(course.categoryName);
-  if (courseCatSlug === categorySlug) return true;
-  if (courseCatSlug.includes(categorySlug) || categorySlug.includes(courseCatSlug)) return true;
-
-  // Match parent category to child subcategories (e.g. business-tools matches manufacturing, technology, etc.)
-  const parentCat = SHOP_CATEGORY_DATA.find(c => c.slug === categorySlug || normalizeSlug(c.name) === categorySlug);
-  if (parentCat && parentCat.children) {
-    const childSlugs = parentCat.children.map(ch => normalizeSlug(ch));
-    if (childSlugs.some(ch => courseCatSlug.includes(ch) || ch.includes(courseCatSlug))) return true;
-  }
-  return false;
+  return courseCatSlug === categorySlug;
 }
 
 function withAllCategory(categories: CategoryItem[], activeCategorySlug?: string): CategoryItem[] {
@@ -161,7 +142,7 @@ export const CourseListing: React.FC = () => {
     },
     [activeCourses, listingState.tab, listingState.category, listingState.searchQuery, listingState.sortBy]
   );
-  const activeTabLabel = listingState.tab === 'my' ? 'My Courses' : 'Available Courses';
+  const activeTabLabel = listingState.tab === 'my' ? 'My Business Solutions' : 'Available Business Solutions';
 
   const updateListingState = useCallback((nextState: Partial<CourseListingState>, replace = false) => {
     const merged = { ...listingStateRef.current, ...nextState };
@@ -171,7 +152,7 @@ export const CourseListing: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    document.title = 'Course - VyapaarKit';
+    document.title = 'Business Solutions - VyapaarKit';
     const initialState = readCourseListingState();
     listingStateRef.current = initialState;
     writeCourseListingState(initialState, true);
@@ -246,42 +227,16 @@ export const CourseListing: React.FC = () => {
   }, [listingState.type, listingState.category, listingState.searchQuery]);
 
   const availableCategoryOptions = useMemo(() => {
-    if (listingState.type === 'business-tools') {
-      return [
-        { id: 'all', name: 'All Categories', slug: ALL_CATEGORY },
-        { id: 'strategy-and-launch', name: 'Strategy & Launch', slug: 'strategy-and-launch' },
-        { id: 'marketing-and-sales', name: 'Marketing & Sales', slug: 'marketing-and-sales' },
-        { id: 'e-commerce-and-digital-commerce', name: 'E-Commerce & Digital Commerce', slug: 'e-commerce-and-digital-commerce' },
-        { id: 'finance-and-profitability', name: 'Finance & Profitability', slug: 'finance-and-profitability' },
-        { id: 'supply-chain-and-operations', name: 'Supply Chain & Operations', slug: 'supply-chain-and-operations' },
-        { id: 'operations-sop-and-automation', name: 'Operations, SOP & Automation', slug: 'operations-sop-and-automation' },
-        { id: 'hr-and-team-management', name: 'HR & Team Management', slug: 'hr-and-team-management' },
-        { id: 'franchise-and-scaling', name: 'Franchise & Scaling', slug: 'franchise-and-scaling' },
-      ];
-    }
-    if (listingState.type === 'business-plans') {
-      return [
-        { id: 'all', name: 'All Categories', slug: ALL_CATEGORY },
-        { id: 'manufacturing-fmcg-and-industrial', name: 'Manufacturing, FMCG & Industrial', slug: 'manufacturing-fmcg-and-industrial' },
-        { id: 'food-agriculture-and-compliance', name: 'Food, Agriculture & Compliance', slug: 'food-agriculture-and-compliance' },
-        { id: 'digital-e-commerce-and-media', name: 'Digital, E-Commerce & Media', slug: 'digital-e-commerce-and-media' },
-        { id: 'retail-and-personal-services', name: 'Retail & Personal Services', slug: 'retail-and-personal-services' },
-        { id: 'strategy-and-growth-playbooks', name: 'Strategy & Growth Playbooks', slug: 'strategy-and-growth-playbooks' },
-      ];
-    }
-    if (listingState.type === 'business-in-the-box') {
-      return [
-        { id: 'all', name: 'All Categories', slug: ALL_CATEGORY },
-        { id: 'food-and-beverage', name: 'Food & Beverage', slug: 'food-and-beverage' },
-        { id: 'agriculture-and-livestock', name: 'Agriculture & Livestock', slug: 'agriculture-and-livestock' },
-        { id: 'services-and-events', name: 'Services & Events', slug: 'services-and-events' },
-        { id: 'health-wellness-and-beauty', name: 'Health, Wellness & Beauty', slug: 'health-wellness-and-beauty' },
-        { id: 'technology-and-ai', name: 'Technology & AI', slug: 'technology-and-ai' },
-        { id: 'master-toolkit', name: 'Master Toolkit', slug: 'master-toolkit' },
-      ];
-    }
-    return categories;
-  }, [categories, listingState.type]);
+    return [
+      { id: 'all', name: 'All Categories', slug: ALL_CATEGORY },
+      { id: 'agriculture', name: 'Agriculture', slug: 'agriculture' },
+      { id: 'commerce', name: 'Commerce', slug: 'commerce' },
+      { id: 'digital', name: 'Digital', slug: 'digital' },
+      { id: 'f-and-b', name: 'F&B', slug: 'f-and-b' },
+      { id: 'manufacturing', name: 'Manufacturing', slug: 'manufacturing' },
+      { id: 'services', name: 'Services', slug: 'services' },
+    ];
+  }, []);
 
   const selectedCategoryValue = useMemo(() => {
     const target = listingState.category;
@@ -299,9 +254,9 @@ export const CourseListing: React.FC = () => {
           <nav className="course-breadcrumbs" aria-label="Breadcrumb">
             <a href="/">Home</a>
             <span>/</span>
-            <span>Course</span>
+            <span>Business Solutions</span>
           </nav>
-          <h1>Course Program</h1>
+          <h1>Business Solutions</h1>
         </div>
       </section>
 
@@ -315,7 +270,7 @@ export const CourseListing: React.FC = () => {
               className={`course-hub-tab${listingState.tab === 'my' ? ' active' : ''}`}
               onClick={() => updateListingState({ tab: 'my' })}
             >
-              My Courses
+              My Business Solutions
             </button>
             <button
               type="button"
@@ -324,7 +279,7 @@ export const CourseListing: React.FC = () => {
               className={`course-hub-tab${listingState.tab === 'available' ? ' active' : ''}`}
               onClick={() => updateListingState({ tab: 'available' })}
             >
-              Available Courses
+              Available Business Solutions
             </button>
           </div>
 
@@ -347,7 +302,7 @@ export const CourseListing: React.FC = () => {
               </svg>
               <input
                 type="search"
-                placeholder="Search courses by title, instructor, or category..."
+                placeholder="Search business solutions by title, author, or category..."
                 value={listingState.searchQuery}
                 onChange={(e) => updateListingState({ searchQuery: e.target.value })}
                 style={{
@@ -400,9 +355,9 @@ export const CourseListing: React.FC = () => {
                   }}
                 >
                   <option value="">All Types</option>
-                  <option value="business-tools">Business Tools</option>
                   <option value="business-plans">Business Plans</option>
-                  <option value="business-in-the-box">Business in the Box</option>
+                  <option value="business-tools">Business Tools</option>
+                  <option value="business-in-the-box">Business in a Box</option>
                 </select>
               </div>
 
@@ -475,12 +430,36 @@ export const CourseListing: React.FC = () => {
                 <h2>{activeTabLabel}</h2>
               </div>
               <span className="course-hub-count">
-                {filteredCourses.length} {filteredCourses.length === 1 ? 'course' : 'courses'}
+                {filteredCourses.length} {filteredCourses.length === 1 ? 'solution' : 'solutions'}
               </span>
             </div>
 
+            {listingState.type === 'business-in-the-box' && (
+              <div style={{
+                background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                border: '2px solid #f59e0b',
+                borderRadius: '14px',
+                padding: '16px 20px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                boxShadow: '0 4px 14px rgba(245, 158, 11, 0.12)'
+              }}>
+                <div style={{ fontSize: '32px', lineHeight: 1 }}>📦</div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#92400e', fontWeight: 800 }}>
+                    Viewing Business in a Box Bundles
+                  </h3>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.92rem', color: '#78350f', lineHeight: 1.4 }}>
+                    Each <strong>Business in a Box</strong> is an all-in-one package. When you purchase any bundle, you get the complete <strong>Business Plan</strong> plus <strong>ALL</strong> business tools and playbooks in that category automatically!
+                  </p>
+                </div>
+              </div>
+            )}
+
             {loading || (listingState.tab === 'my' && !myCoursesLoaded) ? (
-              <div className="course-hub-status">Loading courses...</div>
+              <div className="course-hub-status">Loading business solutions...</div>
             ) : filteredCourses.length > 0 ? (
               <CourseGridSection
                 key={`${listingState.tab}:${listingState.category}`}
@@ -492,11 +471,11 @@ export const CourseListing: React.FC = () => {
               />
             ) : (
               <div className="course-empty-state">
-                <h3>No courses available</h3>
+                <h3>No business solutions available</h3>
                 <p>
                   {listingState.tab === 'my'
-                    ? 'Your enrolled courses will appear here once they match this category.'
-                    : 'No courses available for this category yet.'}
+                    ? 'Your purchased business solutions will appear here once they match this category.'
+                    : 'No business solutions available for this category yet.'}
                 </p>
                 {listingState.tab === 'my' && (
                   <button
@@ -504,7 +483,7 @@ export const CourseListing: React.FC = () => {
                     type="button"
                     onClick={() => updateListingState({ tab: 'available' })}
                   >
-                    Browse More Courses
+                    Browse More Solutions
                   </button>
                 )}
               </div>

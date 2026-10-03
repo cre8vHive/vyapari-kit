@@ -103,24 +103,34 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     'Willingness to follow the course material',
   ]);
   const audience = listOrFallback(course.audience, [
-    'Students',
-    'Working professionals',
     'Entrepreneurs',
-    'Anyone interested in this course topic',
+    'Startup founders',
+    'Small business owners',
+    'Working professionals planning a business venture',
   ]);
-  const includes = listOrFallback(course.includes, [
+  const isBusinessInABox = course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
+  const baseIncludes = listOrFallback(course.includes, [
     'Lifetime access',
     'Mobile access',
-    course.hasPdf ? 'Course PDF material' : 'Structured course content',
+    course.hasPdf ? 'Solution PDF material' : 'Structured business solution content',
     'Beginner friendly',
   ]);
+  const includes = isBusinessInABox
+    ? [
+        'Complete Business Plan',
+        `All Business Tools & Playbooks in ${category}`,
+        ...baseIncludes.filter((item) => !item.toLowerCase().includes('pdf') && !item.toLowerCase().includes('structured')),
+      ]
+    : baseIncludes;
 
   return {
     id: course.id,
     slug: course.slug,
     title: course.title,
-    subtitle: course.shortDescription || course.subtitle || `Learn ${course.title} with a structured ${category} course experience.`,
+    subtitle: course.shortDescription || course.subtitle || `Explore ${course.title} with a structured ${category} business solution experience.`,
     category,
+    packageType: course.packageType || (isBusinessInABox ? 'business-in-the-box' : undefined),
+    isBusinessInABox,
     rating: Number(course.rating || 0),
     students: course.students ? course.students.toLocaleString('en-IN') : DEFAULT_STUDENTS,
     instructorName: course.instructor?.name || course.instructorName,
@@ -152,7 +162,7 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     audience,
     instructor: {
       name: course.instructor?.name || course.instructorName,
-      bio: course.instructor?.bio || `${course.instructorName} is the instructor for ${course.title}.`,
+      bio: course.instructor?.bio || `${course.instructorName} is the author for ${course.title}.`,
       experience: course.instructor?.title || category,
       courses: course.instructor?.courses ?? 1,
       students: course.instructor?.students?.toLocaleString('en-IN') || DEFAULT_STUDENTS,
@@ -162,15 +172,15 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     reviews: course.reviews?.length ? course.reviews.map((review) => ({
       ...review,
       avatar: review.avatar,
-      title: review.title || 'Student review',
+      title: review.title || 'Entrepreneur review',
       date: review.date || formatUpdatedDate(course.updatedAt || course.createdAt),
     })) : [
       {
-        name: 'Course learner',
+        name: 'Entrepreneur',
         avatar: DEFAULT_AVATAR,
         rating: Number(course.rating || 0),
         title: `${course.title} overview`,
-        comment: 'This course is loaded dynamically from MongoDB and rendered with the reusable detail page experience.',
+        comment: 'This business solution is loaded dynamically from MongoDB and rendered with the reusable detail page experience.',
         date: formatUpdatedDate(course.updatedAt || course.createdAt),
       },
     ],
@@ -192,6 +202,8 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
       price: formatCurrency(related.price),
       imageUrl: related.thumbnail || related.imageUrl,
     })),
+    bundledTools: course.bundledTools || [],
+    basePlan: course.basePlan || null,
   };
 }
 

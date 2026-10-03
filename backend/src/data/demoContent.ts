@@ -232,11 +232,11 @@ export const homePage = {
       type: 'hero',
       order: 1,
       config: {
-        headline: 'Faster Way For Your Grow & VyapaarKit',
-        subheading: 'Gain access to practical courses taught by expert instructors.',
-        backgroundType: 'gradient',
-        primaryButton: { text: 'Subscribe', link: '/register' },
-        secondaryButton: { text: 'Learn Now', link: '/courses' }
+        eyebrow: 'IDEAS → TOOLS → PLANS → GROWTH',
+        headline: 'Everything You Need to Start & Grow Your Business',
+        subheading: 'Ready-to-use business tools, plans & kits — built to save you time and help you move faster.',
+        primaryButton: { text: 'Explore Business Kits', link: '/courses' },
+        secondaryButton: { text: "See What's Inside", link: '#categories' }
       }
     },
     { type: 'categories', order: 2, config: { sectionTitle: 'All Categories', categories } },

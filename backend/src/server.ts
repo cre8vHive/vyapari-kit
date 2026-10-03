@@ -86,6 +86,7 @@ function publicCourse(course: any) {
     id: String(course._id || course.id),
     slug: course.slug,
     title: course.title,
+    packageType: course.packageType || 'business-plans',
     instructorName: course.instructorName,
     categoryName: course.categoryName,
     difficulty: course.difficulty,
@@ -142,8 +143,12 @@ function courseInput(body: any) {
     throw new Error('Difficulty must be Beginner, Intermediate, or Advanced');
   }
 
+  let packageType = body.packageType || body.type || 'business-plans';
+  if (packageType === 'business-plan') packageType = 'business-plans';
+
   return {
     title: String(body.title || '').trim(),
+    packageType,
     instructorName: String(body.instructorName || '').trim(),
     categoryName: String(body.categoryName || '').trim(),
     difficulty,
@@ -297,6 +302,61 @@ async function upsertCoursePdf(courseId: string, payload: any, actorId: string) 
   await Course.findByIdAndUpdate(courseId, { pdfAsset: pdf._id, updatedBy: actorId });
 
   return pdf;
+}
+
+async function fulfillBundleEnrollments(userId: any, course: any, actorId?: string) {
+  if (course.packageType === 'business-in-the-box') {
+    // 1. Find all tools in this subcategory and auto-enroll the user
+    const relatedTools = await Course.find({
+      packageType: 'business-tools',
+      categoryName: course.categoryName,
+      isDeleted: { $ne: true },
+    }).lean();
+
+    for (const tool of relatedTools) {
+      await Enrollment.findOneAndUpdate(
+        { user: userId, course: tool._id },
+        {
+          $set: {
+            user: userId,
+            course: tool._id,
+            status: 'active',
+            enrolledAt: new Date(),
+            isDeleted: false,
+            updatedBy: actorId,
+          },
+          $setOnInsert: { createdBy: actorId },
+        },
+        { upsert: true }
+      );
+    }
+
+    // 2. Also enroll in the corresponding base Business Plan if title matches
+    const baseTitle = course.title.replace(/\s*-\s*Business in a Box\s*$/i, '').trim();
+    const basePlan = await Course.findOne({
+      title: new RegExp(`^${escapeRegex(baseTitle)}$`, 'i'),
+      packageType: 'business-plans',
+      isDeleted: { $ne: true },
+    }).lean();
+
+    if (basePlan) {
+      await Enrollment.findOneAndUpdate(
+        { user: userId, course: basePlan._id },
+        {
+          $set: {
+            user: userId,
+            course: basePlan._id,
+            status: 'active',
+            enrolledAt: new Date(),
+            isDeleted: false,
+            updatedBy: actorId,
+          },
+          $setOnInsert: { createdBy: actorId },
+        },
+        { upsert: true }
+      );
+    }
+  }
 }
 
 async function seedDemoContent() {
@@ -903,34 +963,15 @@ app.put('/api/v1/admin/courses/bulk-price', requireAuth, requireActiveSession, r
       updateData.$unset = { oldPrice: "" };
     }
 
-    const filter: any = {};
-    if (type === 'business-tools') {
-      filter.$and = [
-        {
-          $or: [
-            { categoryName: new RegExp('Business Toolkit|Business Tools', 'i') },
-            { title: new RegExp('Framework|Playbook|Blueprint|Checklist|SOP|Automation|Validation|Funnel|Hiring|System', 'i') },
-          ],
-        },
-        { title: { $not: new RegExp('Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|100 ', 'i') } },
-      ];
-    } else if (type === 'business-in-the-box') {
-      filter.$or = [
-        { title: new RegExp('Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|Business-in-a-Box', 'i') },
-        { categoryName: new RegExp('Business-in-a-Box', 'i') },
-      ];
-    } else if (type === 'business-plans') {
-      filter.$and = [
-        {
-          $or: [
-            { categoryName: new RegExp('Business Plan', 'i') },
-            { title: new RegExp('BUSINESS PLAN|Ideas|Playbook|Guide|System', 'i') },
-          ],
-        },
-        { title: { $not: new RegExp('Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|Business-in-a-Box', 'i') } },
-      ];
-    } else if (category) {
-      filter.categoryName = new RegExp(category, 'i');
+    const filter: any = { isDeleted: false };
+    if (type) {
+      const cleanType = (type === 'business-plan' ? 'business-plans' : type).trim().toLowerCase();
+      if (['business-plans', 'business-tools', 'business-in-the-box'].includes(cleanType)) {
+        filter.packageType = cleanType;
+      }
+    }
+    if (category) {
+      filter.categoryName = new RegExp(`^${escapeRegex(category.trim())}$`, 'i');
     }
 
     const result = await Course.updateMany(filter, updateData);
@@ -1211,6 +1252,11 @@ app.post('/api/v1/admin/courses/:courseId/enrollments', requireAuth, requireActi
     },
     { new: true, upsert: true }
   );
+
+  const fullCourse = await Course.findById(courseId).lean();
+  if (fullCourse) {
+    await fulfillBundleEnrollments(userId, fullCourse, authUser.sub);
+  }
 
   try {
     await EmailService.sendCoursePurchase({ name: user.name, email: user.email }, course.title);
@@ -1538,83 +1584,40 @@ const DOMAIN_KEYWORD_MAP: Record<string, string[]> = {
   'strategy-and-growth-playbooks': ['systems', 'profit framework', 'expansion', 'multi-location', 'selection', 'smart pricing'],
 };
 
+function normalizeUnifiedCategory(input?: string): string {
+  if (!input) return '';
+  const clean = input.trim().toLowerCase().replace(/[^a-z0-9&]+/g, '-').replace(/^-+|-+$/g, '');
+  if (!clean || clean === 'all') return '';
+  if (clean.includes('agri')) return 'Agriculture';
+  if (clean.includes('commerce') || clean.includes('retail')) return 'Commerce';
+  if (clean.includes('digital') || clean.includes('tech')) return 'Digital';
+  if (clean.includes('f-and-b') || clean.includes('f&b') || clean.includes('f-b') || clean.includes('food')) return 'F&B';
+  if (clean.includes('manuf') || clean.includes('industrial')) return 'Manufacturing';
+  if (clean.includes('service')) return 'Services';
+  return input.trim();
+}
+
 app.get('/api/v1/courses', async (req, res) => {
-  const type = String(req.query.type || '').trim().toLowerCase();
+  let type = String(req.query.type || '').trim().toLowerCase();
+  if (type === 'business-plan') type = 'business-plans';
+
   const rawCategory = String(req.query.category || '').trim();
-  const category = normalizeCategoryQuery(req.query.category as string | undefined);
+  const targetCategory = normalizeUnifiedCategory(rawCategory);
   const search = String(req.query.search || '').trim().toLowerCase().slice(0, 120);
 
-  console.log(`[GET /api/v1/courses] Incoming request - type: "${type}", category: "${rawCategory}" (normalized: "${category}"), search: "${search}"`);
-
-  const activeType = type || (['business-tools', 'business-plans', 'business-in-the-box'].includes(category) ? category : '');
+  console.log(`[GET /api/v1/courses] Incoming request - type: "${type}", category: "${rawCategory}" (normalized: "${targetCategory}"), search: "${search}"`);
 
   if (isMongoConnected()) {
-    const andConditions: Record<string, any>[] = [{ isPublished: true }];
+    const andConditions: Record<string, any>[] = [{ isPublished: true, isDeleted: { $ne: true } }];
 
-    // 1. Parent Type Filter
-    const toolsPattern = 'Framework|Playbook|Blueprint|Checklist|SOP|Automation|Validation|Funnel|Hiring|System';
-    const boxPattern = 'Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|Business-in-a-Box';
-
-    if (activeType === 'business-tools') {
-      andConditions.push({
-        $and: [
-          {
-            $or: [
-              { categoryName: new RegExp('Business Toolkit|Business Tools', 'i') },
-              { title: new RegExp(toolsPattern, 'i') },
-            ],
-          },
-          { title: { $not: new RegExp('Cloud Kitchen|Café|Dairy|Organic Farming|Poultry|Event Management|Wedding Planning|Fitness|Beauty Salon|AI Business|100 ', 'i') } },
-        ],
-      });
-    } else if (activeType === 'business-in-the-box') {
-      andConditions.push({
-        $or: [
-          { title: new RegExp(boxPattern, 'i') },
-          { categoryName: new RegExp('Business-in-a-Box', 'i') },
-        ],
-      });
-    } else if (activeType === 'business-plans') {
-      andConditions.push({
-        $and: [
-          {
-            $or: [
-              { categoryName: new RegExp('Business Plan', 'i') },
-              { title: new RegExp('BUSINESS PLAN|Ideas|Playbook|Guide|System', 'i') },
-            ],
-          },
-          { title: { $not: new RegExp(boxPattern, 'i') } },
-          {
-            $or: [
-              { title: new RegExp('100 |BUSINESS PLAN|Playbook|Guide|Compliance|FSSAI|Production|Sourcing', 'i') },
-              { categoryName: new RegExp('Business Plan', 'i') },
-            ],
-          },
-        ],
-      });
+    // 1. Explicit Type Filter
+    if (type && ['business-plans', 'business-tools', 'business-in-the-box'].includes(type)) {
+      andConditions.push({ packageType: type });
     }
 
-    // 2. Subcategory Domain Filter
-    if (category && category !== 'business-tools' && category !== 'business-plans' && category !== 'business-in-the-box') {
-      const keywords = DOMAIN_KEYWORD_MAP[category];
-      if (keywords && keywords.length > 0) {
-        const pattern = keywords.map(escapeRegex).join('|');
-        andConditions.push({
-          $or: [
-            { categoryName: new RegExp(pattern, 'i') },
-            { title: new RegExp(pattern, 'i') },
-          ],
-        });
-      } else {
-        const terms = category.split('-').map(escapeRegex).filter(Boolean);
-        const pattern = terms.join('[\\s&\\-]*');
-        andConditions.push({
-          $or: [
-            { categoryName: new RegExp(pattern, 'i') },
-            { title: new RegExp(pattern, 'i') },
-          ],
-        });
-      }
+    // 2. Explicit Subcategory Filter
+    if (targetCategory) {
+      andConditions.push({ categoryName: targetCategory });
     }
 
     // 3. Search Filter
@@ -1624,47 +1627,28 @@ app.get('/api/v1/courses', async (req, res) => {
 
     const query = andConditions.length > 1 ? { $and: andConditions } : andConditions[0];
     const courses = await Course.find(query).sort({ createdAt: -1 }).lean();
-    console.log(`[GET /api/v1/courses] Returning ${courses.length} courses matching type "${activeType}" & category "${category}"`);
+    console.log(`[GET /api/v1/courses] Returning ${courses.length} courses matching type "${type}" & category "${targetCategory}"`);
     res.json(courses.map(publicCourse));
     return;
   }
 
   // Fallback Memory Filtering
   const filtered = fallbackCourses.filter((course) => {
-    const courseCat = normalizeCategoryQuery(course.categoryName);
-    const titleLower = course.title.toLowerCase();
-
-    // Type Match
     let typeMatch = true;
-    const boxKeywords = ['cloud kitchen', 'café', 'dairy', 'organic farming', 'poultry', 'event management', 'wedding planning', 'fitness', 'beauty salon', 'ai business', 'business-in-a-box'];
-    const isBoxCourse = boxKeywords.some(kw => titleLower.includes(kw));
-
-    if (activeType === 'business-tools') {
-      typeMatch = (courseCat.includes('toolkit') || courseCat.includes('tools') || /framework|playbook|blueprint|checklist|sop|automation|validation|funnel|hiring|system/i.test(titleLower)) && !isBoxCourse && !titleLower.includes('100 ');
-    } else if (activeType === 'business-in-the-box') {
-      typeMatch = isBoxCourse;
-    } else if (activeType === 'business-plans') {
-      typeMatch = !isBoxCourse && (courseCat.includes('plan') || titleLower.includes('business plan') || titleLower.includes('100 ') || titleLower.includes('playbook') || titleLower.includes('guide'));
+    if (type && ['business-plans', 'business-tools', 'business-in-the-box'].includes(type)) {
+      typeMatch = (course as any).packageType === type;
     }
 
-    // Category Match
     let categoryMatch = true;
-    if (category && category !== 'business-tools' && category !== 'business-plans' && category !== 'business-in-the-box') {
-      const keywords = DOMAIN_KEYWORD_MAP[category];
-      if (keywords) {
-        categoryMatch = keywords.some(kw => courseCat.includes(kw) || titleLower.includes(kw));
-      } else {
-        categoryMatch = courseCat.includes(category) || category.includes(courseCat);
-      }
+    if (targetCategory) {
+      categoryMatch = course.categoryName === targetCategory;
     }
 
-    // Search Match
-    const searchMatch = !search || titleLower.includes(search);
+    const searchMatch = !search || course.title.toLowerCase().includes(search);
     return typeMatch && categoryMatch && searchMatch;
   });
 
-  console.log(`[GET /api/v1/courses] (Fallback Memory) Returning ${filtered.length} courses for type "${activeType}" & category "${category}"`);
-  res.json(filtered);
+  res.json(filtered.map(publicCourse));
 });
 
 app.get('/api/v1/courses/:slug', async (req, res) => {
@@ -1677,7 +1661,51 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
         categoryName: course.categoryName,
         isPublished: true,
       }).sort({ rating: -1, createdAt: -1 }).limit(4).lean();
-      res.json({ ...publicCourse(course), relatedCourses: related.map(publicCourse) });
+
+      let bundledTools: any[] = [];
+      let basePlan: any = null;
+
+      if (course.packageType === 'business-in-the-box') {
+        bundledTools = await Course.find({
+          categoryName: course.categoryName,
+          packageType: 'business-tools',
+          isPublished: true,
+        }).sort({ title: 1 }).lean();
+
+        const basePlanSlug = course.slug
+          .replace(/-business-in-a-box$/, '')
+          .replace(/-business-in-the-box$/, '');
+
+        basePlan = await Course.findOne({
+          slug: basePlanSlug,
+          packageType: 'business-plans',
+          isPublished: true,
+        }).lean();
+
+        if (!basePlan) {
+          const basePlanTitle = course.title
+            .replace(/\s*\(Business in a Box Bundle\)/i, '')
+            .replace(/\s*Business in a Box Bundle/i, '')
+            .replace(/\s*-\s*Business in a Box/i, '')
+            .replace(/\s*Business in a Box/i, '')
+            .replace(/\s*Bundle/i, '')
+            .trim();
+
+          basePlan = await Course.findOne({
+            categoryName: course.categoryName,
+            packageType: 'business-plans',
+            title: { $regex: new RegExp(`^${escapeRegex(basePlanTitle)}`, 'i') },
+            isPublished: true,
+          }).lean();
+        }
+      }
+
+      res.json({
+        ...publicCourse(course),
+        relatedCourses: related.map(publicCourse),
+        bundledTools: bundledTools.map(publicCourse),
+        basePlan: basePlan ? publicCourse(basePlan) : null,
+      });
       return;
     }
     res.status(404).json({ message: 'Course not found' });
@@ -1766,6 +1794,10 @@ app.post('/api/v1/courses/:courseId/verify-payment', requireAuth, requireActiveS
         },
         { upsert: true, new: true }
       );
+
+      if (course) {
+        await fulfillBundleEnrollments(res.locals.user.sub, course);
+      }
 
       try {
         await EmailService.sendCoursePurchase(
@@ -1956,6 +1988,10 @@ app.post('/api/v1/courses/:courseId/guest-verify-payment', async (req, res) => {
       { upsert: true, new: true }
     );
 
+    if (course) {
+      await fulfillBundleEnrollments(user._id, course);
+    }
+
     // Send guest purchase email
     const effectiveToken = user.passwordSetupToken || passwordSetupToken;
     try {
@@ -1977,6 +2013,301 @@ app.post('/api/v1/courses/:courseId/guest-verify-payment', async (req, res) => {
     return res.json({ message: 'Payment verified successfully.', accessUrl });
   } catch (error) {
     Logger.error('Guest payment verification failed:', error);
+    res.status(500).json({ message: 'Failed to verify payment.' });
+  }
+});
+
+// ── Cart Purchase Flow ──
+
+function createGuestCartToken(email: string, courseIds: string[]): string {
+  const payload = JSON.stringify({ email, courseIds, exp: Date.now() + 15 * 60 * 1000 });
+  const encoded = Buffer.from(payload).toString('base64url');
+  const sig = crypto.createHmac('sha256', config.authSecret || 'local-development-auth-secret')
+    .update(encoded).digest('base64url');
+  return `${encoded}.${sig}`;
+}
+
+function verifyGuestCartToken(token: string): { email: string; courseIds: string[] } | null {
+  try {
+    const [encoded, sig] = token.split('.');
+    if (!encoded || !sig) return null;
+    const expectedSig = crypto.createHmac('sha256', config.authSecret || 'local-development-auth-secret')
+      .update(encoded).digest('base64url');
+    if (sig !== expectedSig) return null;
+    const payload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+    if (!payload.email || !Array.isArray(payload.courseIds) || payload.exp < Date.now()) return null;
+    return { email: payload.email, courseIds: payload.courseIds };
+  } catch {
+    return null;
+  }
+}
+
+app.post('/api/v1/cart/purchase', requireAuth, requireActiveSession, async (req, res) => {
+  try {
+    const { courseIds } = req.body;
+    if (!Array.isArray(courseIds) || courseIds.length === 0) {
+      return res.status(400).json({ message: 'No courses provided in cart' });
+    }
+
+    const courses = await Course.find({
+      _id: { $in: courseIds },
+      isDeleted: false,
+    }).lean();
+
+    if (courses.length === 0) {
+      return res.status(404).json({ message: 'No valid courses found for purchase' });
+    }
+
+    if (!config.razorpayKeyId || !config.razorpayKeySecret) {
+      return res.status(500).json({ message: 'Payment gateway is not configured.' });
+    }
+
+    const totalAmount = courses.reduce((sum, c) => sum + (Number(c.price) || 0), 0);
+    const priceAmount = Math.max(1, Math.round(totalAmount * 100));
+
+    const instance = new Razorpay({
+      key_id: config.razorpayKeyId,
+      key_secret: config.razorpayKeySecret,
+    });
+
+    const options = {
+      amount: priceAmount,
+      currency: 'INR',
+      receipt: `rcpt_cart_${Date.now()}`,
+    };
+
+    const order = await instance.orders.create(options);
+    res.json({ ...order, courseIds: courses.map((c) => c._id.toString()) });
+  } catch (error) {
+    Logger.error('Cart order creation failed:', error);
+    res.status(500).json({ message: 'Failed to initiate cart payment.' });
+  }
+});
+
+app.post('/api/v1/cart/verify-payment', requireAuth, requireActiveSession, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, courseIds } = req.body;
+
+    if (!config.razorpayKeySecret) {
+      return res.status(500).json({ message: 'Payment gateway is not configured.' });
+    }
+
+    if (!Array.isArray(courseIds) || courseIds.length === 0) {
+      return res.status(400).json({ message: 'Course IDs required' });
+    }
+
+    const sign = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac('sha256', config.razorpayKeySecret)
+      .update(sign.toString())
+      .digest('hex');
+
+    if (razorpay_signature !== expectedSign) {
+      return res.status(400).json({ message: 'Invalid payment signature.' });
+    }
+
+    const courses = await Course.find({ _id: { $in: courseIds }, isDeleted: false }).lean();
+    if (courses.length === 0) {
+      return res.status(404).json({ message: 'Courses not found' });
+    }
+
+    for (const course of courses) {
+      await Enrollment.findOneAndUpdate(
+        { user: res.locals.user.sub, course: course._id },
+        {
+          $set: {
+            user: res.locals.user.sub,
+            course: course._id,
+            status: 'active',
+            enrolledAt: new Date(),
+            isDeleted: false,
+          },
+        },
+        { upsert: true, new: true }
+      );
+    }
+
+    const user = await User.findById(res.locals.user.sub).select('name email').lean();
+    if (user) {
+      try {
+        const titles = courses.map((c) => c.title).join(', ');
+        await EmailService.sendCoursePurchase({ name: user.name, email: user.email }, titles);
+      } catch (err) {
+        Logger.error('Failed to send cart purchase email', err);
+      }
+    }
+
+    res.json({ message: 'Payment verified and solutions unlocked successfully.' });
+  } catch (error) {
+    Logger.error('Cart payment verification failed:', error);
+    res.status(500).json({ message: 'Failed to verify payment.' });
+  }
+});
+
+app.post('/api/v1/cart/guest-purchase', async (req, res) => {
+  try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({ message: 'Database is not connected' });
+    }
+
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const name = String(req.body.name || '').trim() || 'Guest User';
+    const { courseIds } = req.body;
+
+    if (!emailPattern.test(email)) {
+      return res.status(400).json({ message: 'A valid email is required' });
+    }
+
+    if (!Array.isArray(courseIds) || courseIds.length === 0) {
+      return res.status(400).json({ message: 'At least one course is required' });
+    }
+
+    const courses = await Course.find({
+      _id: { $in: courseIds },
+      isPublished: true,
+      isDeleted: { $ne: true },
+    }).lean();
+
+    if (courses.length === 0) {
+      return res.status(404).json({ message: 'No valid courses found' });
+    }
+
+    if (!config.razorpayKeyId || !config.razorpayKeySecret) {
+      return res.status(500).json({ message: 'Payment gateway is not configured.' });
+    }
+
+    const validCourseIds = courses.map((c) => c._id.toString());
+    const totalAmount = courses.reduce((sum, c) => sum + (Number(c.price) || 0), 0);
+    const priceAmount = Math.max(1, Math.round(totalAmount * 100));
+
+    const instance = new Razorpay({
+      key_id: config.razorpayKeyId,
+      key_secret: config.razorpayKeySecret,
+    });
+
+    const order = await instance.orders.create({
+      amount: priceAmount,
+      currency: 'INR',
+      receipt: `rcpt_guest_cart_${Date.now()}`,
+    });
+
+    const guestToken = createGuestCartToken(email, validCourseIds);
+
+    res.json({
+      ...order,
+      guestToken,
+      courseIds: validCourseIds,
+    });
+  } catch (error) {
+    Logger.error('Guest cart order creation failed:', error);
+    res.status(500).json({ message: 'Failed to initiate guest cart payment.' });
+  }
+});
+
+app.post('/api/v1/cart/guest-verify-payment', async (req, res) => {
+  try {
+    if (!isMongoConnected()) {
+      return res.status(503).json({ message: 'Database is not connected' });
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, guestToken, courseIds } = req.body;
+
+    if (!guestToken) {
+      return res.status(400).json({ message: 'Guest token is required' });
+    }
+
+    const guestData = verifyGuestCartToken(guestToken);
+    if (!guestData) {
+      return res.status(400).json({ message: 'Invalid or expired guest token' });
+    }
+
+    if (!config.razorpayKeySecret) {
+      return res.status(500).json({ message: 'Payment gateway is not configured.' });
+    }
+
+    const sign = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac('sha256', config.razorpayKeySecret)
+      .update(sign.toString())
+      .digest('hex');
+
+    if (razorpay_signature !== expectedSign) {
+      return res.status(400).json({ message: 'Invalid payment signature.' });
+    }
+
+    const targetCourseIds = Array.isArray(courseIds) && courseIds.length > 0 ? courseIds : guestData.courseIds;
+    const courses = await Course.find({ _id: { $in: targetCourseIds }, isDeleted: { $ne: true } }).lean();
+
+    if (courses.length === 0) {
+      return res.status(404).json({ message: 'No valid courses found' });
+    }
+
+    let user = await User.findOne({ email: guestData.email }).select('_id name email isGuest passwordSetupToken');
+    const passwordSetupToken = crypto.randomBytes(32).toString('hex');
+
+    if (!user) {
+      user = await User.create({
+        name: req.body.name || 'Guest User',
+        email: guestData.email,
+        role: 'student',
+        isGuest: true,
+        isEmailVerified: false,
+        passwordSetupToken,
+      });
+    } else if (user.isGuest && !user.passwordSetupToken) {
+      user.passwordSetupToken = passwordSetupToken;
+      await user.save();
+    }
+
+    const frontendUrl = config.clientOrigins[0] || 'http://localhost:5173';
+    const accessUrls: { title: string; url: string }[] = [];
+
+    for (const course of courses) {
+      const accessToken = crypto.randomBytes(32).toString('hex');
+      await Enrollment.findOneAndUpdate(
+        { user: user._id, course: course._id },
+        {
+          $set: {
+            user: user._id,
+            course: course._id,
+            status: 'active',
+            enrolledAt: new Date(),
+            accessToken,
+            isDeleted: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        { upsert: true, new: true }
+      );
+      accessUrls.push({
+        title: course.title,
+        url: `${frontendUrl}/course-access/${accessToken}`,
+      });
+    }
+
+    const effectiveToken = user.passwordSetupToken || passwordSetupToken;
+    try {
+      for (const item of accessUrls) {
+        const token = item.url.split('/').pop() || '';
+        await EmailService.sendGuestCoursePurchase(
+          { name: user.name, email: user.email },
+          item.title,
+          token,
+          effectiveToken
+        );
+      }
+    } catch (err) {
+      Logger.error('Failed to send guest cart course purchase emails', err);
+    }
+
+    return res.json({
+      message: 'Payment verified successfully.',
+      accessUrls,
+      accessUrl: accessUrls[0]?.url,
+    });
+  } catch (error) {
+    Logger.error('Guest cart payment verification failed:', error);
     res.status(500).json({ message: 'Failed to verify payment.' });
   }
 });

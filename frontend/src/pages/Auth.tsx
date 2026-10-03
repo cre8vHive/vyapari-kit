@@ -206,24 +206,24 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode, onAuth }) => {
             <span className="auth-kicker">
               <span className="auth-kicker-dot" /> VyapaarKit Account
             </span>
-            <h1>{isVerify ? 'Verifying\nemail' : isRegister ? 'Start learning\ntoday' : isForgot ? 'Reset your\npassword' : isReset ? 'Set new\npassword' : 'Welcome\nback'}</h1>
+            <h1>{isVerify ? 'Verifying\nemail' : isRegister ? 'Start business\ntoday' : isForgot ? 'Reset your\npassword' : isReset ? 'Set new\npassword' : 'Welcome\nback'}</h1>
             <p>
               {isVerify
                 ? 'Please wait while we confirm your email address.'
                 : isRegister
-                  ? 'Create your student account and unlock thousands of expert-led courses, bootcamps, and learning paths.'
-                  : isForgot || isReset ? 'Follow the steps to regain access to your account and continue learning.'
-                    : 'Sign in to continue your learning journey. Your progress, certificates, and bookmarks are waiting.'}
+                  ? 'Create your entrepreneur account and unlock thousands of expert-led business solutions, playbooks, and toolkits.'
+                  : isForgot || isReset ? 'Follow the steps to regain access to your account and continue growing.'
+                    : 'Sign in to access your business solutions, playbooks, and toolkits.'}
             </p>
             <div className="auth-stats" aria-hidden="true">
               <div className="auth-stat">
                 <strong>12k+</strong>
-                <span>Students</span>
+                <span>Entrepreneurs</span>
               </div>
               <div className="auth-stat-divider" />
               <div className="auth-stat">
                 <strong>200+</strong>
-                <span>Courses</span>
+                <span>Solutions</span>
               </div>
               <div className="auth-stat-divider" />
               <div className="auth-stat">

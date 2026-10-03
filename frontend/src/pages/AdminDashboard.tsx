@@ -38,7 +38,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             className={`admin-tab ${activeTab === 'courses' ? 'active' : ''}`}
             onClick={() => setActiveTab('courses')}
           >
-            Course Management
+            Business Solutions Management
           </button>
           <button 
             className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}

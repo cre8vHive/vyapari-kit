@@ -114,6 +114,7 @@ export interface CourseSummary {
   subtitle?: string;
   instructorName: string;
   categoryName: string;
+  packageType?: 'business-plans' | 'business-tools' | 'business-in-the-box' | string;
   difficulty: string;
   price: number;
   oldPrice?: number;
@@ -163,6 +164,8 @@ export interface CourseSummary {
     date?: string;
   }>;
   relatedCourses?: CourseSummary[];
+  bundledTools?: CourseSummary[];
+  basePlan?: CourseSummary | null;
   updatedAt?: string;
   createdAt?: string;
 }
@@ -206,6 +209,7 @@ export interface CourseSavePayload {
   title: string;
   instructorName: string;
   categoryName: string;
+  packageType?: 'business-plans' | 'business-tools' | 'business-in-the-box' | string;
   difficulty: string;
   price: number;
   oldPrice?: number | '';
@@ -355,6 +359,24 @@ export const paymentApi = {
     payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; guestToken: string }
   ): Promise<{ message: string; accessUrl: string }> => {
     const response = await apiClient.post<{ message: string; accessUrl: string }>(`/courses/${courseId}/guest-verify-payment`, payload);
+    return response.data;
+  },
+  createCartOrder: async (courseIds: string[]): Promise<any> => {
+    const response = await apiClient.post('/cart/purchase', { courseIds });
+    return response.data;
+  },
+  verifyCartPayment: async (payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; courseIds: string[] }): Promise<{ message: string }> => {
+    const response = await apiClient.post<{ message: string }>('/cart/verify-payment', payload);
+    return response.data;
+  },
+  createGuestCartOrder: async (courseIds: string[], email: string, name?: string): Promise<any> => {
+    const response = await apiClient.post('/cart/guest-purchase', { courseIds, email, name });
+    return response.data;
+  },
+  verifyGuestCartPayment: async (
+    payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; guestToken: string; courseIds?: string[] }
+  ): Promise<{ message: string; accessUrls?: { title: string; url: string }[]; accessUrl?: string }> => {
+    const response = await apiClient.post<{ message: string; accessUrls?: { title: string; url: string }[]; accessUrl?: string }>('/cart/guest-verify-payment', payload);
     return response.data;
   },
 };

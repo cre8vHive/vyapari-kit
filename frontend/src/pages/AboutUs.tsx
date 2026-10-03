@@ -57,7 +57,7 @@ const kitFeatures = [
 const audiences = [
   'First-time entrepreneurs',
   'Working professionals planning a side business',
-  'Students exploring business opportunities',
+  'Aspiring entrepreneurs exploring business opportunities',
   'Small business owners looking to diversify',
   'Investors evaluating business ideas',
   'Anyone who wants a structured business roadmap before investing',

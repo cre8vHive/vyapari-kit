@@ -6,7 +6,7 @@ const CourseCurriculum = ({ curriculum }) => {
   return (
     <section className="course-curriculum">
       <div className="section-heading">
-        <h2>Course curriculum</h2>
+        <h2>Solution curriculum</h2>
       </div>
       <div className="curriculum-list">
         {curriculum.map((section, index) => {
