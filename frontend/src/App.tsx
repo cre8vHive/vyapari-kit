@@ -18,12 +18,12 @@ import vyapaarKitLogo from './assets/vyapaar-kit-logo.jpg';
 
 const HEARTBEAT_INTERVAL_MS = 30_000; // 30 seconds
 
-const HeaderCartButton: React.FC = () => {
+const HeaderCartButton: React.FC<{ mobileMenu?: boolean }> = ({ mobileMenu = false }) => {
   const { totalCount, toggleCart } = useCart();
 
   return (
     <button
-      className="site-cart-btn"
+      className={`site-cart-btn${mobileMenu ? ' site-nav-mobile-action site-nav-mobile-cart' : ''}`}
       type="button"
       onClick={toggleCart}
       aria-label={`Shopping Cart with ${totalCount} items`}
@@ -34,6 +34,7 @@ const HeaderCartButton: React.FC = () => {
         <circle cx="20" cy="21" r="1"></circle>
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
       </svg>
+      {mobileMenu && <span>Cart</span>}
       {totalCount > 0 && <span className="site-cart-badge">{totalCount}</span>}
     </button>
   );
@@ -193,6 +194,13 @@ const AppContent: React.FC = () => {
           <a href={withBase('/courses')} aria-current={isActivePath('/courses') ? 'page' : undefined}>Business Solutions</a>
           <a href={withBase('/about-us')} aria-current={isActivePath('/about-us') ? 'page' : undefined}>About Us</a>
           <a href={withBase('/contact-us')} aria-current={isActivePath('/contact-us') ? 'page' : undefined}>Contact Us</a>
+          {isMenuOpen && (
+            <>
+              <a className="site-nav-mobile-action" href={withBase('/login')}>Login</a>
+              <a className="site-nav-mobile-action" href={withBase('/register')}>Register</a>
+              <HeaderCartButton mobileMenu />
+            </>
+          )}
           {user?.role === 'admin' && <a href={withBase('/admin')}>Admin</a>}
         </nav>
         <div className="site-actions-wrapper" style={{ display: 'flex', alignItems: 'center' }}>

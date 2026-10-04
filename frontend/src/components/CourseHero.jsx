@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [isGalleryPaused, setIsGalleryPaused] = useState(false);
+  const [timerReset, setTimerReset] = useState(0);
+  const touchStartX = useRef(null);
+  const didSwipe = useRef(false);
 
   const defaultGallery = [
     {
@@ -35,8 +39,46 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
     },
   ];
 
-  const gallery = (course.gallery && course.gallery.length > 0) ? course.gallery : defaultGallery;
+  const sourceGallery = (course.gallery && course.gallery.length > 0) ? course.gallery : defaultGallery;
+  const imageGallery = sourceGallery.filter((item) =>
+    /\.(jpe?g|png|webp|gif)(?:[?#].*)?$/i.test(String(item.url || ''))
+  );
+  const gallery = imageGallery.length > 0 ? imageGallery : defaultGallery;
   const currentImage = gallery[activeImageIndex] || gallery[0];
+
+  useEffect(() => {
+    setActiveImageIndex((index) => Math.min(index, gallery.length - 1));
+  }, [gallery.length]);
+
+  useEffect(() => {
+    if (isGalleryPaused || gallery.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveImageIndex((index) => (index + 1) % gallery.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [gallery.length, isGalleryPaused, timerReset]);
+
+  const changeImage = (index) => {
+    setActiveImageIndex((index + gallery.length) % gallery.length);
+    setTimerReset((reset) => reset + 1);
+  };
+
+  const handleTouchStart = (event) => {
+    touchStartX.current = event.changedTouches[0].clientX;
+    setIsGalleryPaused(true);
+  };
+
+  const handleTouchEnd = (event) => {
+    if (touchStartX.current !== null) {
+      const distance = event.changedTouches[0].clientX - touchStartX.current;
+      if (Math.abs(distance) > 40 && gallery.length > 1) {
+        didSwipe.current = true;
+        changeImage(activeImageIndex + (distance < 0 ? 1 : -1));
+      }
+    }
+    touchStartX.current = null;
+    setIsGalleryPaused(false);
+  };
 
   const isBusinessInABox = course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
 
@@ -99,8 +141,25 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
 
       {/* 2. Product Gallery Block (Prominent on both Desktop & Mobile) */}
       <div className="hero-gallery-block">
-        <div className="hero-gallery-wrapper">
-          <div className="hero-media-card product-main-gallery" onClick={() => setIsZoomed(true)}>
+        <div
+          className="hero-gallery-wrapper"
+          onMouseEnter={() => setIsGalleryPaused(true)}
+          onMouseLeave={() => setIsGalleryPaused(false)}
+          onTouchStart={() => setIsGalleryPaused(true)}
+          onTouchEnd={() => setIsGalleryPaused(false)}
+        >
+          <div
+            className="hero-media-card product-main-gallery"
+            onClick={() => {
+              if (didSwipe.current) {
+                didSwipe.current = false;
+                return;
+              }
+              setIsZoomed(true);
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             {/* Top Right Edition Badge (dynamic from DB) */}
             {course.editionNote && (
               <div className="gallery-badge-top-right">
@@ -108,8 +167,8 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
               </div>
             )}
 
-            {/* Main Featured Image */}
             <img
+              key={currentImage.url}
               src={currentImage.url}
               alt={currentImage.alt}
               className="gallery-featured-img"
@@ -127,26 +186,48 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
                 Tap to Zoom
               </span>
             </div>
-          </div>
-
-          {/* Gallery Thumbnails Selection Carousel */}
-          <div className="gallery-thumbnail-row" role="tablist" aria-label="Product image gallery">
-            {gallery.map((item, index) => (
-              <button
-                key={item.id || index}
-                type="button"
-                role="tab"
-                aria-selected={activeImageIndex === index}
-                className={`gallery-thumb-btn ${activeImageIndex === index ? 'active' : ''}`}
-                onClick={() => setActiveImageIndex(index)}
-                title={item.caption || item.label}
-              >
-                <div className="thumb-img-wrapper">
-                  <img src={item.url} alt={item.label} />
-                </div>
-                <span className="thumb-label">{item.label}</span>
-              </button>
-            ))}
+            {gallery.length > 1 && (
+              <div className="gallery-slider-controls">
+                <button
+                  type="button"
+                  aria-label="Previous image"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    changeImage(activeImageIndex - 1);
+                  }}
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next image"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    changeImage(activeImageIndex + 1);
+                  }}
+                >
+                  →
+                </button>
+              </div>
+            )}
+            {gallery.length > 1 && (
+              <div className="gallery-pagination" role="tablist" aria-label="Choose gallery image">
+                {gallery.map((item, index) => (
+                  <button
+                    key={item.id || item.url || index}
+                    type="button"
+                    role="tab"
+                    aria-label={`Show image ${index + 1}`}
+                    aria-selected={activeImageIndex === index}
+                    className={activeImageIndex === index ? 'active' : ''}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      changeImage(index);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

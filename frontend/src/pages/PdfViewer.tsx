@@ -182,8 +182,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ courseId }) => {
 
         setManifest(nextManifest);
 
-        const baseUrl = String(apiClient.defaults.baseURL || window.location.origin);
-        const streamUrl = new URL(nextManifest.pdf.streamUrl, baseUrl).toString();
+        const baseUrl = new URL(String(apiClient.defaults.baseURL || '/api/v1'), window.location.origin);
+        const streamUrl = new URL(nextManifest.pdf.streamUrl, baseUrl.origin).toString();
 
         loadingTask = pdfjsLib.getDocument({
           url: streamUrl,
