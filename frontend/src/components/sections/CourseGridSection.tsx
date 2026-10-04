@@ -22,6 +22,7 @@ export interface CourseGridSectionProps {
   layout?: 'grid' | 'carousel';
   embedded?: boolean;
   mode?: 'available' | 'my';
+  coursesPerPage?: number;
   onCourseClick?: (course: CourseItem, event: React.MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -35,19 +36,32 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
   layout = 'grid',
   embedded = false,
   mode = 'available',
+  coursesPerPage = 12,
   onCourseClick,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const { addToCart, isInCart, openCart } = useCart();
-  const coursesPerPage = 10;
-  const totalPages = Math.ceil(courses.length / coursesPerPage);
+  const uniqueCourses = React.useMemo(() => {
+    const seen = new Set<string>();
+    return courses.filter((c) => {
+      const key = (c.id || c.slug || c.title).toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [courses]);
 
-  if (currentPage > totalPages && totalPages > 0) {
-    setCurrentPage(1);
-  }
+  const totalPages = Math.ceil(uniqueCourses.length / coursesPerPage);
+  const activePage = Math.min(currentPage, Math.max(1, totalPages));
 
-  const startIndex = (currentPage - 1) * coursesPerPage;
-  const displayedCourses = courses.slice(startIndex, startIndex + coursesPerPage);
+  React.useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, totalPages]);
+
+  const startIndex = (activePage - 1) * coursesPerPage;
+  const displayedCourses = uniqueCourses.slice(startIndex, startIndex + coursesPerPage);
 
   const renderPagination = () => {
     if (totalPages <= 1) return null;
@@ -56,18 +70,18 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
       <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', padding: '20px 0', alignItems: 'center' }}>
         <button
           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-          disabled={currentPage === 1}
-          style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f8fafc' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: currentPage === 1 ? '#94a3b8' : '#0f172a' }}
+          disabled={activePage === 1}
+          style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e2e8f0', background: activePage === 1 ? '#f8fafc' : 'white', cursor: activePage === 1 ? 'not-allowed' : 'pointer', color: activePage === 1 ? '#94a3b8' : '#0f172a' }}
         >
           Previous
         </button>
         <span style={{ fontWeight: 500, color: '#475569' }}>
-          Page {currentPage} of {totalPages}
+          Page {activePage} of {totalPages}
         </span>
         <button
           onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-          disabled={currentPage === totalPages}
-          style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e2e8f0', background: currentPage === totalPages ? '#f8fafc' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: currentPage === totalPages ? '#94a3b8' : '#0f172a' }}
+          disabled={activePage === totalPages}
+          style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e2e8f0', background: activePage === totalPages ? '#f8fafc' : 'white', cursor: activePage === totalPages ? 'not-allowed' : 'pointer', color: activePage === totalPages ? '#94a3b8' : '#0f172a' }}
         >
           Next
         </button>

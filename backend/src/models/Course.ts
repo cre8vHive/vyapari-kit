@@ -24,6 +24,13 @@ export interface ICourse extends Document, IAudit {
   audience?: string[];
   faqs?: { question: string; answer: string }[];
   editionNote?: string;
+  gallery?: Array<{
+    id?: string;
+    url: string;
+    label?: string;
+    caption?: string;
+    alt?: string;
+  }>;
 }
 
 const LessonSchema = new Schema({
@@ -132,6 +139,17 @@ const CourseSchema = new Schema<any>({
       title: String,
       comment: String,
       date: String,
+      _id: false,
+    }],
+    default: [],
+  },
+  gallery: {
+    type: [{
+      id: { type: String },
+      url: { type: String, required: true },
+      label: { type: String },
+      caption: { type: String },
+      alt: { type: String },
       _id: false,
     }],
     default: [],

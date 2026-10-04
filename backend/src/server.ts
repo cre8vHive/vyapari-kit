@@ -117,6 +117,7 @@ function publicCourse(course: any) {
     faqs: course.faqs,
     reviews: course.reviews,
     editionNote: course.editionNote || '',
+    gallery: course.gallery || [],
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
   };
@@ -1611,7 +1612,11 @@ app.get('/api/v1/courses', async (req, res) => {
     const andConditions: Record<string, any>[] = [{ isPublished: true, isDeleted: { $ne: true } }];
 
     // 1. Explicit Type Filter
-    if (type && ['business-plans', 'business-tools', 'business-in-the-box'].includes(type)) {
+    const isBoxFilter = type === 'business-in-the-box';
+    if (isBoxFilter) {
+      // Every business plan serves as the base plan for a Business in a Box bundle
+      andConditions.push({ packageType: 'business-plans' });
+    } else if (type && ['business-plans', 'business-tools'].includes(type)) {
       andConditions.push({ packageType: type });
     }
 
@@ -1628,14 +1633,33 @@ app.get('/api/v1/courses', async (req, res) => {
     const query = andConditions.length > 1 ? { $and: andConditions } : andConditions[0];
     const courses = await Course.find(query).sort({ createdAt: -1 }).lean();
     console.log(`[GET /api/v1/courses] Returning ${courses.length} courses matching type "${type}" & category "${targetCategory}"`);
-    res.json(courses.map(publicCourse));
+
+    const mapped = courses.map((c) => {
+      const pub = publicCourse(c);
+      if (isBoxFilter) {
+        return {
+          ...pub,
+          packageType: 'business-in-the-box',
+          price: 899,
+          oldPrice: 2499,
+          title: `${c.title} - Business in a Box`,
+          subtitle: `Complete Business Plan + All ${c.categoryName} Business Tools`,
+        };
+      }
+      return pub;
+    });
+
+    res.json(mapped);
     return;
   }
 
   // Fallback Memory Filtering
+  const isBoxFilter = type === 'business-in-the-box';
   const filtered = fallbackCourses.filter((course) => {
     let typeMatch = true;
-    if (type && ['business-plans', 'business-tools', 'business-in-the-box'].includes(type)) {
+    if (isBoxFilter) {
+      typeMatch = (course as any).packageType === 'business-plans';
+    } else if (type && ['business-plans', 'business-tools'].includes(type)) {
       typeMatch = (course as any).packageType === type;
     }
 
@@ -1648,13 +1672,39 @@ app.get('/api/v1/courses', async (req, res) => {
     return typeMatch && categoryMatch && searchMatch;
   });
 
-  res.json(filtered.map(publicCourse));
+  const mappedFallback = filtered.map((c) => {
+    const pub = publicCourse(c);
+    if (isBoxFilter) {
+      return {
+        ...pub,
+        packageType: 'business-in-the-box',
+        price: 899,
+        oldPrice: 2499,
+        title: `${c.title} - Business in a Box`,
+        subtitle: `Complete Business Plan + All ${c.categoryName} Business Tools`,
+      };
+    }
+    return pub;
+  });
+
+  res.json(mappedFallback);
 });
 
 app.get('/api/v1/courses/:slug', async (req, res) => {
-  console.log(`[GET /api/v1/courses/:slug] Fetching course by slug: "${req.params.slug}"`);
+  const rawSlug = req.params.slug.toLowerCase();
+  const isBoxRequest = rawSlug.endsWith('-business-in-a-box') || rawSlug.endsWith('-business-in-the-box');
+  const cleanSlug = rawSlug
+    .replace(/-business-in-a-box$/, '')
+    .replace(/-business-in-the-box$/, '');
+
+  console.log(`[GET /api/v1/courses/:slug] Fetching course by slug: "${rawSlug}" (clean: "${cleanSlug}", isBox: ${isBoxRequest})`);
+
   if (isMongoConnected()) {
-    const course = await Course.findOne({ slug: req.params.slug.toLowerCase(), isPublished: true }).lean();
+    const course = await Course.findOne({
+      slug: { $in: [rawSlug, cleanSlug] },
+      isPublished: true,
+    }).lean();
+
     if (course) {
       const related = await Course.find({
         _id: { $ne: course._id },
@@ -1665,43 +1715,30 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
       let bundledTools: any[] = [];
       let basePlan: any = null;
 
-      if (course.packageType === 'business-in-the-box') {
+      if (course.packageType === 'business-plans' || isBoxRequest) {
         bundledTools = await Course.find({
           categoryName: course.categoryName,
           packageType: 'business-tools',
           isPublished: true,
         }).sort({ title: 1 }).lean();
 
-        const basePlanSlug = course.slug
-          .replace(/-business-in-a-box$/, '')
-          .replace(/-business-in-the-box$/, '');
+        basePlan = course;
+      }
 
-        basePlan = await Course.findOne({
-          slug: basePlanSlug,
-          packageType: 'business-plans',
-          isPublished: true,
-        }).lean();
-
-        if (!basePlan) {
-          const basePlanTitle = course.title
-            .replace(/\s*\(Business in a Box Bundle\)/i, '')
-            .replace(/\s*Business in a Box Bundle/i, '')
-            .replace(/\s*-\s*Business in a Box/i, '')
-            .replace(/\s*Business in a Box/i, '')
-            .replace(/\s*Bundle/i, '')
-            .trim();
-
-          basePlan = await Course.findOne({
-            categoryName: course.categoryName,
-            packageType: 'business-plans',
-            title: { $regex: new RegExp(`^${escapeRegex(basePlanTitle)}`, 'i') },
-            isPublished: true,
-          }).lean();
-        }
+      let responseCourse = publicCourse(course);
+      if (isBoxRequest) {
+        responseCourse = {
+          ...responseCourse,
+          packageType: 'business-in-the-box',
+          price: 899,
+          oldPrice: 2499,
+          title: `${course.title} - Business in a Box`,
+          subtitle: `Complete Business Plan + All ${course.categoryName} Business Tools`,
+        };
       }
 
       res.json({
-        ...publicCourse(course),
+        ...responseCourse,
         relatedCourses: related.map(publicCourse),
         bundledTools: bundledTools.map(publicCourse),
         basePlan: basePlan ? publicCourse(basePlan) : null,

@@ -131,6 +131,29 @@ export const CourseListing: React.FC = () => {
           (course.categoryName && course.categoryName.toLowerCase().includes(query))
         );
       }
+
+      // Deduplicate courses so each unique business only appears once
+      const isBoxType = listingState.type === 'business-in-the-box';
+      const seenBusinesses = new Set<string>();
+      result = result.filter((course) => {
+        // Normalize base business title
+        const baseKey = course.title
+          .replace(/\s*-\s*Business in a Box$/i, '')
+          .trim()
+          .toLowerCase();
+
+        // If not browsing the dedicated business-in-the-box tab, skip bundle duplicate
+        if (!isBoxType && course.packageType === 'business-in-the-box') {
+          return false;
+        }
+
+        if (seenBusinesses.has(baseKey)) {
+          return false;
+        }
+        seenBusinesses.add(baseKey);
+        return true;
+      });
+
       if (listingState.sortBy === 'price-low') {
         result.sort((a, b) => a.price - b.price);
       } else if (listingState.sortBy === 'price-high') {
@@ -140,7 +163,7 @@ export const CourseListing: React.FC = () => {
       }
       return result;
     },
-    [activeCourses, listingState.tab, listingState.category, listingState.searchQuery, listingState.sortBy]
+    [activeCourses, listingState.tab, listingState.type, listingState.category, listingState.searchQuery, listingState.sortBy]
   );
   const activeTabLabel = listingState.tab === 'my' ? 'My Business Solutions' : 'Available Business Solutions';
 

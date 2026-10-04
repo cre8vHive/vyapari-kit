@@ -163,6 +163,13 @@ export interface CourseSummary {
     comment: string;
     date?: string;
   }>;
+  gallery?: Array<{
+    id?: string;
+    url: string;
+    label?: string;
+    caption?: string;
+    alt?: string;
+  }>;
   relatedCourses?: CourseSummary[];
   bundledTools?: CourseSummary[];
   basePlan?: CourseSummary | null;

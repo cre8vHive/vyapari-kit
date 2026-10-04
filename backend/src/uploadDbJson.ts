@@ -131,48 +131,6 @@ async function uploadDbJson() {
     }
   }
 
-  // 2. Generate Business in a Box bundle items for each Business Plan!
-  console.log(`Generating Business in a Box bundle items for ${businessPlansList.length} Business Plans...`);
-  for (const plan of businessPlansList) {
-    const boxTitle = `${plan.title} - Business in a Box`;
-    const boxSlug = makeUniqueSlug(boxTitle);
-
-    coursesToInsert.push({
-      title: boxTitle,
-      slug: boxSlug,
-      packageType: 'business-in-the-box',
-      categoryName: plan.categoryName,
-      instructorName: plan.instructorName,
-      difficulty: plan.difficulty,
-      price: 899,
-      oldPrice: 2499,
-      rating: 4.9,
-      imageUrl: '/images/tiles/business-in-a-box-bundle.png',
-      subtitle: `Complete Business Plan + All ${plan.categoryName} Business Tools`,
-      editionNote: 'BUNDLE EDITION 2026',
-      language: plan.language,
-      isPublished: true,
-      description: [
-        `The complete Business in a Box bundle for ${plan.title}.`,
-        `Includes the complete ${plan.title} business plan PLUS instant, full access to all industry-specific tools, playbooks, and calculators in the ${plan.categoryName} category.`,
-        ...(plan.description || []),
-      ],
-      includes: [
-        `Complete Business Plan: ${plan.title}`,
-        `All ${plan.categoryName} Business Tools & Playbooks Included`,
-        'Financial Projections & Costing Spreadsheet',
-        'Regulatory & Compliance Roadmap',
-        'Lifetime Access & Free Future Updates',
-        'Instant Multi-Product Download',
-      ],
-      learningHighlights: plan.learningHighlights,
-      skills: plan.skills,
-      requirements: plan.requirements,
-      audience: plan.audience,
-      faqs: plan.faqs,
-    });
-  }
-
   console.log(`Inserting ${coursesToInsert.length} total courses into MongoDB...`);
   await Course.insertMany(coursesToInsert);
   console.log(`Successfully inserted ${coursesToInsert.length} courses!`);
