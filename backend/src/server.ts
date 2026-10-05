@@ -97,6 +97,7 @@ function publicCourse(course: any) {
     isPublished: course.isPublished ?? true,
     hasPdf: Boolean(course.pdfAsset),
     shortDescription: course.shortDescription,
+    subtitle: course.subtitle || '',
     description: course.description,
     thumbnail: course.thumbnail || course.imageUrl,
     bannerImage: course.bannerImage,

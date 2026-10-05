@@ -20,9 +20,17 @@ const MobileStickyBuyBar = ({ course, onPurchase, onAddToCart, isInCart }) => {
     ? course.price?.old
     : (course.oldPrice ? `₹${course.oldPrice}` : null);
 
-  const thumbnail = course.thumbnail && !course.thumbnail.includes('unsplash')
+  const resolveImageUrl = (url) => {
+    if (!url) return 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
+    if (url.startsWith('/images/')) return `https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev${url}`;
+    return url;
+  };
+
+  const rawThumb = course.thumbnail && !course.thumbnail.includes('unsplash')
     ? course.thumbnail
-    : '/images/products/vyapaarkit-bundle-hero.jpg';
+    : (course.imageUrl || course.bannerImage);
+
+  const thumbnail = resolveImageUrl(rawThumb);
 
   const formatDisplayAmount = (priceVal) => {
     if (!priceVal) return '';
@@ -52,6 +60,9 @@ const MobileStickyBuyBar = ({ course, onPurchase, onAddToCart, isInCart }) => {
           src={thumbnail}
           alt={course.title}
           className="mobile-sticky-thumb"
+          onError={(e) => {
+            e.currentTarget.src = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
+          }}
         />
         <div className="mobile-sticky-info">
           {isBusinessInABox && (

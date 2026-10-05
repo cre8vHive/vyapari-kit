@@ -112,7 +112,7 @@ async function uploadDbJson() {
       rating: Number(item.rating ?? 4.9),
       imageUrl: item.imageUrl?.trim() || defaultImage,
       subtitle: item.subtitle || '',
-      editionNote: item.editionNote || 'UPDATED 2026 EDITION',
+      editionNote: item.editionNote || '',
       language: item.language || 'English',
       isPublished: true,
       description: Array.isArray(item.description) ? item.description : (item.description ? [item.description] : [item.title]),

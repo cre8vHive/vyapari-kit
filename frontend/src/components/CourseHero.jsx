@@ -7,32 +7,35 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
   const [timerReset, setTimerReset] = useState(0);
   const touchStartX = useRef(null);
   const didSwipe = useRef(false);
+  const lightboxTouchStartX = useRef(null);
+  const lightboxMouseStartX = useRef(null);
+  const [isLightboxDragging, setIsLightboxDragging] = useState(false);
 
   const defaultGallery = [
     {
       id: 'bundle-hero',
-      url: course.thumbnail && !course.thumbnail.includes('unsplash') ? course.thumbnail : '/images/products/vyapaarkit-bundle-hero.jpg',
+      url: course.thumbnail && !course.thumbnail.includes('unsplash') ? course.thumbnail : 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg',
       label: '3D Kit Bundle',
       caption: 'Complete 3D MSME Toolkit Bundle',
       alt: `${course.title} 3D Bundle Mockup`,
     },
     {
       id: 'whats-inside',
-      url: '/images/products/vyapaarkit-whats-inside.jpg',
+      url: 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-whats-inside.jpg',
       label: "What's Inside",
       caption: 'Included Modules & Documents Breakdown',
       alt: `${course.title} Included Modules & Documents`,
     },
     {
       id: 'financial-model',
-      url: '/images/products/vyapaarkit-financial-model.jpg',
+      url: 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-financial-model.jpg',
       label: 'Financial Model',
       caption: '5-Year Editable Excel Model with Formulas',
       alt: `${course.title} 5-Year Excel Model Preview`,
     },
     {
       id: 'comparison',
-      url: '/images/products/vyapaarkit-comparison.jpg',
+      url: 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-comparison.jpg',
       label: 'Why VyapaarKit',
       caption: 'VyapaarKit vs Traditional Project Consultant',
       alt: `Why VyapaarKit vs Traditional Consultant`,
@@ -58,6 +61,22 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
     return () => window.clearInterval(timer);
   }, [gallery.length, isGalleryPaused, timerReset]);
 
+  // Keyboard navigation when zoomed
+  useEffect(() => {
+    if (!isZoomed) return undefined;
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') {
+        changeImage(activeImageIndex - 1);
+      } else if (e.key === 'ArrowRight') {
+        changeImage(activeImageIndex + 1);
+      } else if (e.key === 'Escape') {
+        setIsZoomed(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isZoomed, activeImageIndex, gallery.length]);
+
   const changeImage = (index) => {
     setActiveImageIndex((index + gallery.length) % gallery.length);
     setTimerReset((reset) => reset + 1);
@@ -78,6 +97,36 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
     }
     touchStartX.current = null;
     setIsGalleryPaused(false);
+  };
+
+  const handleLightboxTouchStart = (event) => {
+    lightboxTouchStartX.current = event.changedTouches[0].clientX;
+  };
+
+  const handleLightboxTouchEnd = (event) => {
+    if (lightboxTouchStartX.current !== null) {
+      const distance = event.changedTouches[0].clientX - lightboxTouchStartX.current;
+      if (Math.abs(distance) > 40 && gallery.length > 1) {
+        changeImage(activeImageIndex + (distance < 0 ? 1 : -1));
+      }
+    }
+    lightboxTouchStartX.current = null;
+  };
+
+  const handleLightboxMouseDown = (event) => {
+    lightboxMouseStartX.current = event.clientX;
+    setIsLightboxDragging(true);
+  };
+
+  const handleLightboxMouseUp = (event) => {
+    if (lightboxMouseStartX.current !== null) {
+      const distance = event.clientX - lightboxMouseStartX.current;
+      if (Math.abs(distance) > 40 && gallery.length > 1) {
+        changeImage(activeImageIndex + (distance < 0 ? 1 : -1));
+      }
+    }
+    lightboxMouseStartX.current = null;
+    setIsLightboxDragging(false);
   };
 
   const isBusinessInABox = course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
@@ -105,7 +154,7 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
           )}
           <span className="hero-chip hero-chip-accent">{course.category}</span>
           <span className="hero-chip">{course.difficulty}</span>
-          {course.editionNote && (
+          {course.editionNote && !/2026/i.test(course.editionNote) && (
             <span className="hero-chip hero-chip-edition">{course.editionNote}</span>
           )}
         </div>
@@ -161,7 +210,7 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
             onTouchEnd={handleTouchEnd}
           >
             {/* Top Right Edition Badge (dynamic from DB) */}
-            {course.editionNote && (
+            {course.editionNote && !/2026/i.test(course.editionNote) && (
               <div className="gallery-badge-top-right">
                 <span className="edition-badge">{course.editionNote}</span>
               </div>
@@ -304,7 +353,7 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
             <h3>Kit includes</h3>
             <ul>
               {course.includes.map((item) => (
-                <li key={item}>{item}</li>
+                <li key={item}>{typeof item === 'string' ? item.replace(/\s*\[cite:[^\]]+\]/g, '') : item}</li>
               ))}
             </ul>
           </div>
@@ -323,12 +372,69 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
             >
               ✕
             </button>
-            <div className="gallery-lightbox-content">
-              <img src={currentImage.url} alt={currentImage.alt} />
-              <div className="gallery-lightbox-caption">
-                <strong>{currentImage.label}</strong> — {currentImage.caption}
-              </div>
+            <div
+              className={`gallery-lightbox-image-container${isLightboxDragging ? ' is-dragging' : ''}`}
+              onTouchStart={handleLightboxTouchStart}
+              onTouchEnd={handleLightboxTouchEnd}
+              onMouseDown={handleLightboxMouseDown}
+              onMouseUp={handleLightboxMouseUp}
+              onMouseLeave={() => {
+                lightboxMouseStartX.current = null;
+                setIsLightboxDragging(false);
+              }}
+            >
+              <img
+                src={currentImage.url}
+                alt={currentImage.alt}
+                draggable="false"
+                style={{ pointerEvents: 'none', userSelect: 'none', maxHeight: '70vh' }}
+              />
+
+              {gallery.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="gallery-lightbox-nav-btn prev"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      changeImage(activeImageIndex - 1);
+                    }}
+                    aria-label="Previous image"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className="gallery-lightbox-nav-btn next"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      changeImage(activeImageIndex + 1);
+                    }}
+                    aria-label="Next image"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
             </div>
+            {gallery.length > 1 && (
+              <div className="gallery-lightbox-caption">
+                <div className="gallery-lightbox-dots">
+                  {gallery.map((item, index) => (
+                    <button
+                      key={item.id || item.url || index}
+                      type="button"
+                      className={`gallery-lightbox-dot${activeImageIndex === index ? ' active' : ''}`}
+                      aria-label={`Go to image ${index + 1}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        changeImage(index);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

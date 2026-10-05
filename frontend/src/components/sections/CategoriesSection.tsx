@@ -66,7 +66,7 @@ export const SHOP_CATEGORY_DATA: CategoryItem[] = [
     titleLines: ['Business', 'Plans'],
     slug: 'business-plans',
     subtitle: 'Know what to do.',
-    productImage: '/images/tiles/business-plans-box.png',
+    productImage: 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/tiles/business-plans-box.png',
     price: '399',
     buttonText: 'Get Business Plans',
     features: [
@@ -84,7 +84,7 @@ export const SHOP_CATEGORY_DATA: CategoryItem[] = [
     subtitle: 'Everything you need.',
     badge: 'MOST POPULAR',
     isPopular: true,
-    productImage: '/images/tiles/business-in-a-box-bundle.png',
+    productImage: 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/tiles/business-in-a-box-bundle.png',
     price: '899',
     buttonText: 'Get Business in a Box',
     features: [
@@ -100,7 +100,7 @@ export const SHOP_CATEGORY_DATA: CategoryItem[] = [
     titleLines: ['Business', 'Tools'],
     slug: 'business-tools',
     subtitle: 'Get things done.',
-    productImage: '/images/tiles/business-tools-binder.png',
+    productImage: 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/tiles/business-tools-binder.png',
     price: '299',
     buttonText: 'Get Business Tools',
     features: [

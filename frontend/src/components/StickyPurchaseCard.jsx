@@ -1,9 +1,17 @@
 import React from 'react';
 
 const StickyPurchaseCard = ({ course, onPurchase, onAddToCart, isInCart }) => {
-  const thumbnail = course.thumbnail && !course.thumbnail.includes('unsplash')
+  const resolveImageUrl = (url) => {
+    if (!url) return 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
+    if (url.startsWith('/images/')) return `https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev${url}`;
+    return url;
+  };
+
+  const rawThumb = course.thumbnail && !course.thumbnail.includes('unsplash')
     ? course.thumbnail
-    : '/images/products/vyapaarkit-bundle-hero.jpg';
+    : (course.imageUrl || course.bannerImage);
+
+  const thumbnail = resolveImageUrl(rawThumb);
 
   const isBusinessInABox = course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
 
@@ -38,8 +46,11 @@ const StickyPurchaseCard = ({ course, onPurchase, onAddToCart, isInCart }) => {
             src={thumbnail}
             alt={course.title}
             className="sticky-card-img"
+            onError={(e) => {
+              e.currentTarget.src = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
+            }}
           />
-          {course.editionNote && (
+          {course.editionNote && !/2026/i.test(course.editionNote) && (
             <span className="sticky-card-edition-badge">{course.editionNote}</span>
           )}
         </div>
@@ -82,7 +93,9 @@ const StickyPurchaseCard = ({ course, onPurchase, onAddToCart, isInCart }) => {
           <button type="button" className="btn btn-secondary" onClick={onPurchase}>Buy Now</button>
         </div>
         <ul className="purchase-benefits">
-          {course.includes.map((benefit) => <li key={benefit}>{benefit}</li>)}
+          {course.includes.map((benefit) => (
+            <li key={benefit}>{typeof benefit === 'string' ? benefit.replace(/\s*\[cite:[^\]]+\]/g, '') : benefit}</li>
+          ))}
         </ul>
       </div>
     </aside>

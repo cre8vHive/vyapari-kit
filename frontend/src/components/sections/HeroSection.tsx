@@ -140,7 +140,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="vyapaar-hero-right">
           <div className="vyapaar-hero-image-wrapper">
             <img
-              src="/images/hero-banner-new.png"
+              src="https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/hero-banner-new.png"
               alt="Build Your Business Faster with VyapaarKit"
               className="vyapaar-hero-img"
               loading="eager"

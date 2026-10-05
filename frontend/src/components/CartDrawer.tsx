@@ -258,7 +258,7 @@ export const CartDrawer: React.FC = () => {
           ) : (
             <ul className="cart-items-list">
               {items.map((item) => {
-                const thumb = item.imageUrl || item.thumbnail || '/images/products/vyapaarkit-bundle-hero.jpg';
+                const thumb = item.imageUrl || item.thumbnail || 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
                 const isBox = item.packageType === 'business-in-the-box' || item.slug?.includes('business-in-the-box');
                 const category = item.categoryName || item.category || 'Business Solution';
 
@@ -269,7 +269,7 @@ export const CartDrawer: React.FC = () => {
                       alt={item.title}
                       className="cart-item-img"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/images/products/vyapaarkit-bundle-hero.jpg';
+                        (e.target as HTMLImageElement).src = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
                       }}
                     />
                     <div className="cart-item-details">

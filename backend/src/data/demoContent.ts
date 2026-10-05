@@ -46,8 +46,8 @@ export const courses = [
     price: 199,
     oldPrice: 1999,
     rating: 4.9,
-    imageUrl: '/images/products/vyapaarkit-bundle-hero.jpg',
-    editionNote: 'UPDATED 2026 EDITION'
+    imageUrl: 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg',
+    editionNote: ''
   },
   {
     id: '2',

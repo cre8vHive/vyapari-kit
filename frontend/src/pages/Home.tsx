@@ -42,14 +42,14 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
           {
             id: '1',
             slug: 'business-in-a-box-complete-entrepreneur',
-            title: 'Business-in-a-Box | MSME Entrepreneur Toolkit & DPR (2026)',
+            title: 'Business-in-a-Box | MSME Entrepreneur Toolkit & DPR',
             instructorName: 'VyapaarKit Experts',
             categoryName: 'Business in the Box',
             difficulty: 'Beginner',
             price: 199,
             oldPrice: 1999,
             rating: 4.9,
-            imageUrl: '/images/products/vyapaarkit-bundle-hero.jpg'
+            imageUrl: 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg'
           },
           {
             id: '5',
@@ -61,7 +61,7 @@ const MOCK_HOME_PAYLOAD: PageResponse = {
             price: 18.99,
             oldPrice: 30.99,
             rating: 4.8,
-            imageUrl: '/images/products/vyapaarkit-financial-model.jpg'
+            imageUrl: 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-financial-model.jpg'
           },
           {
             id: '6',

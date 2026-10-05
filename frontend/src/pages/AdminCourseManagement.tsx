@@ -638,11 +638,11 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
             <input value={form.subtitle} onChange={(event) => updateForm('subtitle', event.target.value)} />
           </label>
           <label className="admin-full-field">
-            Edition Note / Badge (e.g. "Updated 2026 edition")
+            Edition Note / Badge (e.g. "Latest Edition")
             <input 
               value={form.editionNote} 
               onChange={(event) => updateForm('editionNote', event.target.value)} 
-              placeholder="e.g. Updated 2026 edition"
+              placeholder="e.g. Latest Edition"
             />
             <small style={{ color: 'var(--color-muted)', display: 'block', marginTop: '4px' }}>
               Displayed on the course/kit sales page and thumbnail. Leave empty to hide.

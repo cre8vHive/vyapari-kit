@@ -33,17 +33,37 @@ function formatUpdatedDate(value?: string) {
   }).format(date);
 }
 
-function listOrFallback<T>(value: T[] | undefined, fallback: T[]) {
-  return Array.isArray(value) && value.length > 0 ? value : fallback;
+function cleanCitations(text: unknown): any {
+  if (typeof text === 'string') {
+    return text.replace(/\s*\[cite:[^\]]+\]/g, '').trimEnd();
+  }
+  if (Array.isArray(text)) {
+    return text.map(cleanCitations);
+  }
+  if (text && typeof text === 'object') {
+    const res: Record<string, any> = {};
+    for (const [k, v] of Object.entries(text)) {
+      res[k] = cleanCitations(v);
+    }
+    return res;
+  }
+  return text;
+}
+
+function listOrFallback<T>(value: T[] | undefined, fallback: T[]): T[] {
+  if (Array.isArray(value) && value.length > 0) {
+    return value.map(cleanCitations) as T[];
+  }
+  return fallback;
 }
 
 function descriptionOrFallback(course: CourseSummary) {
   if (Array.isArray(course.description) && course.description.length > 0) {
-    return course.description;
+    return course.description.map((d) => cleanCitations(d));
   }
 
   if (typeof course.description === 'string' && course.description.trim()) {
-    return [course.description.trim()];
+    return [cleanCitations(course.description.trim())];
   }
 
   return [
