@@ -6,7 +6,10 @@ const BundleItemsSection = ({ course }) => {
   const isBusinessInABox =
     course.isBusinessInABox ||
     course.packageType === 'business-in-the-box' ||
-    course.slug?.includes('business-in-the-box');
+    course.packageType === 'business-in-a-box' ||
+    course.slug?.includes('business-in-the-box') ||
+    course.slug?.includes('business-in-a-box') ||
+    /business in a box/i.test(course.title || '');
 
   if (!isBusinessInABox) {
     return null;

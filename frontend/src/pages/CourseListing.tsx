@@ -133,7 +133,7 @@ export const CourseListing: React.FC = () => {
       }
 
       // Deduplicate courses so each unique business only appears once
-      const isBoxType = listingState.type === 'business-in-the-box';
+      const isBoxType = listingState.type === 'business-in-the-box' || listingState.type === 'business-in-a-box';
       const seenBusinesses = new Set<string>();
       result = result.filter((course) => {
         // Normalize base business title
@@ -143,7 +143,7 @@ export const CourseListing: React.FC = () => {
           .toLowerCase();
 
         // If not browsing the dedicated business-in-the-box tab, skip bundle duplicate
-        if (!isBoxType && course.packageType === 'business-in-the-box') {
+        if (!isBoxType && (course.packageType === 'business-in-the-box' || course.packageType === 'business-in-a-box' || course.slug?.includes('business-in-a-box'))) {
           return false;
         }
 
@@ -457,7 +457,7 @@ export const CourseListing: React.FC = () => {
               </span>
             </div>
 
-            {listingState.type === 'business-in-the-box' && (
+            {(listingState.type === 'business-in-the-box' || listingState.type === 'business-in-a-box') && (
               <div style={{
                 background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
                 border: '2px solid #f59e0b',

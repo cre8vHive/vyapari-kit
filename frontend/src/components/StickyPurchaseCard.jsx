@@ -13,7 +13,13 @@ const StickyPurchaseCard = ({ course, onPurchase, onAddToCart, isInCart }) => {
 
   const thumbnail = resolveImageUrl(rawThumb);
 
-  const isBusinessInABox = course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
+  const isBusinessInABox =
+    course.isBusinessInABox ||
+    course.packageType === 'business-in-the-box' ||
+    course.packageType === 'business-in-a-box' ||
+    course.slug?.includes('business-in-the-box') ||
+    course.slug?.includes('business-in-a-box') ||
+    /business in a box/i.test(course.title || '');
 
   return (
     <aside className="sticky-purchase-card">

@@ -129,7 +129,12 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
           const isMyCourse = mode === 'my';
           const courseUrl = (isMyCourse && course.hasPdf) ? `/courses/${course.id}/viewer` : `/courses/${course.slug}`;
           const actionText = (isMyCourse && course.hasPdf) ? 'View Material' : 'View Details';
-          const isBusinessInABox = course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
+          const isBusinessInABox =
+            course.packageType === 'business-in-the-box' ||
+            course.packageType === 'business-in-a-box' ||
+            course.slug?.includes('business-in-the-box') ||
+            course.slug?.includes('business-in-a-box') ||
+            /business in a box/i.test(course.title || '');
           const isTool = course.packageType === 'business-tools';
 
           return (

@@ -115,6 +115,7 @@ export interface CourseSummary {
   instructorName: string;
   categoryName: string;
   packageType?: 'business-plans' | 'business-tools' | 'business-in-the-box' | string;
+  isBusinessInABox?: boolean;
   difficulty: string;
   price: number;
   oldPrice?: number;
@@ -349,21 +350,21 @@ export const coursePdfApi = {
 };
 
 export const paymentApi = {
-  createOrder: async (courseId: string): Promise<any> => {
-    const response = await apiClient.post(`/courses/${courseId}/purchase`);
+  createOrder: async (courseId: string, payload?: Record<string, any>): Promise<any> => {
+    const response = await apiClient.post(`/courses/${courseId}/purchase`, payload);
     return response.data;
   },
-  verifyPayment: async (courseId: string, payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }): Promise<{ message: string }> => {
+  verifyPayment: async (courseId: string, payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; [key: string]: any }): Promise<{ message: string }> => {
     const response = await apiClient.post<{ message: string }>(`/courses/${courseId}/verify-payment`, payload);
     return response.data;
   },
-  createGuestOrder: async (courseId: string, email: string, name?: string): Promise<any> => {
-    const response = await apiClient.post(`/courses/${courseId}/guest-purchase`, { email, name });
+  createGuestOrder: async (courseId: string, email: string, name?: string, payload?: Record<string, any>): Promise<any> => {
+    const response = await apiClient.post(`/courses/${courseId}/guest-purchase`, { email, name, ...(payload || {}) });
     return response.data;
   },
   verifyGuestPayment: async (
     courseId: string,
-    payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; guestToken: string }
+    payload: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string; guestToken: string; [key: string]: any }
   ): Promise<{ message: string; accessUrl: string }> => {
     const response = await apiClient.post<{ message: string; accessUrl: string }>(`/courses/${courseId}/guest-verify-payment`, payload);
     return response.data;

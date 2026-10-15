@@ -1602,6 +1602,7 @@ function normalizeUnifiedCategory(input?: string): string {
 app.get('/api/v1/courses', async (req, res) => {
   let type = String(req.query.type || '').trim().toLowerCase();
   if (type === 'business-plan') type = 'business-plans';
+  if (type === 'business-in-a-box') type = 'business-in-the-box';
 
   const rawCategory = String(req.query.category || '').trim();
   const targetCategory = normalizeUnifiedCategory(rawCategory);
@@ -1640,6 +1641,7 @@ app.get('/api/v1/courses', async (req, res) => {
       if (isBoxFilter) {
         return {
           ...pub,
+          slug: `${c.slug}-business-in-a-box`,
           packageType: 'business-in-the-box',
           price: 899,
           oldPrice: 2499,
@@ -1659,7 +1661,7 @@ app.get('/api/v1/courses', async (req, res) => {
   const filtered = fallbackCourses.filter((course) => {
     let typeMatch = true;
     if (isBoxFilter) {
-      typeMatch = (course as any).packageType === 'business-plans';
+      typeMatch = (course as any).packageType === 'business-plans' || course.slug.includes('business-in-a-box');
     } else if (type && ['business-plans', 'business-tools'].includes(type)) {
       typeMatch = (course as any).packageType === type;
     }
@@ -1678,10 +1680,11 @@ app.get('/api/v1/courses', async (req, res) => {
     if (isBoxFilter) {
       return {
         ...pub,
+        slug: c.slug.includes('business-in-a-box') ? c.slug : `${c.slug}-business-in-a-box`,
         packageType: 'business-in-the-box',
         price: 899,
         oldPrice: 2499,
-        title: `${c.title} - Business in a Box`,
+        title: c.title.includes('Business in a Box') ? c.title : `${c.title} - Business in a Box`,
         subtitle: `Complete Business Plan + All ${c.categoryName} Business Tools`,
       };
     }
@@ -1693,7 +1696,15 @@ app.get('/api/v1/courses', async (req, res) => {
 
 app.get('/api/v1/courses/:slug', async (req, res) => {
   const rawSlug = req.params.slug.toLowerCase();
-  const isBoxRequest = rawSlug.endsWith('-business-in-a-box') || rawSlug.endsWith('-business-in-the-box');
+  const queryType = String(req.query.type || req.query.packageType || '').toLowerCase();
+  const isBoxRequest =
+    rawSlug.endsWith('-business-in-a-box') ||
+    rawSlug.endsWith('-business-in-the-box') ||
+    rawSlug.includes('business-in-a-box') ||
+    rawSlug.includes('business-in-the-box') ||
+    queryType === 'business-in-the-box' ||
+    queryType === 'business-in-a-box';
+
   const cleanSlug = rawSlug
     .replace(/-business-in-a-box$/, '')
     .replace(/-business-in-the-box$/, '');
@@ -1730,10 +1741,15 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
       if (isBoxRequest) {
         responseCourse = {
           ...responseCourse,
+          slug: rawSlug.endsWith('-business-in-a-box') || rawSlug.endsWith('-business-in-the-box')
+            ? rawSlug
+            : `${course.slug}-business-in-a-box`,
           packageType: 'business-in-the-box',
           price: 899,
           oldPrice: 2499,
-          title: `${course.title} - Business in a Box`,
+          title: course.title.includes('Business in a Box')
+            ? course.title
+            : `${course.title} - Business in a Box`,
           subtitle: `Complete Business Plan + All ${course.categoryName} Business Tools`,
         };
       }
@@ -1746,16 +1762,28 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
       });
       return;
     }
-    res.status(404).json({ message: 'Course not found' });
-    return;
   }
 
-  const fallback = fallbackCourses.find((course) => course.slug === req.params.slug);
+  const fallback = fallbackCourses.find((course) =>
+    course.slug === rawSlug || course.slug === cleanSlug
+  );
   if (fallback) {
     const relatedCourses = fallbackCourses
       .filter((course) => course.slug !== fallback.slug && course.categoryName === fallback.categoryName)
       .slice(0, 4);
-    res.json({ ...fallback, hasPdf: false, isPublished: true, relatedCourses });
+    let responseCourse: any = { ...fallback, hasPdf: false, isPublished: true, relatedCourses };
+    if (isBoxRequest || fallback.slug.includes('business-in-a-box')) {
+      responseCourse = {
+        ...responseCourse,
+        slug: rawSlug,
+        packageType: 'business-in-the-box',
+        price: 899,
+        oldPrice: 2499,
+        title: fallback.title.includes('Business in a Box') ? fallback.title : `${fallback.title} - Business in a Box`,
+        subtitle: `Complete Business Plan + All ${fallback.categoryName} Business Tools`,
+      };
+    }
+    res.json(responseCourse);
     return;
   }
 
@@ -1772,8 +1800,10 @@ app.post('/api/v1/courses/:courseId/purchase', requireAuth, requireActiveSession
     if (!config.razorpayKeyId || !config.razorpayKeySecret) {
       return res.status(500).json({ message: 'Payment gateway is not configured.' });
     }
-    console.log("Course Price", course.price);
-    const priceAmount = Number(course.price) * 100;
+    const isBox = req.body?.isBox === true || req.body?.packageType === 'business-in-the-box' || req.body?.packageType === 'business-in-a-box';
+    const effectivePrice = isBox ? 899 : Number(course.price);
+    console.log("Course Price", effectivePrice, "isBox:", isBox);
+    const priceAmount = effectivePrice * 100;
 
     const instance = new Razorpay({
       key_id: config.razorpayKeyId,
@@ -1833,8 +1863,10 @@ app.post('/api/v1/courses/:courseId/verify-payment', requireAuth, requireActiveS
         { upsert: true, new: true }
       );
 
+      const isBox = req.body?.isBox === true || req.body?.packageType === 'business-in-the-box' || req.body?.packageType === 'business-in-a-box';
       if (course) {
-        await fulfillBundleEnrollments(res.locals.user.sub, course);
+        const fulfillmentCourse = isBox ? { ...course, packageType: 'business-in-the-box' } : course;
+        await fulfillBundleEnrollments(res.locals.user.sub, fulfillmentCourse);
       }
 
       try {
@@ -1855,15 +1887,15 @@ app.post('/api/v1/courses/:courseId/verify-payment', requireAuth, requireActiveS
 
 // ── Guest Purchase Flow ──
 
-function createGuestToken(email: string, courseId: string): string {
-  const payload = JSON.stringify({ email, courseId, exp: Date.now() + 15 * 60 * 1000 });
+function createGuestToken(email: string, courseId: string, isBox = false): string {
+  const payload = JSON.stringify({ email, courseId, isBox: Boolean(isBox), exp: Date.now() + 15 * 60 * 1000 });
   const encoded = Buffer.from(payload).toString('base64url');
   const sig = crypto.createHmac('sha256', config.authSecret || 'local-development-auth-secret')
     .update(encoded).digest('base64url');
   return `${encoded}.${sig}`;
 }
 
-function verifyGuestToken(token: string): { email: string; courseId: string } | null {
+function verifyGuestToken(token: string): { email: string; courseId: string; isBox?: boolean } | null {
   try {
     const [encoded, sig] = token.split('.');
     if (!encoded || !sig) return null;
@@ -1872,7 +1904,7 @@ function verifyGuestToken(token: string): { email: string; courseId: string } | 
     if (sig !== expectedSig) return null;
     const payload = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
     if (!payload.email || !payload.courseId || payload.exp < Date.now()) return null;
-    return { email: payload.email, courseId: payload.courseId };
+    return { email: payload.email, courseId: payload.courseId, isBox: Boolean(payload.isBox) };
   } catch {
     return null;
   }
@@ -1918,7 +1950,9 @@ app.post('/api/v1/courses/:courseId/guest-purchase', async (req, res) => {
       return res.status(500).json({ message: 'Payment gateway is not configured.' });
     }
 
-    const priceAmount = Number(course.price) * 100;
+    const isBox = req.body?.isBox === true || req.body?.packageType === 'business-in-the-box' || req.body?.packageType === 'business-in-a-box';
+    const effectivePrice = isBox ? 899 : Number(course.price);
+    const priceAmount = effectivePrice * 100;
     const instance = new Razorpay({
       key_id: config.razorpayKeyId,
       key_secret: config.razorpayKeySecret,
@@ -1930,9 +1964,9 @@ app.post('/api/v1/courses/:courseId/guest-purchase', async (req, res) => {
       receipt: `rcpt_guest_${Date.now()}`,
     });
 
-    const guestToken = createGuestToken(email, courseId);
+    const guestToken = createGuestToken(email, courseId, isBox);
 
-    Logger.info('Guest purchase order created', { email, courseId, orderId: order.id });
+    Logger.info('Guest purchase order created', { email, courseId, orderId: order.id, isBox });
 
     res.json({
       ...order,
@@ -2027,7 +2061,9 @@ app.post('/api/v1/courses/:courseId/guest-verify-payment', async (req, res) => {
     );
 
     if (course) {
-      await fulfillBundleEnrollments(user._id, course);
+      const isBox = guestData.isBox || req.body?.isBox === true || req.body?.packageType === 'business-in-the-box' || req.body?.packageType === 'business-in-a-box';
+      const fulfillmentCourse = isBox ? { ...course, packageType: 'business-in-the-box' } : course;
+      await fulfillBundleEnrollments(user._id, fulfillmentCourse);
     }
 
     // Send guest purchase email

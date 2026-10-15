@@ -128,7 +128,13 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     'Small business owners',
     'Working professionals planning a business venture',
   ]);
-  const isBusinessInABox = course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
+  const isBusinessInABox =
+    course.packageType === 'business-in-the-box' ||
+    course.packageType === 'business-in-a-box' ||
+    course.slug?.includes('business-in-the-box') ||
+    course.slug?.includes('business-in-a-box') ||
+    Boolean(course.isBusinessInABox) ||
+    /business in a box/i.test(course.title || '');
   const baseIncludes = listOrFallback(course.includes, [
     'Lifetime access',
     'Mobile access',

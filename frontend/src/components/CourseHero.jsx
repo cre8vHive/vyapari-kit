@@ -129,7 +129,17 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
     setIsLightboxDragging(false);
   };
 
-  const isBusinessInABox = course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
+  const isBusinessInABox =
+    course.isBusinessInABox ||
+    course.packageType === 'business-in-the-box' ||
+    course.packageType === 'business-in-a-box' ||
+    course.slug?.includes('business-in-the-box') ||
+    course.slug?.includes('business-in-a-box') ||
+    /business in a box/i.test(course.title || '');
+
+  const basePlanSlug = course.slug
+    ? course.slug.replace(/-business-in-a-box$/, '').replace(/-business-in-the-box$/, '')
+    : '';
 
   return (
     <section className="course-hero">
@@ -161,7 +171,7 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
         <h1 className="hero-title">{course.title}</h1>
         <p className="hero-copy">{course.subtitle}</p>
 
-        {isBusinessInABox && (
+        {isBusinessInABox ? (
           <div style={{
             margin: '18px 0 8px 0',
             padding: '16px 20px',
@@ -170,20 +180,80 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
             border: '2px solid #f59e0b',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: '16px',
+            flexWrap: 'wrap',
             boxShadow: '0 4px 14px rgba(245, 158, 11, 0.15)'
           }}>
-            <div style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>
-              🎁
-            </div>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                All-In-One Box Bundle
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>
+                🎁
               </div>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#78350f', marginTop: '2px', lineHeight: 1.4 }}>
-                Includes this full <strong>Business Plan</strong> + ALL <strong>Business Tools & Playbooks</strong> in {course.category}!
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  All-In-One Box Bundle
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#78350f', marginTop: '2px', lineHeight: 1.4 }}>
+                  Includes this full <strong>Business Plan</strong> + ALL <strong>Business Tools & Playbooks</strong> in {course.category}!
+                </div>
               </div>
             </div>
+            {basePlanSlug && (
+              <a
+                href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses/${basePlanSlug}`}
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: '#b45309',
+                  textDecoration: 'underline',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                }}
+              >
+                View Single Business Plan (₹399) →
+              </a>
+            )}
+          </div>
+        ) : (
+          <div style={{
+            margin: '18px 0 8px 0',
+            padding: '14px 18px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+            border: '1.5px solid #f59e0b',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '24px', lineHeight: 1 }}>📦</span>
+              <div>
+                <strong style={{ color: '#92400e', fontSize: '0.95rem' }}>Looking for the complete Business in a Box Bundle?</strong>
+                <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: '#78350f' }}>
+                  Get this Business Plan + <strong>ALL {course.category} Business Tools</strong> bundled together for only ₹899.
+                </p>
+              </div>
+            </div>
+            <a
+              href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses/${basePlanSlug || course.slug}-business-in-a-box`}
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 6px rgba(217, 119, 6, 0.25)',
+              }}
+            >
+              View Business in a Box →
+            </a>
           </div>
         )}
       </div>
@@ -283,20 +353,6 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
 
       {/* 3. Details Block: Trust Bullets, Rating & Stats, Specs */}
       <div className="hero-details-block">
-        <div className="hero-trust-bullets">
-          <div className="hero-trust-bullet">
-            <span className="trust-icon">✓</span>
-            <span><strong>100% Bank Loan Ready</strong> — PMEGP, CGTMSE & Mudra Compliant</span>
-          </div>
-          <div className="hero-trust-bullet">
-            <span className="trust-icon">✓</span>
-            <span><strong>5-Year Financial Model</strong> — Auto-calculating Excel with P&L & Cash Flow</span>
-          </div>
-          <div className="hero-trust-bullet">
-            <span className="trust-icon">✓</span>
-            <span><strong>Instant Access</strong> — Immediate Download upon payment</span>
-          </div>
-        </div>
 
         <div className="hero-cards">
           <article className="hero-card">

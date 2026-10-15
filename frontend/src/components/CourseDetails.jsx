@@ -51,7 +51,13 @@ const MobileStickyBuyBar = ({ course, onPurchase, onAddToCart, isInCart }) => {
     }
   }
 
-  const isBusinessInABox = course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box');
+  const isBusinessInABox =
+    course.isBusinessInABox ||
+    course.packageType === 'business-in-the-box' ||
+    course.packageType === 'business-in-a-box' ||
+    course.slug?.includes('business-in-the-box') ||
+    course.slug?.includes('business-in-a-box') ||
+    /business in a box/i.test(course.title || '');
 
   return (
     <aside className="mobile-sticky-buy-bar" aria-label="Mobile quick purchase">
@@ -163,6 +169,14 @@ const CourseDetails = ({ course, onBack }) => {
 
   const isLoggedIn = !!localStorage.getItem('VyapaarKit_auth_token');
 
+  const isBusinessInABox =
+    course.isBusinessInABox ||
+    course.packageType === 'business-in-the-box' ||
+    course.packageType === 'business-in-a-box' ||
+    course.slug?.includes('business-in-the-box') ||
+    course.slug?.includes('business-in-a-box') ||
+    /business in a box/i.test(course.title || '');
+
   const handlePurchase = async () => {
     if (!isLoggedIn) {
       // Show guest email modal
@@ -173,7 +187,7 @@ const CourseDetails = ({ course, onBack }) => {
 
     try {
       const courseId = course.id;
-      const order = await paymentApi.createOrder(courseId);
+      const order = await paymentApi.createOrder(courseId, { isBox: isBusinessInABox, packageType: course.packageType });
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || '',
@@ -188,6 +202,8 @@ const CourseDetails = ({ course, onBack }) => {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
+              isBox: isBusinessInABox,
+              packageType: course.packageType,
             });
             window.location.href = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses?tab=my`;
           } catch (err) {
@@ -234,7 +250,7 @@ const CourseDetails = ({ course, onBack }) => {
 
     try {
       const courseId = course.id;
-      const orderData = await paymentApi.createGuestOrder(courseId, guestEmail, guestName || undefined);
+      const orderData = await paymentApi.createGuestOrder(courseId, guestEmail, guestName || undefined, { isBox: isBusinessInABox, packageType: course.packageType });
       const guestToken = orderData.guestToken;
 
       const options = {
@@ -256,6 +272,8 @@ const CourseDetails = ({ course, onBack }) => {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               guestToken,
+              isBox: isBusinessInABox,
+              packageType: course.packageType,
             });
             setPurchaseAccessUrl(result.accessUrl || '');
             setPurchaseSuccess(true);
@@ -297,7 +315,7 @@ const CourseDetails = ({ course, onBack }) => {
             ← Back to Business Solutions
           </button>
           <div className="details-actions">
-            {(course.isBusinessInABox || course.packageType === 'business-in-the-box' || course.slug?.includes('business-in-the-box')) && (
+            {isBusinessInABox && (
               <span className="details-pill" style={{
                 background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                 color: '#ffffff',

@@ -259,7 +259,12 @@ export const CartDrawer: React.FC = () => {
             <ul className="cart-items-list">
               {items.map((item) => {
                 const thumb = item.imageUrl || item.thumbnail || 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
-                const isBox = item.packageType === 'business-in-the-box' || item.slug?.includes('business-in-the-box');
+                const isBox =
+                  item.packageType === 'business-in-the-box' ||
+                  item.packageType === 'business-in-a-box' ||
+                  item.slug?.includes('business-in-the-box') ||
+                  item.slug?.includes('business-in-a-box') ||
+                  /business in a box/i.test(item.title || '');
                 const category = item.categoryName || item.category || 'Business Solution';
 
                 return (
