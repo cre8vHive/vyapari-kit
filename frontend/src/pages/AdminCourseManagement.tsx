@@ -135,15 +135,30 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
   const [bulkUploadCategory, setBulkUploadCategory] = useState('');
   const [bulkUploadDefaultPrice, setBulkUploadDefaultPrice] = useState('49.99');
   const [bulkUploadDefaultOldPrice, setBulkUploadDefaultOldPrice] = useState('99.99');
-  const [bulkUploadDefaultInstructor, setBulkUploadDefaultInstructor] = useState('VyapariKit Team');
+  const [bulkUploadDefaultInstructor, setBulkUploadDefaultInstructor] = useState('VyapaarKit Team');
   const [bulkUploadInputMode, setBulkUploadInputMode] = useState<'json' | 'titles'>('titles');
   const [bulkUploadText, setBulkUploadText] = useState('');
   const [bulkUploading, setBulkUploading] = useState(false);
+
+  // Popular Showcase State (Max 6 courses)
+  const [popularCourseIds, setPopularCourseIds] = useState<string[]>([]);
+  const [popularAddSelect, setPopularAddSelect] = useState<string>('');
+  const [savingPopular, setSavingPopular] = useState(false);
+  const [isPopularPanelOpen, setIsPopularPanelOpen] = useState(true);
 
   const selectedCourse = useMemo(
     () => courses.find((course) => course.id === selectedCourseId) || null,
     [courses, selectedCourseId]
   );
+
+  const availableCoursesToAdd = useMemo(() => {
+    return courses.filter((c) => !popularCourseIds.includes(c.id));
+  }, [courses, popularCourseIds]);
+
+  const popularSelectedCourses = useMemo(() => {
+    const map = new Map(courses.map((c) => [c.id, c]));
+    return popularCourseIds.map((id) => map.get(id)).filter(Boolean) as AdminCourse[];
+  }, [courses, popularCourseIds]);
 
   const publishedCount = courses.filter((course) => course.isPublished).length;
   const protectedCount = courses.filter((course) => course.hasPdf).length;
@@ -166,16 +181,27 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     try {
       setLoading(true);
       setError('');
-      const [courseData, userData, categoryData, logData] = await Promise.all([
+      const [courseData, userData, categoryData, logData, popularData] = await Promise.all([
         adminApi.getCourses(),
         adminApi.getUsers(),
         adminApi.getCategories(),
         adminApi.getPdfAccessLogs(),
+        adminApi.getPopularCourses().catch(() => ({ courseIds: [], courses: [] })),
       ]);
       setCourses(courseData);
       setUsers(userData);
       setCategories(categoryData);
       setAccessLogs(logData);
+      if (popularData && Array.isArray(popularData.courseIds) && popularData.courseIds.length > 0) {
+        setPopularCourseIds(popularData.courseIds);
+      } else {
+        const flagged = courseData.filter((c) => c.isPopular).sort((a, b) => (a.popularOrder || 0) - (b.popularOrder || 0));
+        if (flagged.length > 0) {
+          setPopularCourseIds(flagged.map((c) => c.id).slice(0, 6));
+        } else {
+          setPopularCourseIds(courseData.slice(0, 3).map((c) => c.id));
+        }
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Unable to load admin dashboard.');
     } finally {
@@ -305,10 +331,67 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     try {
       await adminApi.deleteCourse(selectedCourseId);
       setCourses((current) => current.filter((course) => course.id !== selectedCourseId));
+      setPopularCourseIds((prev) => prev.filter((id) => id !== selectedCourseId));
       resetForm();
       setMessage('Course deleted.');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Unable to delete course.');
+    }
+  };
+
+  const handleAddPopularCourse = (courseIdToAdd?: string) => {
+    const id = courseIdToAdd || popularAddSelect;
+    if (!id) return;
+    if (popularCourseIds.includes(id)) {
+      setMessage('This business solution is already in Popular Business Solutions.');
+      return;
+    }
+    if (popularCourseIds.length >= 6) {
+      setError('Maximum 6 courses allowed for Popular Business Solutions. Please remove one first.');
+      return;
+    }
+    setPopularCourseIds((prev) => [...prev, id]);
+    setPopularAddSelect('');
+    setMessage('');
+    setError('');
+  };
+
+  const handleRemovePopularCourse = (idToRemove: string) => {
+    setPopularCourseIds((prev) => prev.filter((id) => id !== idToRemove));
+    setMessage('');
+    setError('');
+  };
+
+  const handleMovePopularCourse = (index: number, direction: 'up' | 'down') => {
+    setPopularCourseIds((prev) => {
+      const next = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= next.length) return prev;
+      const temp = next[index];
+      next[index] = next[targetIndex];
+      next[targetIndex] = temp;
+      return next;
+    });
+  };
+
+  const handleSavePopularCourses = async () => {
+    try {
+      setSavingPopular(true);
+      setError('');
+      setMessage('Saving Popular Business Solutions...');
+      const res = await adminApi.updatePopularCourses(popularCourseIds);
+      setMessage(res.message || `Successfully saved ${popularCourseIds.length} popular business solutions!`);
+      setCourses((prev) =>
+        prev.map((c) => ({
+          ...c,
+          isPopular: popularCourseIds.includes(c.id),
+          popularOrder: popularCourseIds.indexOf(c.id),
+        }))
+      );
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to update Popular Business Solutions.');
+    } finally {
+      setSavingPopular(false);
     }
   };
 
@@ -347,7 +430,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
         subtitle: `Actionable playbook and system for ${typeLabel}`,
         price: Number(bulkUploadDefaultPrice || 49.99),
         oldPrice: Number(bulkUploadDefaultOldPrice || 99.99),
-        instructorName: bulkUploadDefaultInstructor || 'VyapariKit Team',
+        instructorName: bulkUploadDefaultInstructor || 'VyapaarKit Team',
         difficulty: 'Beginner',
         pdfUrl: 'https://example.com/sample-guide.pdf'
       },
@@ -356,7 +439,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
         subtitle: `Complete framework and execution checklist`,
         price: Number(bulkUploadDefaultPrice || 49.99),
         oldPrice: Number(bulkUploadDefaultOldPrice || 99.99),
-        instructorName: bulkUploadDefaultInstructor || 'VyapariKit Team',
+        instructorName: bulkUploadDefaultInstructor || 'VyapaarKit Team',
         difficulty: 'Intermediate'
       }
     ];
@@ -399,7 +482,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
         category: bulkUploadCategory,
         defaultPrice: Number(bulkUploadDefaultPrice || 0),
         defaultOldPrice: bulkUploadDefaultOldPrice === '' ? '' : Number(bulkUploadDefaultOldPrice),
-        defaultInstructor: bulkUploadDefaultInstructor || 'VyapariKit Team',
+        defaultInstructor: bulkUploadDefaultInstructor || 'VyapaarKit Team',
         courses: parsedCourses,
       });
 
@@ -519,6 +602,182 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
         </div>
       )}
 
+      {/* Popular Business Solutions Showcase Management Panel */}
+      <section className="admin-showcase-card">
+        <div 
+          className="admin-showcase-header"
+          onClick={() => setIsPopularPanelOpen(!isPopularPanelOpen)}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="admin-showcase-title-group">
+            <div className="admin-showcase-icon">🌟</div>
+            <div>
+              <div className="admin-showcase-heading-row">
+                <h3>Popular Business Solutions (Home Showcase)</h3>
+                <span className={`admin-showcase-badge ${popularCourseIds.length >= 6 ? 'is-full' : ''}`}>
+                  {popularCourseIds.length} / 6 Selected
+                </span>
+              </div>
+              <p className="admin-showcase-desc">
+                Choose up to 6 courses to display in "Popular Business Solutions" on the homepage. Arrange order with arrows.
+              </p>
+            </div>
+          </div>
+
+          <div className="admin-showcase-actions" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="admin-primary-btn"
+              onClick={handleSavePopularCourses}
+              disabled={savingPopular}
+              style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 600 }}
+            >
+              {savingPopular ? 'Saving...' : 'Save Popular Showcase'}
+            </button>
+            <button
+              type="button"
+              className="admin-secondary-btn"
+              onClick={() => setIsPopularPanelOpen(!isPopularPanelOpen)}
+              style={{ padding: '8px 14px', fontSize: '13px' }}
+            >
+              {isPopularPanelOpen ? '▲ Hide' : '▼ Manage'}
+            </button>
+          </div>
+        </div>
+
+        {isPopularPanelOpen && (
+          <div className="admin-showcase-body">
+            {/* Selected Popular Courses Grid */}
+            <div className="admin-showcase-subheading">
+              <span>
+                Featured Solutions in Showcase (Display Order #1 to #{popularSelectedCourses.length}):
+              </span>
+              {popularCourseIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Clear all solutions from Popular Showcase?')) {
+                      setPopularCourseIds([]);
+                    }
+                  }}
+                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px', textDecoration: 'underline' }}
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+
+            {popularSelectedCourses.length === 0 ? (
+              <div style={{ padding: '24px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1', color: '#64748b', marginBottom: '18px' }}>
+                <p style={{ margin: 0, fontWeight: 600 }}>No business solutions selected for the homepage showcase.</p>
+                <small style={{ color: '#94a3b8' }}>Select up to 6 courses below to display them on the homepage.</small>
+              </div>
+            ) : (
+              <div className="admin-showcase-grid">
+                {popularSelectedCourses.map((c, index) => (
+                  <div key={c.id} className="admin-showcase-item">
+                    <div className="admin-showcase-order">
+                      #{index + 1}
+                    </div>
+
+                    <img
+                      src={c.imageUrl}
+                      alt={c.title}
+                      className="admin-showcase-thumb"
+                    />
+
+                    <div className="admin-showcase-info">
+                      <div className="admin-showcase-title" title={c.title}>
+                        {c.title}
+                      </div>
+                      <div className="admin-showcase-meta">
+                        <span className="admin-showcase-cat">{c.categoryName}</span>
+                        <span className="admin-showcase-price">₹{c.price}</span>
+                      </div>
+                    </div>
+
+                    <div className="admin-showcase-btns">
+                      <button
+                        type="button"
+                        className="admin-showcase-btn-icon"
+                        onClick={() => handleMovePopularCourse(index, 'up')}
+                        disabled={index === 0}
+                        title="Move earlier"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-showcase-btn-icon"
+                        onClick={() => handleMovePopularCourse(index, 'down')}
+                        disabled={index === popularSelectedCourses.length - 1}
+                        title="Move later"
+                      >
+                        ↓
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-showcase-btn-del"
+                        onClick={() => handleRemovePopularCourse(c.id)}
+                        title="Remove from showcase"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Course Selector */}
+            <div className="admin-showcase-add-bar">
+              <label className="admin-showcase-add-label">
+                Add Course to Showcase:
+              </label>
+              <div className="admin-showcase-add-row">
+                <select
+                  value={popularAddSelect}
+                  onChange={(e) => setPopularAddSelect(e.target.value)}
+                  disabled={popularCourseIds.length >= 6}
+                  className="admin-showcase-add-select"
+                >
+                  <option value="">-- Choose a business solution to add ({availableCoursesToAdd.length} available) --</option>
+                  {availableCoursesToAdd.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title} ({course.categoryName} - ₹{course.price})
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  className="admin-primary-btn"
+                  onClick={() => handleAddPopularCourse()}
+                  disabled={!popularAddSelect || popularCourseIds.length >= 6}
+                  style={{
+                    padding: '8px 18px',
+                    fontSize: '13px',
+                    whiteSpace: 'nowrap',
+                    opacity: (!popularAddSelect || popularCourseIds.length >= 6) ? 0.6 : 1,
+                    cursor: (!popularAddSelect || popularCourseIds.length >= 6) ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  + Add to Showcase
+                </button>
+              </div>
+
+              {popularCourseIds.length >= 6 && (
+                <div>
+                  <span className="admin-showcase-limit-notice">
+                    ⚠️ Maximum limit of 6 solutions reached. Remove one above to add another.
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
       <div className="admin-layout">
         <aside className="admin-course-list" aria-label="Business Solutions">
           <div className="admin-panel-heading">
@@ -544,19 +803,39 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
             </select>
           </div>
           <div className="admin-course-items">
-            {filteredCourses.map((course) => (
-              <button
-                key={course.id}
-                className={`admin-course-item ${selectedCourseId === course.id ? 'active' : ''}`}
-                type="button"
-                onClick={() => selectCourse(course)}
-              >
-                <span>{course.title}</span>
-                <small>
-                  {course.isPublished ? 'Published' : 'Draft'} - {course.hasPdf ? 'PDF attached' : 'No PDF'}
-                </small>
-              </button>
-            ))}
+            {filteredCourses.map((course) => {
+              const isPopular = popularCourseIds.includes(course.id);
+              const popularIndex = popularCourseIds.indexOf(course.id);
+              return (
+                <button
+                  key={course.id}
+                  className={`admin-course-item ${selectedCourseId === course.id ? 'active' : ''}`}
+                  type="button"
+                  onClick={() => selectCourse(course)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                    <span style={{ textAlign: 'left', fontWeight: 600 }}>{course.title}</span>
+                    {isPopular && (
+                      <span style={{
+                        background: '#fef3c7',
+                        color: '#b45309',
+                        border: '1px solid #fde68a',
+                        borderRadius: '4px',
+                        padding: '1px 5px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap'
+                      }}>
+                        ★ Popular #{popularIndex + 1}
+                      </span>
+                    )}
+                  </div>
+                  <small>
+                    {course.isPublished ? 'Published' : 'Draft'} - {course.hasPdf ? 'PDF attached' : 'No PDF'}
+                  </small>
+                </button>
+              );
+            })}
             {courses.length === 0 && <p className="admin-empty">No business solutions yet.</p>}
             {courses.length > 0 && filteredCourses.length === 0 && <p className="admin-empty">No business solutions match this filter.</p>}
           </div>
@@ -581,7 +860,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
               Package Type
               <select value={form.packageType} onChange={(event) => updateForm('packageType', event.target.value)}>
                 <option value="business-plans">Business Plans</option>
-                <option value="business-tools">Business Tools</option>
+                <option value="business-tools">Business Playbooks</option>
                 <option value="business-in-the-box">Business in a Box</option>
               </select>
             </label>
@@ -621,6 +900,24 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
               <input type="checkbox" checked={form.isPublished} onChange={(event) => updateForm('isPublished', event.target.checked)} />
               <span>Published</span>
             </label>
+            {selectedCourseId && (
+              <label className="admin-switch" title="Toggle showcase on homepage under Popular Business Solutions (max 6)">
+                <input
+                  type="checkbox"
+                  checked={popularCourseIds.includes(selectedCourseId)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      handleAddPopularCourse(selectedCourseId);
+                    } else {
+                      handleRemovePopularCourse(selectedCourseId);
+                    }
+                  }}
+                />
+                <span>
+                  Popular Showcase {popularCourseIds.includes(selectedCourseId) ? `(#${popularCourseIds.indexOf(selectedCourseId) + 1})` : `(${popularCourseIds.length}/6)`}
+                </span>
+              </label>
+            )}
           </div>
 
           <label className="admin-full-field">
@@ -744,7 +1041,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
                 >
                   <option value="">All Solution Types</option>
                   <option value="business-plans">Business Plans Only</option>
-                  <option value="business-tools">Business Tools Only</option>
+                  <option value="business-tools">Business Playbooks Only</option>
                   <option value="business-in-the-box">Business in the Box Only</option>
                 </select>
               </label>

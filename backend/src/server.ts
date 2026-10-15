@@ -15,6 +15,7 @@ import Enrollment from './models/Enrollment';
 import Page from './models/Page';
 import PageTemplate from './models/PageTemplate';
 import PdfAccessLog from './models/PdfAccessLog';
+import SiteSettings from './models/SiteSettings';
 import User from './models/User';
 import { Complaint } from './models/Complaint';
 import { Logger } from './services/logger.service';
@@ -64,12 +65,18 @@ function isMongoConnected() {
   return mongoose.connection.readyState === 1;
 }
 
-function publicUser(user: { _id: unknown; name: string; email: string; role: string }) {
+function publicUser(user: any) {
   return {
-    id: String(user._id),
+    id: String(user._id || user.id),
     name: user.name,
     email: user.email,
     role: user.role,
+    createdAt: user.createdAt,
+    lastHeartbeat: user.lastHeartbeat,
+    failedLoginAttempts: user.failedLoginAttempts ?? 0,
+    lockedUntil: user.lockedUntil,
+    isEmailVerified: user.isEmailVerified ?? false,
+    isDeleted: user.isDeleted ?? false,
   };
 }
 
@@ -82,19 +89,31 @@ function escapeRegex(value: string) {
 }
 
 function publicCourse(course: any) {
+  const pkgType = course.packageType || 'business-plans';
+  const coursePrice = (pkgType === 'business-plans' && (course.price === undefined || course.price === null || course.price === 299))
+    ? 399
+    : (course.price ?? (pkgType === 'business-tools' ? 299 : 399));
+
+  const rawInstructor = course.instructorName || course.instructor?.name;
+  const instructorName = (!rawInstructor || /vyapa+ri\s*kit\s*team/i.test(rawInstructor))
+    ? 'VyapaarKit Team'
+    : rawInstructor;
+
   return {
     id: String(course._id || course.id),
     slug: course.slug,
     title: course.title,
-    packageType: course.packageType || 'business-plans',
-    instructorName: course.instructorName,
+    packageType: pkgType,
+    instructorName,
     categoryName: course.categoryName,
     difficulty: course.difficulty,
-    price: course.price,
+    price: coursePrice,
     oldPrice: course.oldPrice,
     rating: course.rating,
     imageUrl: course.imageUrl,
     isPublished: course.isPublished ?? true,
+    isPopular: Boolean(course.isPopular),
+    popularOrder: typeof course.popularOrder === 'number' ? course.popularOrder : 0,
     hasPdf: Boolean(course.pdfAsset),
     shortDescription: course.shortDescription,
     subtitle: course.subtitle || '',
@@ -169,6 +188,8 @@ function courseInput(body: any) {
     requirements: Array.isArray(body.requirements) ? body.requirements : undefined,
     audience: Array.isArray(body.audience) ? body.audience : undefined,
     faqs: Array.isArray(body.faqs) ? body.faqs : undefined,
+    isPopular: typeof body.isPopular === 'boolean' ? body.isPopular : undefined,
+    popularOrder: typeof body.popularOrder === 'number' ? body.popularOrder : undefined,
   };
 }
 
@@ -836,6 +857,163 @@ app.get('/api/v1/admin/courses', requireAuth, requireActiveSession, requireAdmin
   res.json(courses.map((course) => adminCourse(course, pdfByCourse.get(String(course._id)))));
 });
 
+async function getPopularCoursesList() {
+  if (!isMongoConnected()) {
+    return fallbackCourses.slice(0, 3).map(publicCourse);
+  }
+
+  // 1. Check SiteSettings 'popular_courses'
+  const setting = await SiteSettings.findOne({ key: 'popular_courses' }).lean();
+  let courseIds: string[] = Array.isArray(setting?.value?.courseIds) ? setting.value.courseIds : [];
+
+  // 2. If not in SiteSettings, check Page 'home'
+  if (courseIds.length === 0) {
+    const homePageDoc = await Page.findOne({ slug: 'home' }).lean();
+    const gridSec = homePageDoc?.sections?.find((s: any) => s.type === 'course-grid');
+    if (Array.isArray(gridSec?.config?.popularCourseIds) && gridSec.config.popularCourseIds.length > 0) {
+      courseIds = gridSec.config.popularCourseIds;
+    }
+  }
+
+  if (courseIds.length > 0) {
+    const validIds = courseIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    const courses = await Course.find({ _id: { $in: validIds }, isDeleted: { $ne: true } }).lean();
+    const courseMap = new Map(courses.map((c) => [String(c._id), c]));
+    const ordered = courseIds
+      .map((id) => courseMap.get(String(id)))
+      .filter(Boolean)
+      .slice(0, 6);
+
+    if (ordered.length > 0) {
+      return ordered.map(publicCourse);
+    }
+  }
+
+  // 3. Fallback to courses marked isPopular
+  const popularByFlag = await Course.find({ isPopular: true, isDeleted: { $ne: true } })
+    .sort({ popularOrder: 1, createdAt: -1 })
+    .limit(6)
+    .lean();
+
+  if (popularByFlag.length > 0) {
+    return popularByFlag.map(publicCourse);
+  }
+
+  // 4. Default fallback: first 3 published courses
+  const defaultCourses = await Course.find({ isPublished: true, isDeleted: { $ne: true } })
+    .sort({ createdAt: -1 })
+    .limit(3)
+    .lean();
+
+  return defaultCourses.map(publicCourse);
+}
+
+app.get('/api/v1/admin/popular-courses', requireAuth, requireActiveSession, requireAdmin, async (_req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  let courseIds: string[] = [];
+  const setting = await SiteSettings.findOne({ key: 'popular_courses' }).lean();
+  if (Array.isArray(setting?.value?.courseIds)) {
+    courseIds = setting.value.courseIds;
+  } else {
+    const homePageDoc = await Page.findOne({ slug: 'home' }).lean();
+    const gridSec = homePageDoc?.sections?.find((s: any) => s.type === 'course-grid');
+    if (Array.isArray(gridSec?.config?.popularCourseIds)) {
+      courseIds = gridSec.config.popularCourseIds;
+    }
+  }
+
+  if (courseIds.length === 0) {
+    const flagged = await Course.find({ isPopular: true, isDeleted: { $ne: true } })
+      .sort({ popularOrder: 1 })
+      .limit(6)
+      .lean();
+    courseIds = flagged.map((c) => String(c._id));
+  }
+
+  const courses = await getPopularCoursesList();
+  res.json({
+    courseIds,
+    courses,
+  });
+});
+
+app.put('/api/v1/admin/popular-courses', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const { courseIds } = req.body;
+  if (!Array.isArray(courseIds)) {
+    res.status(400).json({ message: 'courseIds must be an array' });
+    return;
+  }
+
+  if (courseIds.length > 6) {
+    res.status(400).json({ message: 'Maximum 6 courses allowed for Popular Business Solutions' });
+    return;
+  }
+
+  const validIds = courseIds
+    .map((id: any) => String(id).trim())
+    .filter((id: string) => mongoose.Types.ObjectId.isValid(id))
+    .slice(0, 6);
+
+  // 1. Reset isPopular for all courses
+  await Course.updateMany({}, { $set: { isPopular: false, popularOrder: 0 } });
+
+  // 2. Set isPopular and popularOrder for selected courses
+  for (let i = 0; i < validIds.length; i++) {
+    await Course.findByIdAndUpdate(validIds[i], {
+      $set: { isPopular: true, popularOrder: i },
+    });
+  }
+
+  // 3. Save to SiteSettings
+  await SiteSettings.findOneAndUpdate(
+    { key: 'popular_courses' },
+    { $set: { value: { courseIds: validIds } } },
+    { upsert: true, new: true }
+  );
+
+  // 4. Update Page 'home' course-grid section
+  const matchedCourses = await Course.find({ _id: { $in: validIds } }).lean();
+  const matchedMap = new Map(matchedCourses.map((c) => [String(c._id), c]));
+  const orderedDocs = validIds.map((id) => matchedMap.get(id)).filter(Boolean);
+  const mappedPublic = orderedDocs.map(publicCourse);
+
+  const homePageDoc = await Page.findOne({ slug: 'home' });
+  if (homePageDoc) {
+    let gridSection = homePageDoc.sections.find((s: any) => s.type === 'course-grid');
+    if (gridSection) {
+      gridSection.config = {
+        ...gridSection.config,
+        sectionTitle: 'Popular Business Solutions',
+        popularCourseIds: validIds,
+        courses: mappedPublic,
+      };
+      homePageDoc.markModified('sections');
+      await homePageDoc.save();
+    }
+  }
+
+  res.json({
+    ok: true,
+    message: `Updated popular business solutions (${validIds.length} courses)`,
+    courseIds: validIds,
+    courses: mappedPublic,
+  });
+});
+
+app.get('/api/v1/popular-courses', async (_req, res) => {
+  const courses = await getPopularCoursesList();
+  res.json(courses);
+});
+
 app.post('/api/v1/admin/courses', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
   if (!isMongoConnected()) {
     res.status(503).json({ message: 'Database is not connected' });
@@ -883,13 +1061,13 @@ app.post('/api/v1/admin/courses/bulk', requireAuth, requireActiveSession, requir
       return;
     }
 
-    let targetCategoryName = 'Business Toolkit';
+    let targetCategoryName = 'Business Playbook';
     if (type === 'business-plans') {
       targetCategoryName = 'Business Plan';
     } else if (type === 'business-in-the-box') {
       targetCategoryName = 'Business-in-a-Box';
     } else if (type === 'business-tools') {
-      targetCategoryName = 'Business Toolkit';
+      targetCategoryName = 'Business Playbook';
     } else if (category) {
       targetCategoryName = category;
     }
@@ -905,7 +1083,7 @@ app.post('/api/v1/admin/courses/bulk', requireAuth, requireActiveSession, requir
       const courseDoc = {
         slug: uniqueSlug,
         title: item.title.trim(),
-        instructorName: item.instructorName || defaultInstructor || 'VyapariKit Team',
+        instructorName: item.instructorName || defaultInstructor || 'VyapaarKit Team',
         categoryName: item.categoryName || targetCategoryName,
         difficulty: item.difficulty || defaultDifficulty || 'Beginner',
         price: item.price !== undefined && item.price !== '' ? Number(item.price) : Number(defaultPrice || 0),
@@ -1093,8 +1271,154 @@ app.get('/api/v1/admin/users', requireAuth, requireActiveSession, requireAdmin, 
     return;
   }
 
-  const users = await User.find().sort({ createdAt: -1 }).lean();
+  const users = await User.find({ isDeleted: { $in: [true, false, null] } }).sort({ createdAt: -1 }).lean();
   res.json(users.map(publicUser));
+});
+
+app.put('/api/v1/admin/users/:userId', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const userId = String(req.params.userId || '');
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).json({ message: 'Valid userId is required' });
+    return;
+  }
+
+  const user = await User.findOne({ _id: userId, isDeleted: { $in: [true, false, null] } });
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  const { name, role } = req.body;
+  if (name && typeof name === 'string' && name.trim().length >= 2) {
+    user.name = name.trim();
+  }
+
+  if (role) {
+    if (!['student', 'admin'].includes(role)) {
+      res.status(400).json({ message: 'Invalid role. Must be student or admin.' });
+      return;
+    }
+    user.role = role;
+  }
+
+  await user.save();
+  Logger.info('Admin updated user', { ...Logger.extractReqContext(req), targetUserId: userId, updatedRole: role });
+
+  res.json({ user: publicUser(user) });
+});
+
+app.post('/api/v1/admin/users/:userId/block', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const userId = String(req.params.userId || '');
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).json({ message: 'Valid userId is required' });
+    return;
+  }
+
+  const user = await User.findOne({ _id: userId, isDeleted: { $in: [true, false, null] } });
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  // Lock user for 100 years and invalidate active session
+  user.lockedUntil = new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000);
+  user.activeSessionId = null;
+  await user.save();
+
+  Logger.info('Admin blocked user', { ...Logger.extractReqContext(req), targetUserId: userId });
+  res.json({ user: publicUser(user) });
+});
+
+app.post('/api/v1/admin/users/:userId/unblock', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const userId = String(req.params.userId || '');
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).json({ message: 'Valid userId is required' });
+    return;
+  }
+
+  const user = await User.findOne({ _id: userId, isDeleted: { $in: [true, false, null] } });
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  user.lockedUntil = null;
+  user.failedLoginAttempts = 0;
+  await user.save();
+
+  Logger.info('Admin unblocked user', { ...Logger.extractReqContext(req), targetUserId: userId });
+  res.json({ user: publicUser(user) });
+});
+
+app.delete('/api/v1/admin/users/:userId', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const userId = String(req.params.userId || '');
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).json({ message: 'Valid userId is required' });
+    return;
+  }
+
+  const user = await User.findOne({ _id: userId, isDeleted: { $in: [true, false, null] } });
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  user.isDeleted = true;
+  user.deletedAt = new Date();
+  user.activeSessionId = null;
+  await user.save();
+
+  Logger.info('Admin soft-deleted user', { ...Logger.extractReqContext(req), targetUserId: userId });
+  res.json({ user: publicUser(user) });
+});
+
+app.post('/api/v1/admin/users/:userId/trigger-reset', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  const userId = String(req.params.userId || '');
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).json({ message: 'Valid userId is required' });
+    return;
+  }
+
+  const user = await User.findOne({ _id: userId, isDeleted: { $in: [true, false, null] } });
+  if (!user) {
+    res.status(404).json({ message: 'User not found' });
+    return;
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  await user.save();
+
+  Logger.info('Admin triggered password reset', { ...Logger.extractReqContext(req), targetUserId: userId });
+  EmailService.sendPasswordReset({ name: user.name, email: user.email }, resetToken).catch(err => Logger.error('Password reset email failed', err));
+
+  res.json({ message: `Password reset triggered. An email has been dispatched to ${user.email}.` });
 });
 
 app.get('/api/v1/admin/pdf-access-logs', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
@@ -1527,13 +1851,46 @@ app.get('/api/v1/pages/:slug', async (req, res) => {
   if (isMongoConnected()) {
     const page = await Page.findOne({ slug: req.params.slug }).lean();
     if (page) {
+      if (req.params.slug === 'home' && Array.isArray(page.sections)) {
+        const popularList = await getPopularCoursesList();
+        page.sections = page.sections.map((section: any) => {
+          if (section.type === 'course-grid') {
+            return {
+              ...section,
+              config: {
+                ...section.config,
+                sectionTitle: 'Popular Business Solutions',
+                courses: popularList,
+              },
+            };
+          }
+          return section;
+        });
+      }
       res.json(page);
       return;
     }
   }
 
   if (req.params.slug === 'home') {
-    res.json(homePage);
+    const popularList = await getPopularCoursesList();
+    const fallbackHome = {
+      ...homePage,
+      sections: homePage.sections.map((section: any) => {
+        if (section.type === 'course-grid') {
+          return {
+            ...section,
+            config: {
+              ...section.config,
+              sectionTitle: 'Popular Business Solutions',
+              courses: popularList,
+            },
+          };
+        }
+        return section;
+      }),
+    };
+    res.json(fallbackHome);
     return;
   }
 
@@ -1646,7 +2003,7 @@ app.get('/api/v1/courses', async (req, res) => {
           price: 899,
           oldPrice: 2499,
           title: `${c.title} - Business in a Box`,
-          subtitle: `Complete Business Plan + All ${c.categoryName} Business Tools`,
+          subtitle: `Complete Business Plan + All ${c.categoryName} Business Playbooks`,
         };
       }
       return pub;
@@ -1661,7 +2018,7 @@ app.get('/api/v1/courses', async (req, res) => {
   const filtered = fallbackCourses.filter((course) => {
     let typeMatch = true;
     if (isBoxFilter) {
-      typeMatch = (course as any).packageType === 'business-plans' || course.slug.includes('business-in-a-box');
+      typeMatch = (course as any).packageType === 'business-plans';
     } else if (type && ['business-plans', 'business-tools'].includes(type)) {
       typeMatch = (course as any).packageType === type;
     }
@@ -1680,12 +2037,12 @@ app.get('/api/v1/courses', async (req, res) => {
     if (isBoxFilter) {
       return {
         ...pub,
-        slug: c.slug.includes('business-in-a-box') ? c.slug : `${c.slug}-business-in-a-box`,
+        slug: `${c.slug}-business-in-a-box`,
         packageType: 'business-in-the-box',
         price: 899,
         oldPrice: 2499,
         title: c.title.includes('Business in a Box') ? c.title : `${c.title} - Business in a Box`,
-        subtitle: `Complete Business Plan + All ${c.categoryName} Business Tools`,
+        subtitle: `Complete Business Plan + All ${c.categoryName} Business Playbooks`,
       };
     }
     return pub;
@@ -1697,11 +2054,9 @@ app.get('/api/v1/courses', async (req, res) => {
 app.get('/api/v1/courses/:slug', async (req, res) => {
   const rawSlug = req.params.slug.toLowerCase();
   const queryType = String(req.query.type || req.query.packageType || '').toLowerCase();
-  const isBoxRequest =
+  const requestedBox =
     rawSlug.endsWith('-business-in-a-box') ||
     rawSlug.endsWith('-business-in-the-box') ||
-    rawSlug.includes('business-in-a-box') ||
-    rawSlug.includes('business-in-the-box') ||
     queryType === 'business-in-the-box' ||
     queryType === 'business-in-a-box';
 
@@ -1709,7 +2064,7 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
     .replace(/-business-in-a-box$/, '')
     .replace(/-business-in-the-box$/, '');
 
-  console.log(`[GET /api/v1/courses/:slug] Fetching course by slug: "${rawSlug}" (clean: "${cleanSlug}", isBox: ${isBoxRequest})`);
+  console.log(`[GET /api/v1/courses/:slug] Fetching course by slug: "${rawSlug}" (clean: "${cleanSlug}", requestedBox: ${requestedBox})`);
 
   if (isMongoConnected()) {
     const course = await Course.findOne({
@@ -1718,6 +2073,10 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
     }).lean();
 
     if (course) {
+      const isPlan = course.packageType === 'business-plans';
+      // ONLY Business Plans can ever be viewed as Business in a Box! Business Tools are strictly standalone.
+      const isBoxRequest = requestedBox && isPlan;
+
       const related = await Course.find({
         _id: { $ne: course._id },
         categoryName: course.categoryName,
@@ -1750,7 +2109,7 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
           title: course.title.includes('Business in a Box')
             ? course.title
             : `${course.title} - Business in a Box`,
-          subtitle: `Complete Business Plan + All ${course.categoryName} Business Tools`,
+          subtitle: `Complete Business Plan + All ${course.categoryName} Business Playbooks`,
         };
       }
 
@@ -1768,11 +2127,14 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
     course.slug === rawSlug || course.slug === cleanSlug
   );
   if (fallback) {
+    const isPlan = (fallback as any).packageType === 'business-plans';
+    const isBoxRequest = requestedBox && isPlan;
+
     const relatedCourses = fallbackCourses
       .filter((course) => course.slug !== fallback.slug && course.categoryName === fallback.categoryName)
       .slice(0, 4);
     let responseCourse: any = { ...fallback, hasPdf: false, isPublished: true, relatedCourses };
-    if (isBoxRequest || fallback.slug.includes('business-in-a-box')) {
+    if (isBoxRequest) {
       responseCourse = {
         ...responseCourse,
         slug: rawSlug,
@@ -1780,7 +2142,7 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
         price: 899,
         oldPrice: 2499,
         title: fallback.title.includes('Business in a Box') ? fallback.title : `${fallback.title} - Business in a Box`,
-        subtitle: `Complete Business Plan + All ${fallback.categoryName} Business Tools`,
+        subtitle: `Complete Business Plan + All ${fallback.categoryName} Business Playbooks`,
       };
     }
     res.json(responseCourse);
@@ -1800,8 +2162,8 @@ app.post('/api/v1/courses/:courseId/purchase', requireAuth, requireActiveSession
     if (!config.razorpayKeyId || !config.razorpayKeySecret) {
       return res.status(500).json({ message: 'Payment gateway is not configured.' });
     }
-    const isBox = req.body?.isBox === true || req.body?.packageType === 'business-in-the-box' || req.body?.packageType === 'business-in-a-box';
-    const effectivePrice = isBox ? 899 : Number(course.price);
+    const isBox = (req.body?.isBox === true || req.body?.packageType === 'business-in-the-box' || req.body?.packageType === 'business-in-a-box') && course.packageType === 'business-plans';
+    const effectivePrice = isBox ? 899 : Number(course.price || (course.packageType === 'business-plans' ? 399 : 299));
     console.log("Course Price", effectivePrice, "isBox:", isBox);
     const priceAmount = effectivePrice * 100;
 
@@ -1950,8 +2312,8 @@ app.post('/api/v1/courses/:courseId/guest-purchase', async (req, res) => {
       return res.status(500).json({ message: 'Payment gateway is not configured.' });
     }
 
-    const isBox = req.body?.isBox === true || req.body?.packageType === 'business-in-the-box' || req.body?.packageType === 'business-in-a-box';
-    const effectivePrice = isBox ? 899 : Number(course.price);
+    const isBox = (req.body?.isBox === true || req.body?.packageType === 'business-in-the-box' || req.body?.packageType === 'business-in-a-box') && course.packageType === 'business-plans';
+    const effectivePrice = isBox ? 899 : Number(course.price || (course.packageType === 'business-plans' ? 399 : 299));
     const priceAmount = effectivePrice * 100;
     const instance = new Razorpay({
       key_id: config.razorpayKeyId,

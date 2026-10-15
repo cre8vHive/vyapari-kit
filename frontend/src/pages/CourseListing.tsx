@@ -379,7 +379,7 @@ export const CourseListing: React.FC = () => {
                 >
                   <option value="">All Types</option>
                   <option value="business-plans">Business Plans</option>
-                  <option value="business-tools">Business Tools</option>
+                  <option value="business-tools">Business Playbooks</option>
                   <option value="business-in-the-box">Business in a Box</option>
                 </select>
               </div>
@@ -475,7 +475,7 @@ export const CourseListing: React.FC = () => {
                     Viewing Business in a Box Bundles
                   </h3>
                   <p style={{ margin: '4px 0 0', fontSize: '0.92rem', color: '#78350f', lineHeight: 1.4 }}>
-                    Each <strong>Business in a Box</strong> is an all-in-one package. When you purchase any bundle, you get the complete <strong>Business Plan</strong> plus <strong>ALL</strong> business tools and playbooks in that category automatically!
+                    Each <strong>Business in a Box</strong> is an all-in-one package. When you purchase any bundle, you get the complete <strong>Business Plan</strong> plus <strong>ALL</strong> business playbooks in that category automatically!
                   </p>
                 </div>
               </div>

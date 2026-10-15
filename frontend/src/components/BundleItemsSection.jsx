@@ -3,13 +3,16 @@ import React, { useState } from 'react';
 const BundleItemsSection = ({ course }) => {
   const [expanded, setExpanded] = useState(false);
 
+  const isTool = course.packageType === 'business-tools';
   const isBusinessInABox =
-    course.isBusinessInABox ||
-    course.packageType === 'business-in-the-box' ||
-    course.packageType === 'business-in-a-box' ||
-    course.slug?.includes('business-in-the-box') ||
-    course.slug?.includes('business-in-a-box') ||
-    /business in a box/i.test(course.title || '');
+    !isTool && (
+      course.isBusinessInABox ||
+      course.packageType === 'business-in-the-box' ||
+      course.packageType === 'business-in-a-box' ||
+      course.slug?.includes('business-in-the-box') ||
+      course.slug?.includes('business-in-a-box') ||
+      /business in a box/i.test(course.title || '')
+    );
 
   if (!isBusinessInABox) {
     return null;
@@ -71,7 +74,7 @@ const BundleItemsSection = ({ course }) => {
               Everything Included In This Box
             </h2>
             <p style={{ margin: 0, fontSize: '0.98rem', color: '#92400e', maxWidth: '720px', lineHeight: 1.5 }}>
-              Purchasing this <strong>Business in a Box</strong> gives you the complete blueprint plus <strong>ALL {totalToolsCount}</strong> industry-specific playbooks, calculators, and operational tools in <strong>{course.category}</strong>.
+              Purchasing this <strong>Business in a Box</strong> gives you the complete blueprint plus <strong>ALL {totalToolsCount}</strong> industry-specific business playbooks, calculators, and operational frameworks in <strong>{course.category}</strong>.
             </p>
           </div>
 
@@ -112,7 +115,7 @@ const BundleItemsSection = ({ course }) => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#78350f' }}>
             <span style={{ color: '#059669', fontSize: '16px' }}>✓</span>
-            <span>{totalToolsCount} Subcategory Tools & Playbooks</span>
+            <span>{totalToolsCount} Subcategory Business Playbooks</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: '#78350f' }}>
             <span style={{ color: '#059669', fontSize: '16px' }}>✓</span>
@@ -184,7 +187,7 @@ const BundleItemsSection = ({ course }) => {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <div style={{ fontSize: '13px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.5px' }}>
-            Item 2 to {totalToolsCount + 1}: All {course.category} Business Tools & Playbooks ({totalToolsCount} Tools)
+            Item 2 to {totalToolsCount + 1}: All {course.category} Business Playbooks ({totalToolsCount} Playbooks)
           </div>
           <span style={{ fontSize: '12px', color: '#059669', fontWeight: 700 }}>
             All Included Free in this Box
@@ -242,7 +245,7 @@ const BundleItemsSection = ({ course }) => {
                       {tool.title}
                     </h4>
                     <span style={{ fontSize: '11px', color: '#64748b' }}>
-                      Playbook & Tool • {tool.difficulty || 'All Levels'}
+                      Playbook • {tool.difficulty || 'All Levels'}
                     </span>
                   </div>
                 </div>
@@ -265,7 +268,7 @@ const BundleItemsSection = ({ course }) => {
             color: '#64748b',
             fontSize: '0.9rem'
           }}>
-            All industry-specific playbooks and practical tools in the {course.category} category are automatically fulfilled upon purchase.
+            All industry-specific playbooks and practical resources in the {course.category} category are automatically fulfilled upon purchase.
           </div>
         )}
 
@@ -289,9 +292,9 @@ const BundleItemsSection = ({ course }) => {
               }}
             >
               {expanded ? (
-                <>Show Fewer Tools ▲</>
+                <>Show Fewer Playbooks ▲</>
               ) : (
-                <>View All {bundledTools.length} Included Tools ▼</>
+                <>View All {bundledTools.length} Included Playbooks ▼</>
               )}
             </button>
           </div>

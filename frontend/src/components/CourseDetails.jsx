@@ -51,39 +51,47 @@ const MobileStickyBuyBar = ({ course, onPurchase, onAddToCart, isInCart }) => {
     }
   }
 
+  const isTool = course.packageType === 'business-tools';
   const isBusinessInABox =
-    course.isBusinessInABox ||
-    course.packageType === 'business-in-the-box' ||
-    course.packageType === 'business-in-a-box' ||
-    course.slug?.includes('business-in-the-box') ||
-    course.slug?.includes('business-in-a-box') ||
-    /business in a box/i.test(course.title || '');
+    !isTool && (
+      course.isBusinessInABox ||
+      course.packageType === 'business-in-the-box' ||
+      course.packageType === 'business-in-a-box' ||
+      course.slug?.includes('business-in-the-box') ||
+      course.slug?.includes('business-in-a-box') ||
+      /business in a box/i.test(course.title || '')
+    );
 
   return (
-    <aside className="mobile-sticky-buy-bar" aria-label="Mobile quick purchase">
+    <aside className={`mobile-sticky-buy-bar${isBusinessInABox ? ' is-business-in-box' : ''}`} aria-label="Mobile quick purchase">
+      {isBusinessInABox && (
+        <div className="mobile-sticky-box-banner">
+          <span className="box-banner-badge">📦 BUSINESS IN A BOX</span>
+          <span className="box-banner-perk">⚡ Blueprint + 10 Playbooks Included</span>
+        </div>
+      )}
       <div className="mobile-sticky-top-row">
-        <img
-          src={thumbnail}
-          alt={course.title}
-          className="mobile-sticky-thumb"
-          onError={(e) => {
-            e.currentTarget.src = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
-          }}
-        />
+        <div className={`mobile-sticky-thumb-wrapper${isBusinessInABox ? ' is-box' : ''}`}>
+          <img
+            src={thumbnail}
+            alt={course.title}
+            className="mobile-sticky-thumb"
+            onError={(e) => {
+              e.currentTarget.src = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
+            }}
+          />
+          {isBusinessInABox && <span className="mobile-sticky-box-corner-badge">BOX</span>}
+        </div>
         <div className="mobile-sticky-info">
-          {isBusinessInABox && (
-            <span style={{
-              background: '#f59e0b',
-              color: '#fff',
-              fontSize: '10px',
-              fontWeight: 800,
-              padding: '2px 6px',
-              borderRadius: '4px',
-              display: 'inline-block',
-              marginBottom: '2px'
-            }}>
-              📦 Business in a Box Bundle
-            </span>
+          {isBusinessInABox ? (
+            <div className="mobile-sticky-badge-pill">
+              <span>📦</span>
+              <span>All-In-One Box Bundle</span>
+            </div>
+          ) : (
+            course.category && (
+              <span className="mobile-sticky-category-tag">{course.category}</span>
+            )
           )}
           <h4 className="mobile-sticky-title">{course.title}</h4>
           <div className="mobile-sticky-prices">
@@ -100,27 +108,47 @@ const MobileStickyBuyBar = ({ course, onPurchase, onAddToCart, isInCart }) => {
       <div className="mobile-sticky-actions">
         <button
           type="button"
-          className="mobile-sticky-cart-btn"
+          className={`mobile-sticky-cart-btn${isInCart ? ' in-cart' : ''}`}
           onClick={onAddToCart}
-          style={{
-            padding: '12px 14px',
-            background: isInCart ? '#dcfce7' : '#f1f5f9',
-            color: isInCart ? '#166534' : '#0f172a',
-            border: '1px solid #cbd5e1',
-            borderRadius: '6px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-          }}
+          aria-label={isInCart ? 'Item in cart' : 'Add item to cart'}
         >
-          {isInCart ? 'In Cart' : 'Add to Cart'}
+          {isInCart ? (
+            <>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span>In Cart</span>
+            </>
+          ) : (
+            <>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
+              <span>{isBusinessInABox ? 'Add Box' : 'Add to Cart'}</span>
+            </>
+          )}
         </button>
         <button
           type="button"
-          className="mobile-sticky-cta-btn"
+          className={`mobile-sticky-cta-btn${isBusinessInABox ? ' is-box-cta' : ''}`}
           onClick={onPurchase}
         >
-          Buy Now
+          {isBusinessInABox ? (
+            <>
+              <span className="cta-icon">⚡</span>
+              <span>Buy Complete Box</span>
+            </>
+          ) : (
+            <>
+              <span>Buy Now</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </>
+          )}
         </button>
       </div>
     </aside>
@@ -169,13 +197,16 @@ const CourseDetails = ({ course, onBack }) => {
 
   const isLoggedIn = !!localStorage.getItem('VyapaarKit_auth_token');
 
+  const isTool = course.packageType === 'business-tools';
   const isBusinessInABox =
-    course.isBusinessInABox ||
-    course.packageType === 'business-in-the-box' ||
-    course.packageType === 'business-in-a-box' ||
-    course.slug?.includes('business-in-the-box') ||
-    course.slug?.includes('business-in-a-box') ||
-    /business in a box/i.test(course.title || '');
+    !isTool && (
+      course.isBusinessInABox ||
+      course.packageType === 'business-in-the-box' ||
+      course.packageType === 'business-in-a-box' ||
+      course.slug?.includes('business-in-the-box') ||
+      course.slug?.includes('business-in-a-box') ||
+      /business in a box/i.test(course.title || '')
+    );
 
   const handlePurchase = async () => {
     if (!isLoggedIn) {

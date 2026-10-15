@@ -148,12 +148,28 @@ export const Home: React.FC<HomeProps> = ({ user }) => {
             const mockSection = MOCK_HOME_PAYLOAD.sections.find(s => s.type === section.type);
 
             if (section.type === 'course-grid') {
+              let displayCourses: any[] = [];
+              if (Array.isArray(section.config?.courses) && section.config.courses.length > 0) {
+                displayCourses = section.config.courses;
+              } else if (Array.isArray(section.config?.popularCourseIds) && section.config.popularCourseIds.length > 0) {
+                displayCourses = section.config.popularCourseIds
+                  .map((id: string) => fetchedCourses.find((c: any) => String(c.id) === String(id) || String(c._id) === String(id)))
+                  .filter(Boolean);
+              } else {
+                const popular = fetchedCourses.filter((c: any) => c.isPopular);
+                if (popular.length > 0) {
+                  displayCourses = popular.sort((a: any, b: any) => (a.popularOrder || 0) - (b.popularOrder || 0));
+                } else {
+                  displayCourses = fetchedCourses && fetchedCourses.length > 0 ? fetchedCourses.slice(0, 3) : (mockSection ? mockSection.config.courses : []);
+                }
+              }
+
               return {
                 ...section,
                 config: {
                   ...section.config,
-                  ...(mockSection ? mockSection.config : {}),
-                  courses: fetchedCourses && fetchedCourses.length > 0 ? fetchedCourses.slice(0, 3) : (mockSection ? mockSection.config.courses : [])
+                  sectionTitle: section.config?.sectionTitle || (mockSection ? mockSection.config.sectionTitle : "Popular Business Solutions"),
+                  courses: displayCourses.slice(0, 6)
                 }
               };
             }

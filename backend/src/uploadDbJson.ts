@@ -103,7 +103,7 @@ async function uploadDbJson() {
       slug: uniqueSlug,
       packageType,
       categoryName,
-      instructorName: item.instructorName || 'Vyapari Kit Team',
+      instructorName: item.instructorName || 'VyapaarKit Team',
       difficulty: item.difficulty && ['Beginner', 'Intermediate', 'Advanced'].includes(item.difficulty)
         ? item.difficulty
         : 'Beginner',

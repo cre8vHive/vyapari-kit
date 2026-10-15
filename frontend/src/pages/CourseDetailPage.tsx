@@ -128,13 +128,14 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     'Small business owners',
     'Working professionals planning a business venture',
   ]);
-  const isBusinessInABox =
+  const isTool = course.packageType === 'business-tools';
+  const isBusinessInABox = !isTool && (
     course.packageType === 'business-in-the-box' ||
     course.packageType === 'business-in-a-box' ||
-    course.slug?.includes('business-in-the-box') ||
-    course.slug?.includes('business-in-a-box') ||
-    Boolean(course.isBusinessInABox) ||
-    /business in a box/i.test(course.title || '');
+    course.slug?.endsWith('-business-in-a-box') ||
+    course.slug?.endsWith('-business-in-the-box') ||
+    Boolean(course.isBusinessInABox)
+  );
   const baseIncludes = listOrFallback(course.includes, [
     'Lifetime access',
     'Mobile access',
@@ -144,10 +145,15 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
   const includes = isBusinessInABox
     ? [
         'Complete Business Plan',
-        `All Business Tools & Playbooks in ${category}`,
+        `All Business Playbooks in ${category}`,
         ...baseIncludes.filter((item) => !item.toLowerCase().includes('pdf') && !item.toLowerCase().includes('structured')),
       ]
     : baseIncludes;
+
+  const rawInstructor = course.instructor?.name || course.instructorName;
+  const instructorName = (!rawInstructor || /vyapa+ri\s*kit\s*team/i.test(rawInstructor))
+    ? 'VyapaarKit Team'
+    : rawInstructor;
 
   return {
     id: course.id,
@@ -159,7 +165,7 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     isBusinessInABox,
     rating: Number(course.rating || 0),
     students: course.students ? course.students.toLocaleString('en-IN') : DEFAULT_STUDENTS,
-    instructorName: course.instructor?.name || course.instructorName,
+    instructorName,
     language: course.language || DEFAULT_LANGUAGE,
     lastUpdated: formatUpdatedDate(course.updatedAt || course.createdAt),
     difficulty: course.difficulty || 'Beginner',
@@ -188,8 +194,8 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     requirements,
     audience,
     instructor: {
-      name: course.instructor?.name || course.instructorName,
-      bio: course.instructor?.bio || `${course.instructorName} is the author for ${course.title}.`,
+      name: instructorName,
+      bio: course.instructor?.bio || `${instructorName} is the author for ${course.title}.`,
       experience: course.instructor?.title || category,
       courses: course.instructor?.courses ?? 1,
       students: course.instructor?.students?.toLocaleString('en-IN') || DEFAULT_STUDENTS,

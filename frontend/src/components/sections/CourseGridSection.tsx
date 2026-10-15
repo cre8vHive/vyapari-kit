@@ -129,13 +129,15 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
           const isMyCourse = mode === 'my';
           const courseUrl = (isMyCourse && course.hasPdf) ? `/courses/${course.id}/viewer` : `/courses/${course.slug}`;
           const actionText = (isMyCourse && course.hasPdf) ? 'View Material' : 'View Details';
-          const isBusinessInABox =
-            course.packageType === 'business-in-the-box' ||
-            course.packageType === 'business-in-a-box' ||
-            course.slug?.includes('business-in-the-box') ||
-            course.slug?.includes('business-in-a-box') ||
-            /business in a box/i.test(course.title || '');
           const isTool = course.packageType === 'business-tools';
+          const isBusinessInABox =
+            !isTool && (
+              course.packageType === 'business-in-the-box' ||
+              course.packageType === 'business-in-a-box' ||
+              course.slug?.includes('business-in-the-box') ||
+              course.slug?.includes('business-in-a-box') ||
+              /business in a box/i.test(course.title || '')
+            );
 
           return (
             <div
@@ -205,7 +207,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                     </span>
                   ) : isTool ? (
                     <span style={{ background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>
-                      Business Tool
+                      Business Playbook
                     </span>
                   ) : (
                     <span style={{ background: '#eff6ff', color: '#2563eb', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>
@@ -220,9 +222,16 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                 {/* Course Title */}
                 <div className="elementor-element elementor-widget elementor-widget-heading">
                   <div className="elementor-widget-container">
-                    <h4 className="elementor-heading-title elementor-size-default">
+                    <h4 className="elementor-heading-title elementor-size-default" style={{ minHeight: '44px', lineHeight: 1.4 }}>
                       <a
                         href={courseUrl}
+                        title={course.title}
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
                         onClick={(event) => {
                           if (onCourseClick) {
                             onCourseClick(course, event);
@@ -293,7 +302,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                 </div>
 
                 {/* Pricing and Action Button */}
-                <div className="elementor-element e-con-full e-flex e-con e-child price-button-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
+                <div className="elementor-element e-con-full e-flex e-con e-child price-button-row">
                   <div className="price-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <span className="price-new" style={{ color: '#0b1220', fontSize: '18px', fontWeight: 'bold' }}>
                       ₹{course.price.toFixed(2)}

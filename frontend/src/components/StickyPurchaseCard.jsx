@@ -13,41 +13,27 @@ const StickyPurchaseCard = ({ course, onPurchase, onAddToCart, isInCart }) => {
 
   const thumbnail = resolveImageUrl(rawThumb);
 
-  const isBusinessInABox =
+  const isTool = course.packageType === 'business-tools';
+  const isBusinessInABox = !isTool && (
     course.isBusinessInABox ||
     course.packageType === 'business-in-the-box' ||
     course.packageType === 'business-in-a-box' ||
     course.slug?.includes('business-in-the-box') ||
     course.slug?.includes('business-in-a-box') ||
-    /business in a box/i.test(course.title || '');
+    /business in a box/i.test(course.title || '')
+  );
 
   return (
     <aside className="sticky-purchase-card">
       <div className={`purchase-card${isBusinessInABox ? ' is-business-in-box' : ''}`} style={isBusinessInABox ? { border: '2px solid #f59e0b', boxShadow: '0 12px 28px -6px rgba(245, 158, 11, 0.25)' } : {}}>
         {isBusinessInABox && (
-          <div style={{
-            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            color: '#ffffff',
-            fontWeight: 800,
-            fontSize: '12px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            textAlign: 'center',
-            marginBottom: '14px',
-            boxShadow: '0 2px 6px rgba(217, 119, 6, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px'
-          }}>
+          <div className="sticky-card-bundle-banner">
             <span>📦</span>
             <span>Business in a Box Bundle</span>
           </div>
         )}
 
-        <div className="sticky-card-media">
+        <div className={`sticky-card-media${isBusinessInABox ? ' has-bundle-banner' : ''}`}>
           <img
             src={thumbnail}
             alt={course.title}
@@ -77,7 +63,7 @@ const StickyPurchaseCard = ({ course, onPurchase, onAddToCart, isInCart }) => {
             fontWeight: 600,
             lineHeight: 1.4
           }}>
-            ⚡ Unlocks full <strong>Business Plan</strong> + all <strong>Business Tools</strong> in {course.category}!
+            ⚡ Unlocks full <strong>Business Plan</strong> + all <strong>Business Playbooks</strong> in {course.category}!
           </div>
         )}
 
@@ -94,9 +80,15 @@ const StickyPurchaseCard = ({ course, onPurchase, onAddToCart, isInCart }) => {
             className={`btn btn-primary${isInCart ? ' btn-in-cart' : ''}`}
             onClick={onAddToCart}
           >
-            {isInCart ? 'In Cart (View)' : 'Add to cart'}
+            {isInCart ? '✓ Added to Cart' : (isBusinessInABox ? '+ Add Box to Cart' : 'Add to cart')}
           </button>
-          <button type="button" className="btn btn-secondary" onClick={onPurchase}>Buy Now</button>
+          <button
+            type="button"
+            className={`btn btn-secondary${isBusinessInABox ? ' btn-box-secondary' : ''}`}
+            onClick={onPurchase}
+          >
+            {isBusinessInABox ? '⚡ Buy Complete Box' : 'Buy Now'}
+          </button>
         </div>
         <ul className="purchase-benefits">
           {course.includes.map((benefit) => (

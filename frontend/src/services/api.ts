@@ -76,6 +76,10 @@ export const cmsApi = {
     const response = await apiClient.get('/testimonials');
     return response.data;
   },
+  getPopularCourses: async (): Promise<CourseSummary[]> => {
+    const response = await apiClient.get<CourseSummary[]>('/popular-courses');
+    return response.data;
+  },
 };
 
 export const courseApi = {
@@ -122,6 +126,8 @@ export interface CourseSummary {
   rating: number;
   imageUrl: string;
   isPublished: boolean;
+  isPopular?: boolean;
+  popularOrder?: number;
   hasPdf: boolean;
   language?: string;
   shortDescription?: string;
@@ -430,6 +436,14 @@ export const adminApi = {
   },
   deleteCourse: async (courseId: string): Promise<void> => {
     await apiClient.delete(`/admin/courses/${courseId}`);
+  },
+  getPopularCourses: async (): Promise<{ courseIds: string[]; courses: CourseSummary[] }> => {
+    const response = await apiClient.get<{ courseIds: string[]; courses: CourseSummary[] }>('/admin/popular-courses');
+    return response.data;
+  },
+  updatePopularCourses: async (courseIds: string[]): Promise<{ ok: boolean; message: string; courseIds: string[]; courses: CourseSummary[] }> => {
+    const response = await apiClient.put<{ ok: boolean; message: string; courseIds: string[]; courses: CourseSummary[] }>('/admin/popular-courses', { courseIds });
+    return response.data;
   },
   getUsers: async (): Promise<AuthUser[]> => {
     const response = await apiClient.get<AuthUser[]>('/admin/users');

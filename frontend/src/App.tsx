@@ -21,9 +21,29 @@ const HEARTBEAT_INTERVAL_MS = 30_000; // 30 seconds
 const HeaderCartButton: React.FC<{ mobileMenu?: boolean }> = ({ mobileMenu = false }) => {
   const { totalCount, toggleCart } = useCart();
 
+  if (mobileMenu) {
+    return (
+      <button
+        className="site-nav-mobile-action site-nav-mobile-cart-row"
+        type="button"
+        onClick={toggleCart}
+      >
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span>Cart</span>
+        </span>
+        {totalCount > 0 && <span className="site-nav-cart-badge-inline">{totalCount}</span>}
+      </button>
+    );
+  }
+
   return (
     <button
-      className={`site-cart-btn${mobileMenu ? ' site-nav-mobile-action site-nav-mobile-cart' : ''}`}
+      className="site-cart-btn"
       type="button"
       onClick={toggleCart}
       aria-label={`Shopping Cart with ${totalCount} items`}
@@ -34,7 +54,6 @@ const HeaderCartButton: React.FC<{ mobileMenu?: boolean }> = ({ mobileMenu = fal
         <circle cx="20" cy="21" r="1"></circle>
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
       </svg>
-      {mobileMenu && <span>Cart</span>}
       {totalCount > 0 && <span className="site-cart-badge">{totalCount}</span>}
     </button>
   );
@@ -190,18 +209,33 @@ const AppContent: React.FC = () => {
           <span />
         </button>
         <nav id="primary-navigation" className={`site-nav${isMenuOpen ? ' is-open' : ''}`} aria-label="Primary navigation">
-          <a href={withBase('/')} aria-current={isActivePath('/') ? 'page' : undefined}>Home</a>
-          <a href={withBase('/courses')} aria-current={isActivePath('/courses') ? 'page' : undefined}>Business Solutions</a>
-          <a href={withBase('/about-us')} aria-current={isActivePath('/about-us') ? 'page' : undefined}>About Us</a>
-          <a href={withBase('/contact-us')} aria-current={isActivePath('/contact-us') ? 'page' : undefined}>Contact Us</a>
+          <a href={withBase('/')} aria-current={isActivePath('/') ? 'page' : undefined} onClick={() => setIsMenuOpen(false)}>Home</a>
+          <a href={withBase('/courses')} aria-current={isActivePath('/courses') ? 'page' : undefined} onClick={() => setIsMenuOpen(false)}>Business Solutions</a>
+          <a href={withBase('/about-us')} aria-current={isActivePath('/about-us') ? 'page' : undefined} onClick={() => setIsMenuOpen(false)}>About Us</a>
+          <a href={withBase('/contact-us')} aria-current={isActivePath('/contact-us') ? 'page' : undefined} onClick={() => setIsMenuOpen(false)}>Contact Us</a>
           {isMenuOpen && (
             <>
-              <a className="site-nav-mobile-action" href={withBase('/login')}>Login</a>
-              <a className="site-nav-mobile-action" href={withBase('/register')}>Register</a>
+              {!user ? (
+                <>
+                  <a className="site-nav-mobile-action" href={withBase('/login')} onClick={() => setIsMenuOpen(false)}>Login</a>
+                  <a className="site-nav-mobile-action" href={withBase('/register')} onClick={() => setIsMenuOpen(false)}>Register</a>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="site-nav-mobile-action site-nav-mobile-logout-row"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleLogout();
+                  }}
+                >
+                  Logout ({user.name})
+                </button>
+              )}
               <HeaderCartButton mobileMenu />
             </>
           )}
-          {user?.role === 'admin' && <a href={withBase('/admin')}>Admin</a>}
+          {user?.role === 'admin' && <a href={withBase('/admin')} onClick={() => setIsMenuOpen(false)}>Admin</a>}
         </nav>
         <div className="site-actions-wrapper" style={{ display: 'flex', alignItems: 'center' }}>
           {user ? (

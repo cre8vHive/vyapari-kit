@@ -129,13 +129,14 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
     setIsLightboxDragging(false);
   };
 
-  const isBusinessInABox =
+  const isTool = course.packageType === 'business-tools';
+  const isBusinessInABox = !isTool && (
     course.isBusinessInABox ||
     course.packageType === 'business-in-the-box' ||
     course.packageType === 'business-in-a-box' ||
-    course.slug?.includes('business-in-the-box') ||
-    course.slug?.includes('business-in-a-box') ||
-    /business in a box/i.test(course.title || '');
+    course.slug?.endsWith('-business-in-a-box') ||
+    course.slug?.endsWith('-business-in-the-box')
+  );
 
   const basePlanSlug = course.slug
     ? course.slug.replace(/-business-in-a-box$/, '').replace(/-business-in-the-box$/, '')
@@ -171,7 +172,7 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
         <h1 className="hero-title">{course.title}</h1>
         <p className="hero-copy">{course.subtitle}</p>
 
-        {isBusinessInABox ? (
+        {isBusinessInABox && (
           <div style={{
             margin: '18px 0 8px 0',
             padding: '16px 20px',
@@ -194,7 +195,7 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
                   All-In-One Box Bundle
                 </div>
                 <div style={{ fontSize: '15px', fontWeight: 700, color: '#78350f', marginTop: '2px', lineHeight: 1.4 }}>
-                  Includes this full <strong>Business Plan</strong> + ALL <strong>Business Tools & Playbooks</strong> in {course.category}!
+                  Includes this full <strong>Business Plan</strong> + ALL <strong>Business Playbooks</strong> in {course.category}!
                 </div>
               </div>
             </div>
@@ -215,7 +216,9 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
               </a>
             )}
           </div>
-        ) : (
+        )}
+
+        {!isBusinessInABox && course.packageType === 'business-plans' && (
           <div style={{
             margin: '18px 0 8px 0',
             padding: '14px 18px',
@@ -234,7 +237,7 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
               <div>
                 <strong style={{ color: '#92400e', fontSize: '0.95rem' }}>Looking for the complete Business in a Box Bundle?</strong>
                 <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: '#78350f' }}>
-                  Get this Business Plan + <strong>ALL {course.category} Business Tools</strong> bundled together for only ₹899.
+                  Get this Business Plan + <strong>ALL {course.category} Business Playbooks</strong> bundled together for only ₹899.
                 </p>
               </div>
             </div>
@@ -309,23 +312,29 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
               <div className="gallery-slider-controls">
                 <button
                   type="button"
+                  className="gallery-slider-btn gallery-slider-prev"
                   aria-label="Previous image"
                   onClick={(event) => {
                     event.stopPropagation();
                     changeImage(activeImageIndex - 1);
                   }}
                 >
-                  ←
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
                 </button>
                 <button
                   type="button"
+                  className="gallery-slider-btn gallery-slider-next"
                   aria-label="Next image"
                   onClick={(event) => {
                     event.stopPropagation();
                     changeImage(activeImageIndex + 1);
                   }}
                 >
-                  →
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </button>
               </div>
             )}
@@ -387,7 +396,13 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
 
       {/* 4. Purchase Block: Pricing, CTA buttons, Kit includes */}
       <div className="hero-purchase-block">
-        <div className="hero-purchase-card">
+        <div className={`hero-purchase-card${isBusinessInABox ? ' is-business-in-box' : ''}`}>
+          {isBusinessInABox && (
+            <div className="hero-box-badge-banner">
+              <span>📦</span>
+              <span>Business in a Box Bundle</span>
+            </div>
+          )}
           <div className="hero-price-row">
             <div>
               <p>Price</p>
@@ -401,9 +416,15 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
               className={`btn btn-primary${isInCart ? ' btn-in-cart' : ''}`}
               onClick={onAddToCart}
             >
-              {isInCart ? 'In Cart (View)' : 'Add to cart'}
+              {isInCart ? '✓ Added to Cart' : (isBusinessInABox ? '+ Add Box to Cart' : 'Add to cart')}
             </button>
-            <button type="button" className="btn btn-secondary" onClick={onPurchase}>Buy Now</button>
+            <button
+              type="button"
+              className={`btn btn-secondary${isBusinessInABox ? ' btn-box-secondary' : ''}`}
+              onClick={onPurchase}
+            >
+              {isBusinessInABox ? '⚡ Buy Complete Box' : 'Buy Now'}
+            </button>
           </div>
           <div className="hero-include-list">
             <h3>Kit includes</h3>

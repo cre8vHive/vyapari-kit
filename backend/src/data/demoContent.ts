@@ -1,7 +1,7 @@
 export const categories = [
   {
     id: '1',
-    name: 'BUSINESS TOOLS',
+    name: 'BUSINESS PLAYBOOKS',
     slug: 'business-tools',
     iconUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=96&q=80',
     children: ['Technology', 'Food & Beverage', 'Manufacturing', 'Service', 'Commerce', 'Agriculture'],
@@ -124,9 +124,9 @@ export const courses = [
   {
     id: '8',
     slug: 'essential-business-tools-stack',
-    title: 'Essential Business Tools & Productivity Tech Stack',
+    title: 'Essential Business Playbooks & Productivity Tech Stack',
     instructorName: 'Onecontributor',
-    categoryName: 'Business Tools',
+    categoryName: 'Business Playbooks',
     difficulty: 'Beginner' as const,
     price: 18.99,
     oldPrice: 29.99,
@@ -234,7 +234,7 @@ export const homePage = {
       config: {
         eyebrow: 'IDEAS → TOOLS → PLANS → GROWTH',
         headline: 'Everything You Need to Start & Grow Your Business',
-        subheading: 'Ready-to-use business tools, plans & kits — built to save you time and help you move faster.',
+        subheading: 'Ready-to-use business playbooks, plans & kits — built to save you time and help you move faster.',
         primaryButton: { text: 'Explore Business Kits', link: '/courses' },
         secondaryButton: { text: "See What's Inside", link: '#categories' }
       }

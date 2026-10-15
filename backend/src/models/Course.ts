@@ -14,6 +14,8 @@ export interface ICourse extends Document, IAudit {
   imageUrl: string;
   pdfAsset?: mongoose.Types.ObjectId;
   isPublished: boolean;
+  isPopular?: boolean;
+  popularOrder?: number;
   subtitle?: string;
   language?: string;
   includes?: string[];
@@ -163,6 +165,14 @@ const CourseSchema = new Schema<any>({
     default: true,
     required: true,
   },
+  isPopular: {
+    type: Boolean,
+    default: false,
+  },
+  popularOrder: {
+    type: Number,
+    default: 0,
+  },
   isDeleted: AuditSchema.path('isDeleted'),
   deletedAt: AuditSchema.path('deletedAt'),
   deletedBy: AuditSchema.path('deletedBy'),
@@ -176,6 +186,7 @@ CourseSchema.index({ slug: 1 }, { unique: true });
 CourseSchema.index({ packageType: 1 });
 CourseSchema.index({ categoryName: 1 });
 CourseSchema.index({ packageType: 1, categoryName: 1 });
+CourseSchema.index({ isPopular: 1, popularOrder: 1 });
 CourseSchema.index({ title: 'text' }, { language_override: 'dummyLanguageField' });
 CourseSchema.index({ isDeleted: 1 });
 

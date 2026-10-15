@@ -32,7 +32,7 @@ async function main() {
 
     const courseObj: any = {
       isPublished: true,
-      instructorName: 'Vyapari Kit Team', // Default instructor
+      instructorName: 'VyapaarKit Team', // Default instructor
       imageUrl: '/placeholder-course.jpg' // Default image
     };
 
