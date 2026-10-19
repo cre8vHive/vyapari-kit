@@ -154,7 +154,6 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                 flexDirection: 'column',
               }}
             >
-              {/* Image Hotspot with Business in a Box Badge overlay */}
               <div className="elementor-element elementor-element-hotspot-container elementor-widget elementor-widget-hotspot" style={{ position: 'relative' }}>
                 <div className="elementor-widget-container">
                   <img
@@ -163,28 +162,6 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                     alt={course.title}
                     loading="lazy"
                   />
-                  {isBusinessInABox && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '12px',
-                      left: '12px',
-                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                      color: '#ffffff',
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      letterSpacing: '0.5px',
-                      textTransform: 'uppercase',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      zIndex: 2,
-                    }}>
-                      📦 Business in a Box
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -203,7 +180,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                       textTransform: 'uppercase',
                       letterSpacing: '0.4px'
                     }}>
-                      All-In-One Bundle
+                      Business in a Box
                     </span>
                   ) : isTool ? (
                     <span style={{ background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>
@@ -282,20 +259,31 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                 </div>
 
                 {/* Rating Stars */}
-                <div className="elementor-element e-con-full e-flex e-con e-child rating-container-row" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div className="elementor-element elementor-widget elementor-widget-rating">
+                <div
+                  className="elementor-element e-con-full e-flex e-con e-child rating-container-row"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    flexWrap: 'nowrap',
+                    margin: '10px 0 0',
+                    minHeight: '20px',
+                    lineHeight: 1,
+                  }}
+                >
+                  <div className="elementor-element elementor-widget elementor-widget-rating" style={{ display: 'flex', alignItems: 'center' }}>
                     <div className="elementor-widget-container">
-                      <div className="e-rating">
-                        <div className="e-rating-wrapper">
+                      <div className="e-rating" style={{ display: 'flex', alignItems: 'center', lineHeight: 1 }}>
+                        <div className="e-rating-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '2px', flexWrap: 'nowrap' }}>
                           {renderStars(course.rating)}
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="elementor-element elementor-widget elementor-widget-heading">
+                  <div className="elementor-element elementor-widget elementor-widget-heading" style={{ display: 'flex', alignItems: 'center' }}>
                     <div className="elementor-widget-container">
-                      <h4 className="elementor-heading-title elementor-size-default">
-                        <b>{course.rating.toFixed(1)}</b>
+                      <h4 className="elementor-heading-title elementor-size-default" style={{ margin: 0, display: 'flex', alignItems: 'center', lineHeight: 1 }}>
+                        <b style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 1 }}>{course.rating.toFixed(1)}</b>
                       </h4>
                     </div>
                   </div>

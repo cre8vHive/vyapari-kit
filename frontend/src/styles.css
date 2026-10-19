@@ -1650,7 +1650,7 @@ img {
 
 .course-card-wrapper img {
   width: 100%;
-  aspect-ratio: 3 / 2;
+  aspect-ratio: auto;
   height: auto;
   object-fit: contain;
   object-position: center;
