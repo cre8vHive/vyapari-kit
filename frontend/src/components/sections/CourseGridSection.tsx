@@ -199,7 +199,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                 {/* Course Title */}
                 <div className="elementor-element elementor-widget elementor-widget-heading">
                   <div className="elementor-widget-container">
-                    <h4 className="elementor-heading-title elementor-size-default" style={{ minHeight: '44px', lineHeight: 1.4 }}>
+                    <h4 className="elementor-heading-title elementor-size-default" style={{ minHeight: '38px', lineHeight: 1.35, margin: '0 0 4px 0' }}>
                       <a
                         href={courseUrl}
                         title={course.title}
@@ -224,32 +224,32 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                 {/* Bundle Value Indicator */}
                 {isBusinessInABox && (
                   <div style={{
-                    margin: '6px 0 10px 0',
-                    padding: '6px 10px',
+                    margin: '4px 0 6px 0',
+                    padding: '4px 8px',
                     borderRadius: '6px',
                     background: '#fffbeb',
                     border: '1px solid #fde68a',
-                    fontSize: '11.5px',
+                    fontSize: '11px',
                     color: '#92400e',
                     fontWeight: 600,
-                    lineHeight: 1.4,
+                    lineHeight: 1.3,
                   }}>
                     ✨ Includes Plan + All {course.categoryName} Tools
                   </div>
                 )}
 
                 {/* Meta Attributes */}
-                <div className="elementor-element e-con-full e-flex e-con e-child course-meta-row" style={{ display: 'flex', gap: '10px' }}>
+                <div className="elementor-element e-con-full e-flex e-con e-child course-meta-row" style={{ display: 'flex', gap: '8px', alignItems: 'center', margin: '4px 0' }}>
                   <div className="elementor-element elementor-widget elementor-widget-heading">
                     <div className="elementor-widget-container">
-                      <h5 className="elementor-heading-title elementor-size-default" style={{ opacity: 0.8 }}>
+                      <h5 className="elementor-heading-title elementor-size-default" style={{ opacity: 0.8, margin: 0, fontSize: '13px', lineHeight: 1.3 }}>
                         By {course.instructorName}
                       </h5>
                     </div>
                   </div>
                   <div className="elementor-element elementor-widget elementor-widget-heading">
                     <div className="elementor-widget-container">
-                      <h5 className="elementor-heading-title elementor-size-default">
+                      <h5 className="elementor-heading-title elementor-size-default" style={{ margin: 0, fontSize: '13px', lineHeight: 1.3 }}>
                         <a href={`/courses?tab=available&category=${courseCategorySlug(course.categoryName)}`} style={{ color: '#0b7cff' }}>
                           in {course.categoryName}
                         </a>
@@ -266,8 +266,8 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
                     alignItems: 'center',
                     gap: '8px',
                     flexWrap: 'nowrap',
-                    margin: '10px 0 0',
-                    minHeight: '20px',
+                    margin: '4px 0 0',
+                    minHeight: '18px',
                     lineHeight: 1,
                   }}
                 >
