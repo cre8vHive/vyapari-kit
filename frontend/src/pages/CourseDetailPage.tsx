@@ -175,7 +175,28 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     },
     thumbnail: course.bannerImage || course.thumbnail || course.imageUrl,
     editionNote: course.editionNote || '',
-    gallery: course.gallery || [],
+    gallery: isBusinessInABox
+      ? [
+          (course.gallery && course.gallery.length > 0)
+            ? course.gallery[0]
+            : {
+                id: `${course.slug}-cover`,
+                url: course.bannerImage || course.thumbnail || course.imageUrl,
+                label: `${course.title} - Cover`,
+                caption: `${course.title} Cover`,
+                alt: `${course.title} Cover`,
+              },
+          ...(course.bundledTools || [])
+            .filter((t: any) => t.imageUrl || t.thumbnail)
+            .map((t: any, idx: number) => ({
+              id: `box-tool-${t.slug || idx}`,
+              url: t.thumbnail || t.imageUrl,
+              label: t.title,
+              caption: `Included Playbook: ${t.title}`,
+              alt: `${t.title} Cover`,
+            })),
+        ]
+      : (course.gallery || []),
     includes,
     learningHighlights: highlights,
     description: descriptionOrFallback(course),

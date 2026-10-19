@@ -2098,6 +2098,26 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
 
       let responseCourse = publicCourse(course);
       if (isBoxRequest) {
+        const boxCover = (course.gallery && course.gallery.length > 0)
+          ? [course.gallery[0]]
+          : [{
+              id: `${course.slug}-cover`,
+              url: course.thumbnail || course.imageUrl,
+              label: `${course.title} - Cover`,
+              caption: `${course.title} Cover`,
+              alt: `${course.title} Cover`,
+            }];
+
+        const toolsGallery = bundledTools
+          .filter((t) => t.imageUrl || t.thumbnail)
+          .map((t, idx) => ({
+            id: `box-tool-${t.slug || idx}`,
+            url: t.imageUrl || t.thumbnail,
+            label: `Playbook: ${t.title}`,
+            caption: `Included Playbook: ${t.title}`,
+            alt: `${t.title} Cover`,
+          }));
+
         responseCourse = {
           ...responseCourse,
           slug: rawSlug.endsWith('-business-in-a-box') || rawSlug.endsWith('-business-in-the-box')
@@ -2110,6 +2130,7 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
             ? course.title
             : `${course.title} - Business in a Box`,
           subtitle: `Complete Business Plan + All ${course.categoryName} Business Playbooks`,
+          gallery: [...boxCover, ...toolsGallery],
         };
       }
 

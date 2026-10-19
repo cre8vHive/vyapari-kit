@@ -142,20 +142,37 @@ const BundleItemsSection = ({ course }) => {
           boxShadow: '0 4px 12px rgba(59, 130, 246, 0.08)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '10px',
-              background: '#eff6ff',
-              color: '#2563eb',
-              fontSize: '22px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              📋
-            </div>
+            {course.basePlan?.thumbnail || course.basePlan?.imageUrl || course.thumbnail || course.imageUrl ? (
+              <img
+                src={course.basePlan?.thumbnail || course.basePlan?.imageUrl || course.thumbnail || course.imageUrl}
+                alt={basePlanTitle}
+                style={{
+                  width: '84px',
+                  height: '56px',
+                  borderRadius: '10px',
+                  objectFit: 'contain',
+                  background: '#0f172a',
+                  flexShrink: 0,
+                  border: '1px solid #bfdbfe',
+                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)'
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '10px',
+                background: '#eff6ff',
+                color: '#2563eb',
+                fontSize: '22px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                📋
+              </div>
+            )}
             <div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '3px' }}>
                 <span style={{ background: '#dbeafe', color: '#1d4ed8', fontSize: '11px', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
@@ -216,22 +233,39 @@ const BundleItemsSection = ({ course }) => {
                   boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                  <div style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '8px',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    color: '#0284c7',
-                    fontSize: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}>
-                    🛠️
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                  {tool.imageUrl || tool.thumbnail ? (
+                    <img
+                      src={tool.imageUrl || tool.thumbnail}
+                      alt={tool.title}
+                      style={{
+                        width: '72px',
+                        height: '48px',
+                        borderRadius: '8px',
+                        objectFit: 'contain',
+                        background: '#0f172a',
+                        flexShrink: 0,
+                        border: '1px solid #e2e8f0',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      color: '#0284c7',
+                      fontSize: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      🛠️
+                    </div>
+                  )}
                   <div style={{ minWidth: 0 }}>
                     <h4 style={{
                       margin: 0,
