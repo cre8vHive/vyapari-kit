@@ -125,6 +125,7 @@ export interface CourseSummary {
   oldPrice?: number;
   rating: number;
   imageUrl: string;
+  boxImageUrl?: string;
   isPublished: boolean;
   isPopular?: boolean;
   popularOrder?: number;

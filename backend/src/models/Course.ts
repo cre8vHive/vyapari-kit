@@ -12,6 +12,9 @@ export interface ICourse extends Document, IAudit {
   oldPrice?: number;
   rating: number;
   imageUrl: string;
+  boxImageUrl?: string;
+  thumbnail?: string;
+  bannerImage?: string;
   pdfAsset?: mongoose.Types.ObjectId;
   isPublished: boolean;
   isPopular?: boolean;
@@ -108,6 +111,7 @@ const CourseSchema = new Schema<any>({
     required: [true, 'Course image URL is required'],
     trim: true,
   },
+  boxImageUrl: { type: String, trim: true },
   shortDescription: { type: String, trim: true },
   subtitle: { type: String, trim: true },
   description: { type: Schema.Types.Mixed },

@@ -173,19 +173,29 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
       current: currentPrice || 'Free',
       old: oldPrice,
     },
-    thumbnail: course.bannerImage || course.thumbnail || course.imageUrl,
+    thumbnail: isBusinessInABox
+      ? (course.boxImageUrl || course.bannerImage || course.thumbnail || course.imageUrl)
+      : (course.bannerImage || course.thumbnail || course.imageUrl),
     editionNote: course.editionNote || '',
     gallery: isBusinessInABox
       ? [
-          (course.gallery && course.gallery.length > 0)
-            ? course.gallery[0]
-            : {
-                id: `${course.slug}-cover`,
-                url: course.bannerImage || course.thumbnail || course.imageUrl,
-                label: `${course.title} - Cover`,
-                caption: `${course.title} Cover`,
-                alt: `${course.title} Cover`,
-              },
+          course.boxImageUrl
+            ? {
+                id: `${course.slug}-bib-cover`,
+                url: course.boxImageUrl,
+                label: `${course.title} - Business in a Box Cover`,
+                caption: `${course.title} Business in a Box Cover`,
+                alt: `${course.title} Business in a Box Cover`,
+              }
+            : (course.gallery && course.gallery.length > 0)
+              ? course.gallery[0]
+              : {
+                  id: `${course.slug}-cover`,
+                  url: course.bannerImage || course.thumbnail || course.imageUrl,
+                  label: `${course.title} - Cover`,
+                  caption: `${course.title} Cover`,
+                  alt: `${course.title} Cover`,
+                },
           ...(course.bundledTools || [])
             .filter((t: any) => t.imageUrl || t.thumbnail)
             .map((t: any, idx: number) => ({

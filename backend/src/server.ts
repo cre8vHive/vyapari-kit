@@ -138,6 +138,7 @@ function publicCourse(course: any) {
     reviews: course.reviews,
     editionNote: course.editionNote || '',
     gallery: course.gallery || [],
+    boxImageUrl: course.boxImageUrl || null,
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
   };
@@ -2004,6 +2005,9 @@ app.get('/api/v1/courses', async (req, res) => {
           oldPrice: 2499,
           title: `${c.title} - Business in a Box`,
           subtitle: `Complete Business Plan + All ${c.categoryName} Business Playbooks`,
+          imageUrl: c.boxImageUrl || pub.imageUrl,
+          thumbnail: c.boxImageUrl || pub.thumbnail,
+          bannerImage: c.boxImageUrl || pub.bannerImage,
         };
       }
       return pub;
@@ -2043,6 +2047,9 @@ app.get('/api/v1/courses', async (req, res) => {
         oldPrice: 2499,
         title: c.title.includes('Business in a Box') ? c.title : `${c.title} - Business in a Box`,
         subtitle: `Complete Business Plan + All ${c.categoryName} Business Playbooks`,
+        imageUrl: (c as any).boxImageUrl || pub.imageUrl,
+        thumbnail: (c as any).boxImageUrl || pub.thumbnail,
+        bannerImage: (c as any).boxImageUrl || pub.bannerImage,
       };
     }
     return pub;
@@ -2098,15 +2105,23 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
 
       let responseCourse = publicCourse(course);
       if (isBoxRequest) {
-        const boxCover = (course.gallery && course.gallery.length > 0)
-          ? [course.gallery[0]]
-          : [{
-              id: `${course.slug}-cover`,
-              url: course.thumbnail || course.imageUrl,
-              label: `${course.title} - Cover`,
-              caption: `${course.title} Cover`,
-              alt: `${course.title} Cover`,
-            }];
+        const boxCover = course.boxImageUrl
+          ? [{
+              id: `${course.slug}-bib-cover`,
+              url: course.boxImageUrl,
+              label: `${course.title} - Business in a Box Cover`,
+              caption: `${course.title} Business in a Box Cover`,
+              alt: `${course.title} Business in a Box Cover`,
+            }]
+          : (course.gallery && course.gallery.length > 0)
+            ? [course.gallery[0]]
+            : [{
+                id: `${course.slug}-cover`,
+                url: course.thumbnail || course.imageUrl,
+                label: `${course.title} - Cover`,
+                caption: `${course.title} Cover`,
+                alt: `${course.title} Cover`,
+              }];
 
         const toolsGallery = bundledTools
           .filter((t) => t.imageUrl || t.thumbnail)
@@ -2130,6 +2145,10 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
             ? course.title
             : `${course.title} - Business in a Box`,
           subtitle: `Complete Business Plan + All ${course.categoryName} Business Playbooks`,
+          imageUrl: course.boxImageUrl || responseCourse.imageUrl,
+          thumbnail: course.boxImageUrl || responseCourse.thumbnail,
+          bannerImage: course.boxImageUrl || responseCourse.bannerImage,
+          boxImageUrl: course.boxImageUrl || responseCourse.imageUrl,
           gallery: [...boxCover, ...toolsGallery],
         };
       }

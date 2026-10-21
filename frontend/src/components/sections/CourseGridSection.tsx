@@ -13,6 +13,7 @@ export interface CourseItem {
   oldPrice?: number;
   rating: number;
   imageUrl: string;
+  boxImageUrl?: string;
   hasPdf?: boolean;
 }
 
@@ -157,7 +158,7 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
               <div className="elementor-element elementor-element-hotspot-container elementor-widget elementor-widget-hotspot" style={{ position: 'relative' }}>
                 <div className="elementor-widget-container">
                   <img
-                    src={course.imageUrl}
+                    src={(isBusinessInABox && course.boxImageUrl) ? course.boxImageUrl : course.imageUrl}
                     className="attachment-full size-full"
                     alt={course.title}
                     loading="lazy"
