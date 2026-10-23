@@ -1650,7 +1650,7 @@ img {
 
 .course-card-wrapper img {
   width: 100%;
-  aspect-ratio: auto;
+  aspect-ratio: auto !important;
   height: auto;
   object-fit: contain;
   object-position: center;
@@ -1856,6 +1856,213 @@ img {
   border-radius: 4px;
 }
 
+/* Course Hub Search & Collapsible Filters Toolbar */
+.course-hub-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.course-hub-toolbar-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+
+.course-hub-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.course-hub-search-icon {
+  position: absolute;
+  left: 14px;
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.course-hub-search-field {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 2.8rem;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  background-color: #f9fafb;
+  color: #111827;
+  font-size: 0.98rem;
+  outline: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.course-hub-search-field:focus {
+  border-color: #3b82f6;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.course-hub-filter-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 48px;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.course-hub-filter-toggle-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.course-hub-filter-toggle-btn.is-open {
+  border-color: #3b82f6;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.course-hub-filter-toggle-btn.has-active {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.course-hub-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.course-hub-filter-chevron {
+  transition: transform 0.2s ease;
+}
+
+.course-hub-filter-toggle-btn.is-open .course-hub-filter-chevron {
+  transform: rotate(180deg);
+}
+
+.course-hub-filters-collapse {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  animation: fadeInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.course-hub-filters-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.course-hub-filter-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 200px;
+}
+
+.course-hub-filter-field label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4b5563;
+  white-space: nowrap;
+}
+
+.course-hub-filter-field select {
+  width: 100%;
+  padding: 10px 2.2rem 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background-color: #fff;
+  color: #1f2937;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 1em;
+  transition: all 0.2s ease;
+}
+
+.course-hub-filter-field select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.course-hub-filter-reset-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.course-hub-filter-reset-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.course-hub-filter-reset-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+@media (max-width: 600px) {
+  .course-hub-filters-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .course-hub-filter-field {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .course-hub-filter-field select {
+    max-width: 65%;
+  }
+}
+
 .course-hub-content {
   padding-top: 24px;
 }
@@ -1876,6 +2083,62 @@ img {
   font-weight: 800;
   letter-spacing: 0.4px;
   text-transform: uppercase;
+}
+
+/* Course Hub Business in a Box Banner */
+.course-hub-box-banner {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.12);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.course-hub-box-banner-icon {
+  font-size: 28px;
+  line-height: 1.15;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.course-hub-box-banner-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.course-hub-box-banner-title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #92400e;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.course-hub-box-banner-desc {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  color: #78350f;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+@media (min-width: 640px) {
+  .course-hub-box-banner {
+    padding: 16px 20px;
+    gap: 16px;
+  }
+  .course-hub-box-banner-icon {
+    font-size: 32px;
+  }
+  .course-hub-box-banner-title {
+    font-size: 1.1rem;
+  }
 }
 
 /* Course details page */
@@ -2235,6 +2498,132 @@ img {
   line-height: 1.8;
   color: var(--color-muted);
   max-width: 680px;
+}
+
+/* Hero Box Callout Banners (All-In-One Box Bundle & Upsell Banner) */
+.hero-box-callout-banner {
+  margin: 18px 0 12px 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1.5px solid #f59e0b;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 3px 12px rgba(245, 158, 11, 0.12);
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.hero-box-callout-banner.is-all-in-one {
+  border: 2px solid #f59e0b;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15);
+}
+
+.hero-box-callout-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-box-callout-icon {
+  font-size: 26px;
+  line-height: 1.1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.hero-box-callout-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-box-callout-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #92400e;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.hero-box-callout-banner.is-all-in-one .hero-box-callout-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hero-box-callout-desc {
+  font-size: 0.88rem;
+  color: #78350f;
+  margin: 4px 0 0 0;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.hero-box-callout-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #b45309;
+  text-decoration: underline;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 8px 14px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.hero-box-callout-link:hover {
+  background: #ffffff;
+  color: #92400e;
+}
+
+.hero-box-callout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 9px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.hero-box-callout-btn:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+@media (min-width: 640px) {
+  .hero-box-callout-banner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 639px) {
+
+  .hero-box-callout-link,
+  .hero-box-callout-btn {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .hero-cards {
@@ -6254,7 +6643,8 @@ img {
     border-top: 3px solid #f59e0b;
     background: linear-gradient(180deg, #fffdf5 0%, #ffffff 38px);
     box-shadow: 0 -8px 30px rgba(245, 158, 11, 0.22), 0 -2px 10px rgba(0, 0, 0, 0.08);
-    padding-top: 0;
+    padding: 10px 14px 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 
   .mobile-sticky-box-banner {
@@ -6418,7 +6808,7 @@ img {
     align-items: center;
     gap: 10px;
     width: 100%;
-    margin-top: 4px;
+    margin-top: 0;
   }
 
   .mobile-sticky-cart-btn {
@@ -6516,7 +6906,7 @@ img {
 
   /* Safe padding so sticky bar does not overlap content */
   .course-details-page {
-    padding-bottom: 150px;
+    padding-bottom: 85px;
   }
 }
 

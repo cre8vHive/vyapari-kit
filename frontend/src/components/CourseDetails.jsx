@@ -12,45 +12,6 @@ import { paymentApi } from '../services/api';
 import { useCart } from '../context/CartContext';
 
 const MobileStickyBuyBar = ({ course, onPurchase, onAddToCart, isInCart }) => {
-  const currentPrice = typeof course.price === 'object'
-    ? course.price?.current
-    : (typeof course.price === 'number' ? `₹${course.price}` : String(course.price || ''));
-
-  const oldPrice = typeof course.price === 'object'
-    ? course.price?.old
-    : (course.oldPrice ? `₹${course.oldPrice}` : null);
-
-  const resolveImageUrl = (url) => {
-    if (!url) return 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
-    if (url.startsWith('/images/')) return `https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev${url}`;
-    return url;
-  };
-
-  const rawThumb = course.thumbnail && !course.thumbnail.includes('unsplash')
-    ? course.thumbnail
-    : (course.imageUrl || course.bannerImage);
-
-  const thumbnail = resolveImageUrl(rawThumb);
-
-  const formatDisplayAmount = (priceVal) => {
-    if (!priceVal) return '';
-    const num = parseFloat(String(priceVal).replace(/[^0-9.]/g, ''));
-    if (isNaN(num)) return priceVal;
-    return `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  const formattedCurPrice = formatDisplayAmount(currentPrice) || currentPrice;
-  const formattedOldPrice = formatDisplayAmount(oldPrice) || oldPrice;
-
-  let discountPercentage = null;
-  if (currentPrice && oldPrice) {
-    const curVal = parseFloat(String(currentPrice).replace(/[^0-9.]/g, ''));
-    const oldVal = parseFloat(String(oldPrice).replace(/[^0-9.]/g, ''));
-    if (!isNaN(curVal) && !isNaN(oldVal) && oldVal > curVal && curVal > 0) {
-      discountPercentage = Math.round(((oldVal - curVal) / oldVal) * 100);
-    }
-  }
-
   const isTool = course.packageType === 'business-tools';
   const isBusinessInABox =
     !isTool && (
@@ -64,47 +25,6 @@ const MobileStickyBuyBar = ({ course, onPurchase, onAddToCart, isInCart }) => {
 
   return (
     <aside className={`mobile-sticky-buy-bar${isBusinessInABox ? ' is-business-in-box' : ''}`} aria-label="Mobile quick purchase">
-      {isBusinessInABox && (
-        <div className="mobile-sticky-box-banner">
-          <span className="box-banner-badge">📦 BUSINESS IN A BOX</span>
-          <span className="box-banner-perk">⚡ Blueprint + 10 Playbooks Included</span>
-        </div>
-      )}
-      <div className="mobile-sticky-top-row">
-        <div className={`mobile-sticky-thumb-wrapper${isBusinessInABox ? ' is-box' : ''}`}>
-          <img
-            src={thumbnail}
-            alt={course.title}
-            className="mobile-sticky-thumb"
-            onError={(e) => {
-              e.currentTarget.src = 'https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg';
-            }}
-          />
-          {isBusinessInABox && <span className="mobile-sticky-box-corner-badge">BOX</span>}
-        </div>
-        <div className="mobile-sticky-info">
-          {isBusinessInABox ? (
-            <div className="mobile-sticky-badge-pill">
-              <span>📦</span>
-              <span>All-In-One Box Bundle</span>
-            </div>
-          ) : (
-            course.category && (
-              <span className="mobile-sticky-category-tag">{course.category}</span>
-            )
-          )}
-          <h4 className="mobile-sticky-title">{course.title}</h4>
-          <div className="mobile-sticky-prices">
-            {formattedOldPrice && (
-              <span className="mobile-sticky-old-price">{formattedOldPrice}</span>
-            )}
-            <span className="mobile-sticky-cur-price">{formattedCurPrice}</span>
-            {discountPercentage && (
-              <span className="mobile-sticky-discount-badge">{discountPercentage}% OFF</span>
-            )}
-          </div>
-        </div>
-      </div>
       <div className="mobile-sticky-actions">
         <button
           type="button"

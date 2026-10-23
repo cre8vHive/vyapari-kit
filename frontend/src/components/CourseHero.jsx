@@ -173,28 +173,14 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
         <p className="hero-copy">{course.subtitle}</p>
 
         {isBusinessInABox && (
-          <div style={{
-            margin: '18px 0 8px 0',
-            padding: '16px 20px',
-            borderRadius: '14px',
-            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-            border: '2px solid #f59e0b',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-            flexWrap: 'wrap',
-            boxShadow: '0 4px 14px rgba(245, 158, 11, 0.15)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ fontSize: '32px', lineHeight: 1, flexShrink: 0 }}>
-                🎁
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div className="hero-box-callout-banner is-all-in-one">
+            <div className="hero-box-callout-content">
+              <div className="hero-box-callout-icon">🎁</div>
+              <div className="hero-box-callout-text">
+                <div className="hero-box-callout-title">
                   All-In-One Box Bundle
                 </div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: '#78350f', marginTop: '2px', lineHeight: 1.4 }}>
+                <div className="hero-box-callout-desc">
                   Includes this full <strong>Business Plan</strong> + ALL <strong>Business Playbooks</strong> in {course.category}!
                 </div>
               </div>
@@ -202,15 +188,7 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
             {basePlanSlug && (
               <a
                 href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses/${basePlanSlug}`}
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: '#b45309',
-                  textDecoration: 'underline',
-                  background: 'rgba(255, 255, 255, 0.7)',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                }}
+                className="hero-box-callout-link"
               >
                 View Single Business Plan (₹399) →
               </a>
@@ -219,41 +197,21 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
         )}
 
         {!isBusinessInABox && course.packageType === 'business-plans' && (
-          <div style={{
-            margin: '18px 0 8px 0',
-            padding: '14px 18px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-            border: '1.5px solid #f59e0b',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            flexWrap: 'wrap',
-            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.1)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '24px', lineHeight: 1 }}>📦</span>
-              <div>
-                <strong style={{ color: '#92400e', fontSize: '0.95rem' }}>Looking for the complete Business in a Box Bundle?</strong>
-                <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: '#78350f' }}>
+          <div className="hero-box-callout-banner is-upsell">
+            <div className="hero-box-callout-content">
+              <div className="hero-box-callout-icon">📦</div>
+              <div className="hero-box-callout-text">
+                <div className="hero-box-callout-title">
+                  Looking for the complete Business in a Box Bundle?
+                </div>
+                <p className="hero-box-callout-desc">
                   Get this Business Plan + <strong>ALL {course.category} Business Playbooks</strong> bundled together for only ₹899.
                 </p>
               </div>
             </div>
             <a
               href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses/${basePlanSlug || course.slug}-business-in-a-box`}
-              style={{
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                color: '#ffffff',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                padding: '8px 14px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 2px 6px rgba(217, 119, 6, 0.25)',
-              }}
+              className="hero-box-callout-btn"
             >
               View Business in a Box →
             </a>
@@ -308,36 +266,6 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
                 Tap to Zoom
               </span>
             </div>
-            {gallery.length > 1 && (
-              <div className="gallery-slider-controls">
-                <button
-                  type="button"
-                  className="gallery-slider-btn gallery-slider-prev"
-                  aria-label="Previous image"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    changeImage(activeImageIndex - 1);
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 18 9 12 15 6" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  className="gallery-slider-btn gallery-slider-next"
-                  aria-label="Next image"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    changeImage(activeImageIndex + 1);
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </button>
-              </div>
-            )}
             {gallery.length > 1 && (
               <div className="gallery-pagination" role="tablist" aria-label="Choose gallery image">
                 {gallery.map((item, index) => (
@@ -466,33 +394,6 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
                 draggable="false"
                 style={{ pointerEvents: 'none', userSelect: 'none', maxHeight: '70vh' }}
               />
-
-              {gallery.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    className="gallery-lightbox-nav-btn prev"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      changeImage(activeImageIndex - 1);
-                    }}
-                    aria-label="Previous image"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    className="gallery-lightbox-nav-btn next"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      changeImage(activeImageIndex + 1);
-                    }}
-                    aria-label="Next image"
-                  >
-                    ›
-                  </button>
-                </>
-              )}
             </div>
             {gallery.length > 1 && (
               <div className="gallery-lightbox-caption">

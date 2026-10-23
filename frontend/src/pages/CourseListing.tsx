@@ -108,6 +108,7 @@ function withAllCategory(categories: CategoryItem[], activeCategorySlug?: string
 
 export const CourseListing: React.FC = () => {
   const [listingState, setListingState] = useState<CourseListingState>(() => readCourseListingState());
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const listingStateRef = useRef(listingState);
   const [availableCourses, setAvailableCourses] = useState<CourseItem[]>([]);
   const [myCourses, setMyCourses] = useState<CourseItem[]>([]);
@@ -270,6 +271,14 @@ export const CourseListing: React.FC = () => {
     return match ? match.slug || target : target;
   }, [availableCategoryOptions, listingState.category]);
 
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (listingState.type) count += 1;
+    if (selectedCategoryValue && selectedCategoryValue !== ALL_CATEGORY) count += 1;
+    if (listingState.sortBy && listingState.sortBy !== 'newest') count += 1;
+    return count;
+  }, [listingState.type, selectedCategoryValue, listingState.sortBy]);
+
   return (
     <div className="page-renderer course-listing-template">
       <section className="course-page-hero">
@@ -306,144 +315,129 @@ export const CourseListing: React.FC = () => {
             </button>
           </div>
 
-          <div className="course-hub-toolbar" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1, minWidth: '250px' }}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ position: 'absolute', left: '16px', color: '#6b7280' }}
+          <div className="course-hub-toolbar">
+            <div className="course-hub-toolbar-row">
+              <div className="course-hub-search-wrapper">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="course-hub-search-icon"
+                >
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                  type="search"
+                  placeholder="Search business solutions by title, author, or category..."
+                  value={listingState.searchQuery}
+                  onChange={(e) => updateListingState({ searchQuery: e.target.value })}
+                  className="course-hub-search-field"
+                />
+              </div>
+
+              <button
+                type="button"
+                className={`course-hub-filter-toggle-btn${isFiltersOpen ? ' is-open' : ''}${activeFilterCount > 0 ? ' has-active' : ''}`}
+                onClick={() => setIsFiltersOpen((prev) => !prev)}
+                aria-expanded={isFiltersOpen}
+                aria-label="Toggle filters"
               >
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input
-                type="search"
-                placeholder="Search business solutions by title, author, or category..."
-                value={listingState.searchQuery}
-                onChange={(e) => updateListingState({ searchQuery: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '1rem 1rem 1rem 3rem',
-                  borderRadius: '12px',
-                  border: '2px solid #e5e7eb',
-                  backgroundColor: '#f9fafb',
-                  color: '#111827',
-                  fontSize: '1.05rem',
-                  outline: 'none',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  transition: 'all 0.2s ease',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6';
-                  e.target.style.backgroundColor = '#ffffff';
-                  e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.15)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#e5e7eb';
-                  e.target.style.backgroundColor = '#f9fafb';
-                  e.target.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-                }}
-              />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
+                <span className="filter-toggle-text">Filters</span>
+                {activeFilterCount > 0 && (
+                  <span className="course-hub-filter-badge">{activeFilterCount}</span>
+                )}
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="course-hub-filter-chevron"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Type:</span>
-                <select
-                  value={listingState.type}
-                  onChange={(e) => updateListingState({ type: e.target.value, category: ALL_CATEGORY })}
-                  style={{
-                    padding: '1rem 2.5rem 1rem 1rem',
-                    borderRadius: '12px',
-                    border: '2px solid #e5e7eb',
-                    backgroundColor: '#fff',
-                    color: '#374151',
-                    fontSize: '1.05rem',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    appearance: 'none',
-                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 1rem center',
-                    backgroundSize: '1em',
-                    maxWidth: '220px'
-                  }}
-                >
-                  <option value="">All Types</option>
-                  <option value="business-plans">Business Plans</option>
-                  <option value="business-tools">Business Playbooks</option>
-                  <option value="business-in-the-box">Business in a Box</option>
-                </select>
-              </div>
+            {isFiltersOpen && (
+              <div className="course-hub-filters-collapse">
+                <div className="course-hub-filters-inner">
+                  <div className="course-hub-filter-field">
+                    <label htmlFor="filter-type">Type:</label>
+                    <select
+                      id="filter-type"
+                      value={listingState.type}
+                      onChange={(e) => updateListingState({ type: e.target.value, category: ALL_CATEGORY })}
+                    >
+                      <option value="">All Types</option>
+                      <option value="business-plans">Business Plans</option>
+                      <option value="business-tools">Business Playbooks</option>
+                      <option value="business-in-the-box">Business in a Box</option>
+                    </select>
+                  </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Category:</span>
-                <select
-                  value={selectedCategoryValue}
-                  onChange={(e) => updateListingState({ category: e.target.value })}
-                  style={{
-                    padding: '1rem 2.5rem 1rem 1rem',
-                    borderRadius: '12px',
-                    border: '2px solid #e5e7eb',
-                    backgroundColor: '#fff',
-                    color: '#374151',
-                    fontSize: '1.05rem',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    appearance: 'none',
-                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 1rem center',
-                    backgroundSize: '1em',
-                    maxWidth: '250px'
-                  }}
-                >
-                  {availableCategoryOptions.map((cat) => (
-                    <option key={cat.id || cat.slug || cat.name} value={cat.slug || 'all'}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <div className="course-hub-filter-field">
+                    <label htmlFor="filter-category">Category:</label>
+                    <select
+                      id="filter-category"
+                      value={selectedCategoryValue}
+                      onChange={(e) => updateListingState({ category: e.target.value })}
+                    >
+                      {availableCategoryOptions.map((cat) => (
+                        <option key={cat.id || cat.slug || cat.name} value={cat.slug || 'all'}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem', color: '#6b7280', fontWeight: 500 }}>Sort by:</span>
-                <select
-                  value={listingState.sortBy}
-                  onChange={(e) => updateListingState({ sortBy: e.target.value })}
-                  style={{
-                    padding: '1rem 2.5rem 1rem 1rem',
-                    borderRadius: '12px',
-                    border: '2px solid #e5e7eb',
-                    backgroundColor: '#fff',
-                    color: '#374151',
-                    fontSize: '1.05rem',
-                    cursor: 'pointer',
-                    outline: 'none',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    appearance: 'none',
-                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 1rem center',
-                    backgroundSize: '1em',
-                  }}
-                >
-                  <option value="newest">Newest</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="rating">Highest Rated</option>
-                </select>
+                  <div className="course-hub-filter-field">
+                    <label htmlFor="filter-sort">Sort by:</label>
+                    <select
+                      id="filter-sort"
+                      value={listingState.sortBy}
+                      onChange={(e) => updateListingState({ sortBy: e.target.value })}
+                    >
+                      <option value="newest">Newest</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
+                      <option value="rating">Highest Rated</option>
+                    </select>
+                  </div>
+
+                  {activeFilterCount > 0 && (
+                    <div className="course-hub-filter-reset-wrap">
+                      <button
+                        type="button"
+                        className="course-hub-filter-reset-btn"
+                        onClick={() => {
+                          updateListingState({
+                            type: '',
+                            category: ALL_CATEGORY,
+                            sortBy: 'newest',
+                          });
+                        }}
+                      >
+                        Reset Filters
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="course-hub-content" role="tabpanel" aria-label={activeTabLabel}>
@@ -458,23 +452,13 @@ export const CourseListing: React.FC = () => {
             </div>
 
             {(listingState.type === 'business-in-the-box' || listingState.type === 'business-in-a-box') && (
-              <div style={{
-                background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                border: '2px solid #f59e0b',
-                borderRadius: '14px',
-                padding: '16px 20px',
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px',
-                boxShadow: '0 4px 14px rgba(245, 158, 11, 0.12)'
-              }}>
-                <div style={{ fontSize: '32px', lineHeight: 1 }}>📦</div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#92400e', fontWeight: 800 }}>
+              <div className="course-hub-box-banner">
+                <div className="course-hub-box-banner-icon">📦</div>
+                <div className="course-hub-box-banner-content">
+                  <h3 className="course-hub-box-banner-title">
                     Viewing Business in a Box Bundles
                   </h3>
-                  <p style={{ margin: '4px 0 0', fontSize: '0.92rem', color: '#78350f', lineHeight: 1.4 }}>
+                  <p className="course-hub-box-banner-desc">
                     Each <strong>Business in a Box</strong> is an all-in-one package. When you purchase any bundle, you get the complete <strong>Business Plan</strong> plus <strong>ALL</strong> business playbooks in that category automatically!
                   </p>
                 </div>
