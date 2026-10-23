@@ -281,40 +281,8 @@ export const CourseListing: React.FC = () => {
 
   return (
     <div className="page-renderer course-listing-template">
-      <section className="course-page-hero">
-        <div className="e-con-inner">
-          <nav className="course-breadcrumbs" aria-label="Breadcrumb">
-            <a href="/">Home</a>
-            <span>/</span>
-            <span>Business Solutions</span>
-          </nav>
-          <h1>Business Solutions</h1>
-        </div>
-      </section>
-
       <section className="course-hub-section">
         <div className="course-hub-card">
-          <div className="course-hub-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={listingState.tab === 'my'}
-              className={`course-hub-tab${listingState.tab === 'my' ? ' active' : ''}`}
-              onClick={() => updateListingState({ tab: 'my' })}
-            >
-              My Business Solutions
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={listingState.tab === 'available'}
-              className={`course-hub-tab${listingState.tab === 'available' ? ' active' : ''}`}
-              onClick={() => updateListingState({ tab: 'available' })}
-            >
-              Available Business Solutions
-            </button>
-          </div>
-
           <div className="course-hub-toolbar">
             <div className="course-hub-toolbar-row">
               <div className="course-hub-search-wrapper">

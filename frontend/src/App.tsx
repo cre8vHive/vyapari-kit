@@ -215,6 +215,13 @@ const AppContent: React.FC = () => {
           <a href={withBase('/contact-us')} aria-current={isActivePath('/contact-us') ? 'page' : undefined} onClick={() => setIsMenuOpen(false)}>Contact Us</a>
           {isMenuOpen && (
             <>
+              <a
+                className="site-nav-mobile-action"
+                href={withBase('/courses?tab=my')}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                My Business Solutions
+              </a>
               {!user ? (
                 <>
                   <a className="site-nav-mobile-action" href={withBase('/login')} onClick={() => setIsMenuOpen(false)}>Login</a>
