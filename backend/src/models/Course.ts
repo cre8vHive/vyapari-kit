@@ -193,6 +193,8 @@ CourseSchema.index({ packageType: 1, categoryName: 1 });
 CourseSchema.index({ isPopular: 1, popularOrder: 1 });
 CourseSchema.index({ title: 'text' }, { language_override: 'dummyLanguageField' });
 CourseSchema.index({ isDeleted: 1 });
+CourseSchema.index({ createdAt: -1 });
+CourseSchema.index({ isDeleted: 1, createdAt: -1 });
 
 CourseSchema.pre('validate', function (this: ICourse, next) {
   if (this.title && !this.slug) {

@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useMemo, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { adminApi, AdminCategory, AdminCourse, AuthUser, CourseSavePayload, PdfAccessLogItem, uploadApi } from '../services/api';
 
 interface AdminCourseManagementProps {
@@ -110,6 +110,77 @@ const BULK_TYPE_CATEGORIES: Record<string, { label: string; value: string }[]> =
   'business-in-the-box': UNIFIED_ADMIN_SUBCATEGORIES,
 };
 
+interface BulkCourseRowProps {
+  course: AdminCourse;
+  isSelected: boolean;
+  onToggle: (id: string) => void;
+  onEdit: (course: AdminCourse) => void;
+}
+
+const BulkCourseRow = React.memo<BulkCourseRowProps>(({ course, isSelected, onToggle, onEdit }) => {
+  return (
+    <tr className={isSelected ? 'is-selected' : ''}>
+      <td style={{ textAlign: 'center' }}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggle(course.id)}
+          aria-label={`Select ${course.title}`}
+        />
+      </td>
+      <td className="admin-bulk-title-col">
+        <span className="admin-bulk-title-text" title={course.title}>
+          {course.title}
+        </span>
+        {course.subtitle && (
+          <span className="admin-bulk-subtitle-text" title={course.subtitle}>
+            {course.subtitle}
+          </span>
+        )}
+      </td>
+      <td>
+        <span className={`admin-badge-type ${course.packageType || 'business-plans'}`}>
+          {course.packageType ? course.packageType.replace(/-/g, ' ') : 'business plans'}
+        </span>
+      </td>
+      <td>
+        <span className="admin-badge-cat">
+          {course.categoryName || 'General'}
+        </span>
+      </td>
+      <td>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <strong style={{ color: '#0f172a' }}>₹{course.price}</strong>
+          {course.oldPrice && (
+            <del style={{ color: '#94a3b8', fontSize: '11px' }}>₹{course.oldPrice}</del>
+          )}
+        </div>
+      </td>
+      <td>
+        <span className={`admin-badge-status ${course.isPublished ? 'is-published' : 'is-draft'}`}>
+          {course.isPublished ? '● Published' : '○ Draft'}
+        </span>
+      </td>
+      <td style={{ color: '#64748b', fontSize: '12px' }}>
+        {course.instructorName || 'VyapaarKit Team'}
+      </td>
+      <td style={{ textAlign: 'right' }}>
+        <div className="admin-bulk-row-actions" style={{ justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            className="admin-bulk-quick-btn"
+            onClick={() => onEdit(course)}
+            title="Open in Single Editor"
+          >
+            ✏️ Edit
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
+BulkCourseRow.displayName = 'BulkCourseRow';
+
 export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ user }) => {
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [users, setUsers] = useState<AuthUser[]>([]);
@@ -144,7 +215,84 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
   const [popularCourseIds, setPopularCourseIds] = useState<string[]>([]);
   const [popularAddSelect, setPopularAddSelect] = useState<string>('');
   const [savingPopular, setSavingPopular] = useState(false);
-  const [isPopularPanelOpen, setIsPopularPanelOpen] = useState(true);
+  const [isPopularPanelOpen, setIsPopularPanelOpen] = useState(false);
+
+  // Top-level View Tab: 'single' (Course Editor) or 'bulk' (Bulk Update Studio)
+  const [adminTab, setAdminTab] = useState<'single' | 'bulk'>('single');
+
+  // Bulk Selection and Filter State
+  const [bulkFilters, setBulkFilters] = useState({
+    search: '',
+    category: '',
+    packageType: '',
+    isPublished: 'all', // 'all' | 'published' | 'draft'
+  });
+  const [selectedBulkCourseIds, setSelectedBulkCourseIds] = useState<string[]>([]);
+  const [bulkStudioTab, setBulkStudioTab] = useState<'multi' | 'rule' | 'delete'>('multi');
+
+  // Unified Multi-Field Bulk Update State
+  const [bulkFields, setBulkFields] = useState({
+    title: '',
+    subtitle: '',
+    editionNote: '',
+    packageType: '',
+    categoryName: '',
+    price: '',
+    oldPrice: '',
+    clearOldPrice: false,
+    rating: '4.9',
+    difficulty: 'Beginner',
+    instructorName: '',
+    isPublished: true,
+    language: '',
+    duration: '',
+    imageUrl: '',
+    thumbnail: '',
+    bannerImage: '',
+    boxImageUrl: '',
+    syncThumbnailFromGallery: false,
+    includes: '',
+    learningHighlights: '',
+    skills: '',
+    requirements: '',
+    audience: '',
+    description: '',
+  });
+
+  const [bulkEnabled, setBulkEnabled] = useState<Record<string, boolean>>({
+    title: false,
+    subtitle: false,
+    editionNote: false,
+    packageType: false,
+    categoryName: false,
+    price: false,
+    oldPrice: false,
+    rating: false,
+    difficulty: false,
+    instructorName: false,
+    isPublished: false,
+    language: false,
+    duration: false,
+    imageUrl: false,
+    thumbnail: false,
+    bannerImage: false,
+    boxImageUrl: false,
+    syncThumbnailFromGallery: false,
+    includes: false,
+    learningHighlights: false,
+    skills: false,
+    requirements: false,
+    audience: false,
+    description: false,
+  });
+
+  const [bulkProcessing, setBulkProcessing] = useState<boolean>(false);
+  const [bulkPage, setBulkPage] = useState<number>(1);
+  const [bulkPageSize, setBulkPageSize] = useState<number>(25);
+
+  useEffect(() => {
+    setBulkPage(1);
+  }, [bulkFilters]);
 
   const selectedCourse = useMemo(
     () => courses.find((course) => course.id === selectedCourseId) || null,
@@ -159,6 +307,69 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     const map = new Map(courses.map((c) => [c.id, c]));
     return popularCourseIds.map((id) => map.get(id)).filter(Boolean) as AdminCourse[];
   }, [courses, popularCourseIds]);
+
+  const allCategoryNames = useMemo(() => {
+    const set = new Set<string>();
+    categories.forEach((cat) => cat.name && set.add(cat.name));
+    courses.forEach((c) => c.categoryName && set.add(c.categoryName));
+    return Array.from(set).sort();
+  }, [categories, courses]);
+
+  const filteredBulkCourses = useMemo(() => {
+    const search = bulkFilters.search.trim().toLowerCase();
+    const category = bulkFilters.category.trim().toLowerCase();
+    const type = bulkFilters.packageType.trim().toLowerCase();
+    const status = bulkFilters.isPublished;
+
+    return courses.filter((course) => {
+      const matchesSearch =
+        !search ||
+        course.title.toLowerCase().includes(search) ||
+        (course.instructorName && course.instructorName.toLowerCase().includes(search)) ||
+        (course.categoryName && course.categoryName.toLowerCase().includes(search));
+
+      const matchesCategory = !category || (course.categoryName && course.categoryName.toLowerCase() === category);
+      const matchesType = !type || (course.packageType && course.packageType.toLowerCase() === type);
+      const matchesStatus =
+        status === 'all' ||
+        (status === 'published' && course.isPublished) ||
+        (status === 'draft' && !course.isPublished);
+
+      return matchesSearch && matchesCategory && matchesType && matchesStatus;
+    });
+  }, [bulkFilters, courses]);
+
+  const selectedBulkCourseIdsSet = useMemo(() => new Set(selectedBulkCourseIds), [selectedBulkCourseIds]);
+
+  const isAllFilteredSelected = useMemo(
+    () =>
+      filteredBulkCourses.length > 0 &&
+      filteredBulkCourses.every((c) => selectedBulkCourseIdsSet.has(c.id)),
+    [filteredBulkCourses, selectedBulkCourseIdsSet]
+  );
+
+  const toggleSelectAllFiltered = useCallback(() => {
+    if (isAllFilteredSelected) {
+      const filteredIdSet = new Set(filteredBulkCourses.map((c) => c.id));
+      setSelectedBulkCourseIds((prev) => prev.filter((id) => !filteredIdSet.has(id)));
+    } else {
+      const newIds = new Set([...selectedBulkCourseIds, ...filteredBulkCourses.map((c) => c.id)]);
+      setSelectedBulkCourseIds(Array.from(newIds));
+    }
+  }, [isAllFilteredSelected, filteredBulkCourses, selectedBulkCourseIds]);
+
+  const toggleCourseSelection = useCallback((id: string) => {
+    setSelectedBulkCourseIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  }, []);
+
+  const totalBulkPages = Math.max(1, Math.ceil(filteredBulkCourses.length / bulkPageSize));
+  const paginatedBulkCourses = useMemo(() => {
+    if (bulkPageSize >= filteredBulkCourses.length) return filteredBulkCourses;
+    const start = (bulkPage - 1) * bulkPageSize;
+    return filteredBulkCourses.slice(start, start + bulkPageSize);
+  }, [filteredBulkCourses, bulkPage, bulkPageSize]);
 
   const publishedCount = courses.filter((course) => course.isPublished).length;
   const protectedCount = courses.filter((course) => course.hasPdf).length;
@@ -181,17 +392,16 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     try {
       setLoading(true);
       setError('');
-      const [courseData, userData, categoryData, logData, popularData] = await Promise.all([
+      const [courseData, userData, categoryData, popularData] = await Promise.all([
         adminApi.getCourses(),
         adminApi.getUsers(),
         adminApi.getCategories(),
-        adminApi.getPdfAccessLogs(),
         adminApi.getPopularCourses().catch(() => ({ courseIds: [], courses: [] })),
       ]);
       setCourses(courseData);
       setUsers(userData);
       setCategories(categoryData);
-      setAccessLogs(logData);
+      setAccessLogs([]);
       if (popularData && Array.isArray(popularData.courseIds) && popularData.courseIds.length > 0) {
         setPopularCourseIds(popularData.courseIds);
       } else {
@@ -228,12 +438,12 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     setError('');
   };
 
-  const selectCourse = (course: AdminCourse) => {
+  const selectCourse = useCallback((course: AdminCourse) => {
     setSelectedCourseId(course.id);
     setForm(courseToForm(course));
     setMessage('');
     setError('');
-  };
+  }, []);
 
   const buildPayload = async (): Promise<CourseSavePayload> => {
     const payload: CourseSavePayload = {
@@ -410,8 +620,16 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
         oldPrice: bulkOldPrice === '' ? '' : Number(bulkOldPrice),
         type: bulkPriceType,
       });
-      const courseData = await adminApi.getCourses();
-      setCourses(courseData);
+      setCourses((prevCourses) =>
+        prevCourses.map((c) => {
+          if (bulkPriceType && c.packageType !== bulkPriceType) return c;
+          const next = { ...c, price: Number(bulkPrice) };
+          if (bulkOldPrice !== '') {
+            next.oldPrice = Number(bulkOldPrice);
+          }
+          return next;
+        })
+      );
       setMessage(response.message || `Prices updated for ${response.modifiedCount} courses.`);
       setBulkPrice('');
       setBulkOldPrice('');
@@ -551,6 +769,186 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     }
   };
 
+  const updateBulkField = useCallback((field: string, value: any) => {
+    setBulkFields((prev) => ({ ...prev, [field]: value }));
+    const enableKey = field === 'clearOldPrice' ? 'oldPrice' : field;
+    setBulkEnabled((prev) => {
+      if (prev[enableKey]) return prev;
+      return { ...prev, [enableKey]: true };
+    });
+  }, []);
+
+  const toggleBulkFieldEnabled = useCallback((field: string) => {
+    setBulkEnabled((prev) => ({ ...prev, [field]: !prev[field] }));
+  }, []);
+
+  const toggleAllBulkFields = useCallback((enable: boolean) => {
+    setBulkEnabled((prev) => {
+      const next: Record<string, boolean> = {};
+      Object.keys(prev).forEach((k) => {
+        next[k] = enable;
+      });
+      return next;
+    });
+  }, []);
+
+  const enabledFieldKeys = Object.keys(bulkEnabled).filter((k) => bulkEnabled[k]);
+
+  const handleApplyAllBulkFields = async () => {
+    if (selectedBulkCourseIds.length === 0) {
+      setError('Please select at least one course from the table below.');
+      return;
+    }
+    if (enabledFieldKeys.length === 0) {
+      setError('Please enable at least one field to update.');
+      return;
+    }
+
+    setBulkProcessing(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const updates: Record<string, any> = {};
+
+      if (bulkEnabled.title && bulkFields.title.trim()) updates.title = bulkFields.title.trim();
+      if (bulkEnabled.subtitle) updates.subtitle = bulkFields.subtitle.trim();
+      if (bulkEnabled.editionNote) updates.editionNote = bulkFields.editionNote.trim();
+      if (bulkEnabled.packageType && bulkFields.packageType) updates.packageType = bulkFields.packageType;
+      if (bulkEnabled.categoryName && bulkFields.categoryName.trim()) updates.categoryName = bulkFields.categoryName.trim();
+
+      if (bulkEnabled.price && bulkFields.price !== '') {
+        updates.price = Number(bulkFields.price);
+      }
+
+      if (bulkEnabled.oldPrice) {
+        if (bulkFields.clearOldPrice) {
+          updates.oldPrice = null;
+        } else if (bulkFields.oldPrice !== '') {
+          updates.oldPrice = Number(bulkFields.oldPrice);
+        }
+      }
+
+      if (bulkEnabled.rating && bulkFields.rating !== '') {
+        updates.rating = Number(bulkFields.rating);
+      }
+
+      if (bulkEnabled.difficulty && bulkFields.difficulty) updates.difficulty = bulkFields.difficulty;
+      if (bulkEnabled.instructorName && bulkFields.instructorName.trim()) updates.instructorName = bulkFields.instructorName.trim();
+      if (bulkEnabled.isPublished) updates.isPublished = bulkFields.isPublished;
+      if (bulkEnabled.language && bulkFields.language.trim()) updates.language = bulkFields.language.trim();
+      if (bulkEnabled.duration && bulkFields.duration.trim()) updates.duration = bulkFields.duration.trim();
+      if (bulkEnabled.imageUrl && bulkFields.imageUrl.trim()) updates.imageUrl = bulkFields.imageUrl.trim();
+      if (bulkEnabled.thumbnail) updates.thumbnail = bulkFields.thumbnail.trim();
+      if (bulkEnabled.bannerImage) updates.bannerImage = bulkFields.bannerImage.trim();
+      if (bulkEnabled.boxImageUrl) updates.boxImageUrl = bulkFields.boxImageUrl.trim();
+      if (bulkEnabled.syncThumbnailFromGallery) updates.syncThumbnailFromGallery = bulkFields.syncThumbnailFromGallery;
+
+      if (bulkEnabled.includes) {
+        updates.includes = bulkFields.includes.split('\n').map((s) => s.trim()).filter(Boolean);
+      }
+      if (bulkEnabled.learningHighlights) {
+        updates.learningHighlights = bulkFields.learningHighlights.split('\n').map((s) => s.trim()).filter(Boolean);
+      }
+      if (bulkEnabled.skills) {
+        updates.skills = bulkFields.skills.split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
+      }
+      if (bulkEnabled.requirements) {
+        updates.requirements = bulkFields.requirements.split('\n').map((s) => s.trim()).filter(Boolean);
+      }
+      if (bulkEnabled.audience) {
+        updates.audience = bulkFields.audience.split('\n').map((s) => s.trim()).filter(Boolean);
+      }
+      if (bulkEnabled.description) {
+        updates.description = bulkFields.description.split('\n\n').map((s) => s.trim()).filter(Boolean);
+      }
+
+      const res = await adminApi.bulkUpdateCourses(selectedBulkCourseIds, updates);
+      const selectedSet = new Set(selectedBulkCourseIds);
+      setCourses((prevCourses) =>
+        prevCourses.map((c) => {
+          if (!selectedSet.has(c.id)) return c;
+          const next = { ...c, ...updates };
+          if (updates.oldPrice === null) {
+            delete (next as any).oldPrice;
+          }
+          return next;
+        })
+      );
+      setMessage(res.message || `Successfully updated ${enabledFieldKeys.length} field(s) across ${res.modifiedCount} course(s)!`);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to apply bulk field updates.');
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkDeleteSelected = async () => {
+    if (selectedBulkCourseIds.length === 0) {
+      setError('Please select at least one course to delete.');
+      return;
+    }
+    if (!window.confirm(`⚠️ WARNING: Are you sure you want to delete ${selectedBulkCourseIds.length} course(s)? This action cannot be undone.`)) return;
+
+    setBulkProcessing(true);
+    setMessage('');
+    setError('');
+
+    try {
+      const res = await adminApi.bulkDeleteCourses(selectedBulkCourseIds);
+      const deletedSet = new Set(selectedBulkCourseIds);
+      setCourses((prevCourses) => prevCourses.filter((c) => !deletedSet.has(c.id)));
+      setSelectedBulkCourseIds([]);
+      setMessage(res.message || `Successfully deleted ${res.deletedCount} courses.`);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to bulk delete courses.');
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleExportCsv = () => {
+    const listToExport = selectedBulkCourseIds.length > 0
+      ? courses.filter((c) => selectedBulkCourseIds.includes(c.id))
+      : filteredBulkCourses;
+
+    if (listToExport.length === 0) {
+      setError('No courses available to export.');
+      return;
+    }
+
+    const headers = ['ID', 'Title', 'Package Type', 'Category', 'Price', 'Old Price', 'Status', 'Instructor', 'Difficulty', 'Rating', 'Image URL'];
+    const rows = listToExport.map((c) => [
+      `"${c.id}"`,
+      `"${(c.title || '').replace(/"/g, '""')}"`,
+      `"${(c.packageType || '').replace(/"/g, '""')}"`,
+      `"${(c.categoryName || '').replace(/"/g, '""')}"`,
+      c.price,
+      c.oldPrice || '',
+      c.isPublished ? 'Published' : 'Draft',
+      `"${(c.instructorName || '').replace(/"/g, '""')}"`,
+      `"${(c.difficulty || '').replace(/"/g, '""')}"`,
+      c.rating,
+      `"${(c.imageUrl || '').replace(/"/g, '""')}"`,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `courses_catalog_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setMessage(`Exported ${listToExport.length} courses to CSV.`);
+  };
+
+  const handleEditCourseInSingleEditor = useCallback((course: AdminCourse) => {
+    selectCourse(course);
+    setAdminTab('single');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [selectCourse]);
+
   if (!user) {
     return (
       <section className="admin-shell admin-state">
@@ -602,8 +1000,855 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
         </div>
       )}
 
-      {/* Popular Business Solutions Showcase Management Panel */}
-      <section className="admin-showcase-card">
+      {/* Admin Tab Switcher */}
+      <div className="admin-nav-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={adminTab === 'single'}
+          className={`admin-tab-btn ${adminTab === 'single' ? 'active' : ''}`}
+          onClick={() => setAdminTab('single')}
+        >
+          <span>📝 Single Course Editor</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={adminTab === 'bulk'}
+          className={`admin-tab-btn ${adminTab === 'bulk' ? 'active' : ''}`}
+          onClick={() => setAdminTab('bulk')}
+        >
+          <span>⚡ Bulk Update & Operations</span>
+          {selectedBulkCourseIds.length > 0 && (
+            <span className="admin-tab-badge">{selectedBulkCourseIds.length}</span>
+          )}
+        </button>
+      </div>
+
+      {adminTab === 'bulk' ? (
+        <div className="admin-bulk-wrapper">
+          {/* Operations Card */}
+          <div className="admin-bulk-card">
+            <div className="admin-bulk-card-header">
+              <h2>
+                <span>⚡</span>
+                <span>Bulk Course Operations</span>
+              </h2>
+              <div className="admin-bulk-pills" role="tablist">
+                <button
+                  type="button"
+                  className={`admin-bulk-pill-btn ${bulkStudioTab === 'multi' ? 'active' : ''}`}
+                  onClick={() => setBulkStudioTab('multi')}
+                >
+                  🚀 Multi-Field Editor (Update Any Field at Once)
+                </button>
+                <button
+                  type="button"
+                  className={`admin-bulk-pill-btn ${bulkStudioTab === 'rule' ? 'active' : ''}`}
+                  onClick={() => setBulkStudioTab('rule')}
+                >
+                  📊 Category Rule Fast Price
+                </button>
+                <button
+                  type="button"
+                  className={`admin-bulk-pill-btn ${bulkStudioTab === 'delete' ? 'active' : ''}`}
+                  onClick={() => setBulkStudioTab('delete')}
+                  style={{ color: bulkStudioTab === 'delete' ? '#fff' : '#ef4444' }}
+                >
+                  🗑️ Bulk Delete Selected
+                </button>
+              </div>
+            </div>
+
+            <div className="admin-bulk-action-form">
+              {bulkStudioTab === 'multi' && (
+                <div className="admin-bulk-sections-container">
+                  {/* Top Bar with Enable/Disable helpers & Counter */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <div>
+                      <span style={{ fontWeight: 700, fontSize: '13px', color: '#1e293b' }}>
+                        Selected Courses: <strong style={{ color: '#0b7cff' }}>{selectedBulkCourseIds.length}</strong> | Fields Enabled: <strong style={{ color: '#0b7cff' }}>{enabledFieldKeys.length}</strong>
+                      </span>
+                      <div className="admin-bulk-badge-list">
+                        {enabledFieldKeys.length === 0 ? (
+                          <span style={{ color: '#94a3b8', fontSize: '12px' }}>
+                            (Type into any field below or check its box to enable it for bulk update)
+                          </span>
+                        ) : (
+                          enabledFieldKeys.map((key) => (
+                            <span key={key} className="admin-bulk-active-tag">
+                              {key}
+                              <button type="button" onClick={() => toggleBulkFieldEnabled(key)} title="Remove field">✕</button>
+                            </span>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        className="admin-bulk-quick-btn"
+                        onClick={() => toggleAllBulkFields(true)}
+                      >
+                        Enable All
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-bulk-quick-btn"
+                        onClick={() => toggleAllBulkFields(false)}
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Section 1: Pricing & Commerce */}
+                  <div className="admin-bulk-section-card">
+                    <h3 className="admin-bulk-section-title">💰 Pricing, Discount & Ratings</h3>
+                    <div className="admin-bulk-grid-fields">
+                      <div className={`admin-bulk-field ${bulkEnabled.price ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Price (₹)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('price')}>
+                            <input type="checkbox" checked={bulkEnabled.price} onChange={() => toggleBulkFieldEnabled('price')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="e.g. 499"
+                          value={bulkFields.price}
+                          onChange={(e) => updateBulkField('price', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.oldPrice ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Old / Original Price (₹)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('oldPrice')}>
+                            <input type="checkbox" checked={bulkEnabled.oldPrice} onChange={() => toggleBulkFieldEnabled('oldPrice')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="e.g. 999"
+                          value={bulkFields.oldPrice}
+                          disabled={bulkFields.clearOldPrice}
+                          onChange={(e) => updateBulkField('oldPrice', e.target.value)}
+                        />
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', marginTop: '4px', cursor: 'pointer', color: '#64748b' }}>
+                          <input
+                            type="checkbox"
+                            checked={bulkFields.clearOldPrice}
+                            onChange={(e) => updateBulkField('clearOldPrice', e.target.checked)}
+                          />
+                          <span>Remove / Clear Old Price</span>
+                        </label>
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.rating ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Rating (0.0 to 5.0)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('rating')}>
+                            <input type="checkbox" checked={bulkEnabled.rating} onChange={() => toggleBulkFieldEnabled('rating')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="5"
+                          placeholder="e.g. 4.9"
+                          value={bulkFields.rating}
+                          onChange={(e) => updateBulkField('rating', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Hierarchy, Classification & Publishing */}
+                  <div className="admin-bulk-section-card">
+                    <h3 className="admin-bulk-section-title">🏷️ Classification, Instructor & Publishing</h3>
+                    <div className="admin-bulk-grid-fields">
+                      <div className={`admin-bulk-field ${bulkEnabled.packageType ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Package Type</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('packageType')}>
+                            <input type="checkbox" checked={bulkEnabled.packageType} onChange={() => toggleBulkFieldEnabled('packageType')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <select
+                          value={bulkFields.packageType}
+                          onChange={(e) => updateBulkField('packageType', e.target.value)}
+                        >
+                          <option value="">-- Choose Type --</option>
+                          <option value="business-plans">Business Plans</option>
+                          <option value="business-tools">Business Tools</option>
+                          <option value="business-in-the-box">Business in the Box</option>
+                        </select>
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.categoryName ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Category</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('categoryName')}>
+                            <input type="checkbox" checked={bulkEnabled.categoryName} onChange={() => toggleBulkFieldEnabled('categoryName')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          list="bulk-category-datalist-all"
+                          placeholder="Select or enter category..."
+                          value={bulkFields.categoryName}
+                          onChange={(e) => updateBulkField('categoryName', e.target.value)}
+                        />
+                        <datalist id="bulk-category-datalist-all">
+                          {allCategoryNames.map((cat) => (
+                            <option key={cat} value={cat} />
+                          ))}
+                        </datalist>
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.difficulty ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Difficulty</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('difficulty')}>
+                            <input type="checkbox" checked={bulkEnabled.difficulty} onChange={() => toggleBulkFieldEnabled('difficulty')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <select
+                          value={bulkFields.difficulty}
+                          onChange={(e) => updateBulkField('difficulty', e.target.value)}
+                        >
+                          <option value="Beginner">Beginner</option>
+                          <option value="Intermediate">Intermediate</option>
+                          <option value="Advanced">Advanced</option>
+                        </select>
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.instructorName ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Instructor Name</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('instructorName')}>
+                            <input type="checkbox" checked={bulkEnabled.instructorName} onChange={() => toggleBulkFieldEnabled('instructorName')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="e.g. VyapaarKit Team"
+                          value={bulkFields.instructorName}
+                          onChange={(e) => updateBulkField('instructorName', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.isPublished ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Store Visibility</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('isPublished')}>
+                            <input type="checkbox" checked={bulkEnabled.isPublished} onChange={() => toggleBulkFieldEnabled('isPublished')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <select
+                          value={bulkFields.isPublished ? 'true' : 'false'}
+                          onChange={(e) => updateBulkField('isPublished', e.target.value === 'true')}
+                        >
+                          <option value="true">Published (Visible in Store)</option>
+                          <option value="false">Unpublished (Draft / Hidden)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: General Information */}
+                  <div className="admin-bulk-section-card">
+                    <h3 className="admin-bulk-section-title">📝 Course Information & Meta</h3>
+                    <div className="admin-bulk-grid-fields">
+                      <div className={`admin-bulk-field ${bulkEnabled.title ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Title (Override for all)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('title')}>
+                            <input type="checkbox" checked={bulkEnabled.title} onChange={() => toggleBulkFieldEnabled('title')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Enter title override"
+                          value={bulkFields.title}
+                          onChange={(e) => updateBulkField('title', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.subtitle ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Subtitle / Tagline</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('subtitle')}>
+                            <input type="checkbox" checked={bulkEnabled.subtitle} onChange={() => toggleBulkFieldEnabled('subtitle')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Catchy tagline or subtitle"
+                          value={bulkFields.subtitle}
+                          onChange={(e) => updateBulkField('subtitle', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.editionNote ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Edition Note</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('editionNote')}>
+                            <input type="checkbox" checked={bulkEnabled.editionNote} onChange={() => toggleBulkFieldEnabled('editionNote')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="e.g. 2025 Comprehensive Edition"
+                          value={bulkFields.editionNote}
+                          onChange={(e) => updateBulkField('editionNote', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.language ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Language</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('language')}>
+                            <input type="checkbox" checked={bulkEnabled.language} onChange={() => toggleBulkFieldEnabled('language')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="e.g. English / Hindi"
+                          value={bulkFields.language}
+                          onChange={(e) => updateBulkField('language', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.duration ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Duration / Pacing</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('duration')}>
+                            <input type="checkbox" checked={bulkEnabled.duration} onChange={() => toggleBulkFieldEnabled('duration')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="e.g. Self-Paced / 4 Weeks"
+                          value={bulkFields.duration}
+                          onChange={(e) => updateBulkField('duration', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 4: Media, Thumbnails & Gallery */}
+                  <div className="admin-bulk-section-card">
+                    <h3 className="admin-bulk-section-title">🖼️ Media, Thumbnails & Banners</h3>
+                    <div className="admin-bulk-grid-fields">
+                      <div className={`admin-bulk-field ${bulkEnabled.imageUrl ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Primary Image URL</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('imageUrl')}>
+                            <input type="checkbox" checked={bulkEnabled.imageUrl} onChange={() => toggleBulkFieldEnabled('imageUrl')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="https://..."
+                          value={bulkFields.imageUrl}
+                          onChange={(e) => updateBulkField('imageUrl', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.bannerImage ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Banner Image URL</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('bannerImage')}>
+                            <input type="checkbox" checked={bulkEnabled.bannerImage} onChange={() => toggleBulkFieldEnabled('bannerImage')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="https://..."
+                          value={bulkFields.bannerImage}
+                          onChange={(e) => updateBulkField('bannerImage', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.thumbnail ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Thumbnail URL</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('thumbnail')}>
+                            <input type="checkbox" checked={bulkEnabled.thumbnail} onChange={() => toggleBulkFieldEnabled('thumbnail')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="https://..."
+                          value={bulkFields.thumbnail}
+                          onChange={(e) => updateBulkField('thumbnail', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.boxImageUrl ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Box Bundle Image URL</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('boxImageUrl')}>
+                            <input type="checkbox" checked={bulkEnabled.boxImageUrl} onChange={() => toggleBulkFieldEnabled('boxImageUrl')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="https://..."
+                          value={bulkFields.boxImageUrl}
+                          onChange={(e) => updateBulkField('boxImageUrl', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.syncThumbnailFromGallery ? 'is-enabled' : ''}`} style={{ justifyContent: 'center' }}>
+                        <div className="admin-bulk-field-header">
+                          <label>Auto-Sync from Gallery</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('syncThumbnailFromGallery')}>
+                            <input type="checkbox" checked={bulkEnabled.syncThumbnailFromGallery} onChange={() => toggleBulkFieldEnabled('syncThumbnailFromGallery')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', color: '#334155' }}>
+                          <input
+                            type="checkbox"
+                            checked={bulkFields.syncThumbnailFromGallery}
+                            onChange={(e) => updateBulkField('syncThumbnailFromGallery', e.target.checked)}
+                          />
+                          <span>Set Primary, Banner & Thumbnail from 1st Gallery Photo</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 5: Lists & Content */}
+                  <div className="admin-bulk-section-card">
+                    <h3 className="admin-bulk-section-title">📋 Curriculum, Highlights & Content Lists</h3>
+                    <div className="admin-bulk-grid-fields">
+                      <div className={`admin-bulk-field ${bulkEnabled.includes ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Includes / Deliverables (1 per line)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('includes')}>
+                            <input type="checkbox" checked={bulkEnabled.includes} onChange={() => toggleBulkFieldEnabled('includes')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <textarea
+                          rows={3}
+                          placeholder="Comprehensive Business Plan&#10;Financial Model (.xlsx)&#10;Marketing Roadmap"
+                          value={bulkFields.includes}
+                          onChange={(e) => updateBulkField('includes', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.learningHighlights ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Learning Highlights (1 per line)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('learningHighlights')}>
+                            <input type="checkbox" checked={bulkEnabled.learningHighlights} onChange={() => toggleBulkFieldEnabled('learningHighlights')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <textarea
+                          rows={3}
+                          placeholder="Master financial projections&#10;Understand legal requirements"
+                          value={bulkFields.learningHighlights}
+                          onChange={(e) => updateBulkField('learningHighlights', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.skills ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Skills / Tags (comma or 1 per line)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('skills')}>
+                            <input type="checkbox" checked={bulkEnabled.skills} onChange={() => toggleBulkFieldEnabled('skills')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <textarea
+                          rows={3}
+                          placeholder="Budgeting, Strategy, Marketing, Sales"
+                          value={bulkFields.skills}
+                          onChange={(e) => updateBulkField('skills', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.requirements ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Requirements (1 per line)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('requirements')}>
+                            <input type="checkbox" checked={bulkEnabled.requirements} onChange={() => toggleBulkFieldEnabled('requirements')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <textarea
+                          rows={3}
+                          placeholder="Basic computer skills&#10;Desire to start a business"
+                          value={bulkFields.requirements}
+                          onChange={(e) => updateBulkField('requirements', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.audience ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Target Audience (1 per line)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('audience')}>
+                            <input type="checkbox" checked={bulkEnabled.audience} onChange={() => toggleBulkFieldEnabled('audience')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <textarea
+                          rows={3}
+                          placeholder="Aspiring entrepreneurs&#10;Small business owners"
+                          value={bulkFields.audience}
+                          onChange={(e) => updateBulkField('audience', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.description ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Description (Paragraphs)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('description')}>
+                            <input type="checkbox" checked={bulkEnabled.description} onChange={() => toggleBulkFieldEnabled('description')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <textarea
+                          rows={3}
+                          placeholder="Double newline between paragraphs"
+                          value={bulkFields.description}
+                          onChange={(e) => updateBulkField('description', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sticky Apply Action Bar */}
+                  <div className="admin-bulk-sticky-action">
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '15px', color: '#0f172a' }}>
+                        Ready to Apply Changes
+                      </div>
+                      <small style={{ color: '#64748b' }}>
+                        Targeting <strong>{selectedBulkCourseIds.length}</strong> selected courses with <strong>{enabledFieldKeys.length}</strong> active field update(s).
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      className="admin-primary-btn"
+                      onClick={handleApplyAllBulkFields}
+                      disabled={bulkProcessing || selectedBulkCourseIds.length === 0 || enabledFieldKeys.length === 0}
+                      style={{ padding: '12px 28px', fontSize: '15px', fontWeight: 800 }}
+                    >
+                      {bulkProcessing ? 'Applying Changes...' : `🚀 Apply All Changes (${enabledFieldKeys.length} fields on ${selectedBulkCourseIds.length} courses)`}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {bulkStudioTab === 'rule' && (
+                <>
+                  <div style={{ color: '#475569', fontSize: '14px', marginBottom: '8px' }}>
+                    <p style={{ margin: 0 }}>
+                      <strong>Rule-Based Quick Price Updater:</strong> Update all courses matching a package type across the whole catalog without having to check individual rows.
+                    </p>
+                  </div>
+                  <form onSubmit={handleBulkUpdatePrice} style={{ display: 'grid', gap: '14px' }}>
+                    <div className="admin-bulk-grid-fields">
+                      <div className="admin-bulk-field">
+                        <label>Target Package Type</label>
+                        <select value={bulkPriceType} onChange={(e) => setBulkPriceType(e.target.value)}>
+                          <option value="">ALL Package Types</option>
+                          <option value="business-plans">Business Plans</option>
+                          <option value="business-tools">Business Tools</option>
+                          <option value="business-in-the-box">Business in the Box</option>
+                        </select>
+                      </div>
+                      <div className="admin-bulk-field">
+                        <label>New Price (₹)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          required
+                          placeholder="e.g. 49"
+                          value={bulkPrice}
+                          onChange={(e) => setBulkPrice(e.target.value)}
+                        />
+                      </div>
+                      <div className="admin-bulk-field">
+                        <label>New Old Price (Optional ₹)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="e.g. 99"
+                          value={bulkOldPrice}
+                          onChange={(e) => setBulkOldPrice(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="admin-bulk-action-footer">
+                      <span className="admin-bulk-selected-summary">
+                        Will update: <strong>{bulkPriceType ? bulkPriceType.toUpperCase().replace(/-/g, ' ') : 'ALL'}</strong> courses in catalog
+                      </span>
+                      <button type="submit" className="admin-primary-btn" disabled={saving}>
+                        {saving ? 'Updating...' : 'Execute Rule-Based Price Update'}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+
+              {bulkStudioTab === 'delete' && (
+                <>
+                  <div style={{ color: '#b91c1c', fontSize: '14px', lineHeight: 1.6 }}>
+                    <p style={{ margin: '0 0 6px 0', fontWeight: 700 }}>
+                      ⚠️ Danger Zone: Bulk Course Deletion
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      This will soft-delete the <strong>{selectedBulkCourseIds.length}</strong> selected course(s). They will no longer appear in the store or admin listings.
+                    </p>
+                  </div>
+                  <div className="admin-bulk-action-footer">
+                    <span className="admin-bulk-selected-summary" style={{ color: '#ef4444' }}>
+                      Selected for Deletion: <strong>{selectedBulkCourseIds.length}</strong> courses
+                    </span>
+                    <button
+                      type="button"
+                      className="admin-danger-btn"
+                      onClick={handleBulkDeleteSelected}
+                      disabled={bulkProcessing || selectedBulkCourseIds.length === 0}
+                    >
+                      {bulkProcessing ? 'Deleting...' : `Delete Selected (${selectedBulkCourseIds.length})`}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Filters and Search Toolbar */}
+          <div className="admin-bulk-filter-toolbar">
+            <div className="admin-bulk-search-group">
+              <input
+                type="search"
+                className="admin-bulk-search-input"
+                placeholder="Search by title, instructor, category..."
+                value={bulkFilters.search}
+                onChange={(e) => setBulkFilters((prev) => ({ ...prev, search: e.target.value }))}
+              />
+              <select
+                className="admin-bulk-filter-select"
+                value={bulkFilters.packageType}
+                onChange={(e) => setBulkFilters((prev) => ({ ...prev, packageType: e.target.value }))}
+              >
+                <option value="">All Package Types</option>
+                <option value="business-plans">Business Plans</option>
+                <option value="business-tools">Business Tools</option>
+                <option value="business-in-the-box">Business in the Box</option>
+              </select>
+              <select
+                className="admin-bulk-filter-select"
+                value={bulkFilters.category}
+                onChange={(e) => setBulkFilters((prev) => ({ ...prev, category: e.target.value }))}
+              >
+                <option value="">All Categories</option>
+                {allCategoryNames.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <select
+                className="admin-bulk-filter-select"
+                value={bulkFilters.isPublished}
+                onChange={(e) => setBulkFilters((prev) => ({ ...prev, isPublished: e.target.value }))}
+              >
+                <option value="all">All Statuses</option>
+                <option value="published">Published Only</option>
+                <option value="draft">Drafts Only</option>
+              </select>
+            </div>
+
+            <div className="admin-bulk-btn-group">
+              <button
+                type="button"
+                className="admin-bulk-quick-btn"
+                onClick={toggleSelectAllFiltered}
+              >
+                {isAllFilteredSelected ? 'Deselect Filtered' : `Select Filtered (${filteredBulkCourses.length})`}
+              </button>
+              {selectedBulkCourseIds.length > 0 && (
+                <button
+                  type="button"
+                  className="admin-bulk-quick-btn"
+                  onClick={() => setSelectedBulkCourseIds([])}
+                >
+                  Clear Selection
+                </button>
+              )}
+              <button
+                type="button"
+                className="admin-secondary-btn"
+                onClick={handleExportCsv}
+                style={{ padding: '8px 14px', fontSize: '13px' }}
+              >
+                📥 Export CSV
+              </button>
+            </div>
+          </div>
+
+          {/* Courses Data Table */}
+          <div className="admin-bulk-table-card">
+            <div className="admin-bulk-table-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontWeight: 700, fontSize: '14px', color: '#0f172a' }}>
+                  Showing {filteredBulkCourses.length} of {courses.length} courses
+                </span>
+                <span className="admin-tab-badge">
+                  {selectedBulkCourseIds.length} Selected
+                </span>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  Per page:
+                  <select
+                    value={bulkPageSize}
+                    onChange={(e) => {
+                      setBulkPageSize(Number(e.target.value));
+                      setBulkPage(1);
+                    }}
+                    style={{ padding: '3px 8px', fontSize: '12px', borderRadius: '4px', border: '1px solid #cbd5e1', background: '#fff' }}
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                    <option value={9999}>All</option>
+                  </select>
+                </label>
+                {totalBulkPages > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      type="button"
+                      className="admin-bulk-quick-btn"
+                      disabled={bulkPage <= 1}
+                      onClick={() => setBulkPage((p) => Math.max(1, p - 1))}
+                      style={{ padding: '3px 8px', fontSize: '12px' }}
+                    >
+                      ‹ Prev
+                    </button>
+                    <span style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>
+                      {bulkPage} / {totalBulkPages}
+                    </span>
+                    <button
+                      type="button"
+                      className="admin-bulk-quick-btn"
+                      disabled={bulkPage >= totalBulkPages}
+                      onClick={() => setBulkPage((p) => Math.min(totalBulkPages, p + 1))}
+                      style={{ padding: '3px 8px', fontSize: '12px' }}
+                    >
+                      Next ›
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="admin-bulk-table-container">
+              <table className="admin-bulk-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '40px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={isAllFilteredSelected}
+                        onChange={toggleSelectAllFiltered}
+                        aria-label="Select all filtered courses"
+                      />
+                    </th>
+                    <th>Course Title</th>
+                    <th>Package Type</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Instructor</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBulkCourses.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                        No courses found matching current filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedBulkCourses.map((course) => (
+                      <BulkCourseRow
+                        key={course.id}
+                        course={course}
+                        isSelected={selectedBulkCourseIdsSet.has(course.id)}
+                        onToggle={toggleCourseSelection}
+                        onEdit={handleEditCourseInSingleEditor}
+                      />
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {totalBulkPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '13px', color: '#64748b' }}>
+                  Showing {(bulkPage - 1) * bulkPageSize + 1} to {Math.min(bulkPage * bulkPageSize, filteredBulkCourses.length)} of {filteredBulkCourses.length} courses
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    type="button"
+                    className="admin-bulk-quick-btn"
+                    disabled={bulkPage <= 1}
+                    onClick={() => setBulkPage((p) => Math.max(1, p - 1))}
+                  >
+                    ‹ Prev Page
+                  </button>
+                  <span style={{ fontSize: '12px', color: '#475569', fontWeight: 600, padding: '0 8px' }}>
+                    Page {bulkPage} of {totalBulkPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="admin-bulk-quick-btn"
+                    disabled={bulkPage >= totalBulkPages}
+                    onClick={() => setBulkPage((p) => Math.min(totalBulkPages, p + 1))}
+                  >
+                    Next Page ›
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Popular Business Solutions Showcase Management Panel */}
+          <section className="admin-showcase-card">
         <div 
           className="admin-showcase-header"
           onClick={() => setIsPopularPanelOpen(!isPopularPanelOpen)}
@@ -684,6 +1929,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
                       src={c.imageUrl}
                       alt={c.title}
                       className="admin-showcase-thumb"
+                      loading="lazy"
                     />
 
                     <div className="admin-showcase-info">
@@ -1135,10 +2381,19 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
                 <time dateTime={log.createdAt}>{new Date(log.createdAt).toLocaleString()}</time>
               </article>
             ))}
-            {accessLogs.length === 0 && <p className="admin-empty">No PDF access logs yet.</p>}
+            {accessLogs.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '20px 12px' }}>
+                <p className="admin-empty" style={{ margin: '0 0 10px 0' }}>PDF access logs not loaded yet.</p>
+                <button className="admin-secondary-btn" type="button" onClick={refreshAccessLogs} style={{ padding: '6px 14px', fontSize: '13px' }}>
+                  📥 Load PDF Access Logs
+                </button>
+              </div>
+            )}
           </div>
         </section>
       </div>
+        </>
+      )}
     </section>
   );
 };

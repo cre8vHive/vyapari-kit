@@ -435,6 +435,40 @@ export const adminApi = {
     const response = await apiClient.put<{ message: string; modifiedCount: number }>('/admin/courses/bulk-price', payload);
     return response.data;
   },
+  bulkUpdateCourses: async (courseIds: string[], updates: {
+    title?: string;
+    price?: number;
+    oldPrice?: number | '' | null;
+    packageType?: string;
+    categoryName?: string;
+    isPublished?: boolean;
+    instructorName?: string;
+    difficulty?: string;
+    rating?: number;
+    subtitle?: string;
+    editionNote?: string;
+    language?: string;
+    duration?: string;
+    imageUrl?: string;
+    thumbnail?: string;
+    bannerImage?: string;
+    boxImageUrl?: string;
+    includes?: string[];
+    learningHighlights?: string[];
+    skills?: string[];
+    requirements?: string[];
+    audience?: string[];
+    description?: string[];
+    syncThumbnailFromGallery?: boolean;
+    [key: string]: any;
+  }): Promise<{ message: string; modifiedCount: number; matchedCount: number }> => {
+    const response = await apiClient.put<{ message: string; modifiedCount: number; matchedCount: number }>('/admin/courses/bulk-update', { courseIds, updates });
+    return response.data;
+  },
+  bulkDeleteCourses: async (courseIds: string[]): Promise<{ message: string; deletedCount: number }> => {
+    const response = await apiClient.post<{ message: string; deletedCount: number }>('/admin/courses/bulk-delete', { courseIds });
+    return response.data;
+  },
   deleteCourse: async (courseId: string): Promise<void> => {
     await apiClient.delete(`/admin/courses/${courseId}`);
   },

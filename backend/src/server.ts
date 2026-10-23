@@ -843,19 +843,38 @@ app.get('/api/v1/auth/me', requireAuth, requireActiveSession, async (_req, res) 
   res.json({ user: publicUser(user) });
 });
 
+let adminCoursesCache: any[] | null = null;
+let adminCoursesCacheTime = 0;
+const ADMIN_COURSES_CACHE_TTL_MS = 60_000; // 60s fallback TTL
+
+export function invalidateAdminCoursesCache() {
+  adminCoursesCache = null;
+  adminCoursesCacheTime = 0;
+}
+
 app.get('/api/v1/admin/courses', requireAuth, requireActiveSession, requireAdmin, async (_req, res) => {
   if (!isMongoConnected()) {
     res.status(503).json({ message: 'Database is not connected' });
     return;
   }
 
-  const courses = await Course.find().sort({ createdAt: -1 }).lean();
-  const pdfs = await CoursePdf.find({ course: { $in: courses.map((course) => course._id) } })
-    .select('course filename storageType fileSize updatedAt')
-    .lean();
+  const now = Date.now();
+  if (adminCoursesCache && now - adminCoursesCacheTime < ADMIN_COURSES_CACHE_TTL_MS) {
+    res.json(adminCoursesCache);
+    return;
+  }
+
+  const [courses, pdfs] = await Promise.all([
+    Course.find().sort({ createdAt: -1 }).lean(),
+    CoursePdf.find().select('course filename storageType fileSize updatedAt').lean(),
+  ]);
   const pdfByCourse = new Map(pdfs.map((pdf) => [String(pdf.course), pdf]));
 
-  res.json(courses.map((course) => adminCourse(course, pdfByCourse.get(String(course._id)))));
+  const result = courses.map((course) => adminCourse(course, pdfByCourse.get(String(course._id))));
+  adminCoursesCache = result;
+  adminCoursesCacheTime = now;
+
+  res.json(result);
 });
 
 async function getPopularCoursesList() {
@@ -1002,6 +1021,7 @@ app.put('/api/v1/admin/popular-courses', requireAuth, requireActiveSession, requ
     }
   }
 
+  invalidateAdminCoursesCache();
   res.json({
     ok: true,
     message: `Updated popular business solutions (${validIds.length} courses)`,
@@ -1041,6 +1061,7 @@ app.post('/api/v1/admin/courses', requireAuth, requireActiveSession, requireAdmi
     }
 
     const savedCourse = await Course.findById(course._id).lean();
+    invalidateAdminCoursesCache();
     res.status(201).json({ course: publicCourse(savedCourse || course) });
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Unable to create course' });
@@ -1112,6 +1133,7 @@ app.post('/api/v1/admin/courses/bulk', requireAuth, requireActiveSession, requir
       createdDocs.push(created);
     }
 
+    invalidateAdminCoursesCache();
     res.status(201).json({
       message: `Successfully uploaded ${createdDocs.length} courses for type "${type || 'custom'}"`,
       createdCount: createdDocs.length,
@@ -1156,9 +1178,226 @@ app.put('/api/v1/admin/courses/bulk-price', requireAuth, requireActiveSession, r
     }
 
     const result = await Course.updateMany(filter, updateData);
+    invalidateAdminCoursesCache();
     res.status(200).json({ message: 'Bulk price update successful', modifiedCount: result.modifiedCount });
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Unable to update bulk prices' });
+  }
+});
+
+app.put('/api/v1/admin/courses/bulk-update', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  try {
+    const authUser = res.locals.user;
+    const { courseIds, updates } = req.body;
+
+    if (!Array.isArray(courseIds) || courseIds.length === 0) {
+      res.status(400).json({ message: 'courseIds array is required and must not be empty' });
+      return;
+    }
+
+    const validIds = courseIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+      res.status(400).json({ message: 'No valid course IDs provided' });
+      return;
+    }
+
+    const filter = { _id: { $in: validIds }, isDeleted: false };
+    const updateOps: any = { $set: { updatedBy: authUser.sub } };
+
+    if (updates) {
+      if (typeof updates.title === 'string' && updates.title.trim()) {
+        updateOps.$set.title = updates.title.trim();
+      }
+
+      if (typeof updates.price === 'number' || (typeof updates.price === 'string' && updates.price.trim() !== '')) {
+        const numPrice = Number(updates.price);
+        if (!isNaN(numPrice) && numPrice >= 0) {
+          updateOps.$set.price = numPrice;
+        }
+      }
+
+      if (updates.oldPrice !== undefined) {
+        if (updates.oldPrice === null || updates.oldPrice === '') {
+          updateOps.$unset = { ...updateOps.$unset, oldPrice: "" };
+        } else {
+          const numOldPrice = Number(updates.oldPrice);
+          if (!isNaN(numOldPrice) && numOldPrice >= 0) {
+            updateOps.$set.oldPrice = numOldPrice;
+          }
+        }
+      }
+
+      if (updates.packageType && typeof updates.packageType === 'string') {
+        const cleanType = (updates.packageType === 'business-plan' ? 'business-plans' : updates.packageType).trim().toLowerCase();
+        if (['business-plans', 'business-tools', 'business-in-the-box'].includes(cleanType)) {
+          updateOps.$set.packageType = cleanType;
+        }
+      }
+
+      if (updates.categoryName && typeof updates.categoryName === 'string' && updates.categoryName.trim()) {
+        updateOps.$set.categoryName = updates.categoryName.trim();
+      }
+
+      if (typeof updates.isPublished === 'boolean') {
+        updateOps.$set.isPublished = updates.isPublished;
+      }
+
+      if (updates.instructorName && typeof updates.instructorName === 'string' && updates.instructorName.trim()) {
+        updateOps.$set.instructorName = updates.instructorName.trim();
+      }
+
+      if (updates.difficulty && typeof updates.difficulty === 'string' && updates.difficulty.trim()) {
+        updateOps.$set.difficulty = updates.difficulty.trim();
+      }
+
+      if (typeof updates.rating === 'number' || (typeof updates.rating === 'string' && updates.rating.trim() !== '')) {
+        const numRating = Number(updates.rating);
+        if (!isNaN(numRating) && numRating >= 0 && numRating <= 5) {
+          updateOps.$set.rating = numRating;
+        }
+      }
+
+      if (typeof updates.subtitle === 'string') {
+        updateOps.$set.subtitle = updates.subtitle.trim();
+      }
+
+      if (typeof updates.editionNote === 'string') {
+        updateOps.$set.editionNote = updates.editionNote.trim();
+      }
+
+      if (typeof updates.language === 'string' && updates.language.trim()) {
+        updateOps.$set.language = updates.language.trim();
+      }
+
+      if (typeof updates.duration === 'string') {
+        updateOps.$set.duration = updates.duration.trim();
+      }
+
+      if (typeof updates.imageUrl === 'string' && updates.imageUrl.trim()) {
+        updateOps.$set.imageUrl = updates.imageUrl.trim();
+      }
+
+      if (typeof updates.thumbnail === 'string') {
+        updateOps.$set.thumbnail = updates.thumbnail.trim();
+      }
+
+      if (typeof updates.bannerImage === 'string') {
+        updateOps.$set.bannerImage = updates.bannerImage.trim();
+      }
+
+      if (typeof updates.boxImageUrl === 'string') {
+        updateOps.$set.boxImageUrl = updates.boxImageUrl.trim();
+      }
+
+      if (Array.isArray(updates.includes)) {
+        updateOps.$set.includes = updates.includes.map((s: any) => String(s).trim()).filter(Boolean);
+      }
+
+      if (Array.isArray(updates.learningHighlights)) {
+        updateOps.$set.learningHighlights = updates.learningHighlights.map((s: any) => String(s).trim()).filter(Boolean);
+      }
+
+      if (Array.isArray(updates.skills)) {
+        updateOps.$set.skills = updates.skills.map((s: any) => String(s).trim()).filter(Boolean);
+      }
+
+      if (Array.isArray(updates.requirements)) {
+        updateOps.$set.requirements = updates.requirements.map((s: any) => String(s).trim()).filter(Boolean);
+      }
+
+      if (Array.isArray(updates.audience)) {
+        updateOps.$set.audience = updates.audience.map((s: any) => String(s).trim()).filter(Boolean);
+      }
+
+      if (Array.isArray(updates.description)) {
+        updateOps.$set.description = updates.description.map((s: any) => String(s).trim()).filter(Boolean);
+      } else if (typeof updates.description === 'string' && updates.description.trim()) {
+        updateOps.$set.description = updates.description.split('\n\n').map((s: string) => s.trim()).filter(Boolean);
+      }
+    }
+
+    let modifiedCount = 0;
+    if (Object.keys(updateOps.$set).length > 1 || updateOps.$unset) {
+      const resUpdate = await Course.updateMany(filter, updateOps);
+      modifiedCount = resUpdate.modifiedCount;
+    }
+
+    if (updates?.syncThumbnailFromGallery) {
+      const coursesWithGallery = await Course.find({
+        _id: { $in: validIds },
+        isDeleted: false,
+        'gallery.0.url': { $exists: true }
+      });
+
+      for (const course of coursesWithGallery) {
+        if (course.gallery && course.gallery.length > 0 && course.gallery[0].url) {
+          const bannerUrl = course.gallery[0].url;
+          course.imageUrl = bannerUrl;
+          course.thumbnail = bannerUrl;
+          course.bannerImage = bannerUrl;
+          course.updatedBy = authUser.sub;
+          await course.save();
+          modifiedCount++;
+        }
+      }
+    }
+
+    invalidateAdminCoursesCache();
+    res.status(200).json({
+      message: 'Bulk courses update successful',
+      modifiedCount,
+      matchedCount: validIds.length
+    });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message || 'Unable to bulk update courses' });
+  }
+});
+
+app.post('/api/v1/admin/courses/bulk-delete', requireAuth, requireActiveSession, requireAdmin, async (req, res) => {
+  if (!isMongoConnected()) {
+    res.status(503).json({ message: 'Database is not connected' });
+    return;
+  }
+
+  try {
+    const authUser = res.locals.user;
+    const { courseIds } = req.body;
+
+    if (!Array.isArray(courseIds) || courseIds.length === 0) {
+      res.status(400).json({ message: 'courseIds array is required and must not be empty' });
+      return;
+    }
+
+    const validIds = courseIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (validIds.length === 0) {
+      res.status(400).json({ message: 'No valid course IDs provided' });
+      return;
+    }
+
+    const result = await Course.updateMany(
+      { _id: { $in: validIds }, isDeleted: false },
+      {
+        $set: {
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: authUser.sub,
+          updatedBy: authUser.sub,
+        }
+      }
+    );
+
+    invalidateAdminCoursesCache();
+    res.status(200).json({
+      message: 'Bulk delete successful',
+      deletedCount: result.modifiedCount
+    });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message || 'Unable to bulk delete courses' });
   }
 });
 
@@ -1204,6 +1443,7 @@ app.put('/api/v1/admin/courses/:courseId', requireAuth, requireActiveSession, re
     }
 
     const pdf = await CoursePdf.findOne({ course: courseId }).select('course filename storageType fileSize updatedAt').lean();
+    invalidateAdminCoursesCache();
     res.json({ course: adminCourse(course, pdf) });
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Unable to update course' });
@@ -1235,6 +1475,7 @@ app.delete('/api/v1/admin/courses/:courseId', requireAuth, requireActiveSession,
     return;
   }
 
+  invalidateAdminCoursesCache();
   res.json({ ok: true });
 });
 
@@ -1253,6 +1494,7 @@ app.post('/api/v1/admin/courses/:courseId/pdf', requireAuth, requireActiveSessio
     }
 
     const pdf = await upsertCoursePdf(String(course._id), req.body, authUser.sub);
+    invalidateAdminCoursesCache();
     res.json({
       pdf: {
         id: String(pdf._id),

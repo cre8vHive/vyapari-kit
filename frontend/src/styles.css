@@ -7936,3 +7936,549 @@ img {
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   Admin Navigation Tabs (Single vs Bulk) & Bulk Operations Studio
+   ========================================================================== */
+
+.admin-nav-tabs {
+  width: min(1360px, 100%);
+  margin: 0 auto 24px auto;
+  display: flex;
+  gap: 12px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 2px;
+}
+
+.admin-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -4px;
+}
+
+.admin-tab-btn:hover {
+  color: var(--color-blue, #0b7cff);
+}
+
+.admin-tab-btn.active {
+  color: var(--color-blue, #0b7cff);
+  border-bottom-color: var(--color-blue, #0b7cff);
+}
+
+.admin-tab-badge {
+  background: var(--color-blue, #0b7cff);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 12px;
+}
+
+.admin-bulk-wrapper {
+  width: min(1360px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.admin-bulk-card {
+  background: #ffffff;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(15, 52, 92, 0.05);
+  overflow: hidden;
+}
+
+.admin-bulk-card-header {
+  padding: 18px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.admin-bulk-card-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-bulk-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-bulk-pill-btn {
+  padding: 7px 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.admin-bulk-pill-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.admin-bulk-pill-btn.active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+.admin-bulk-action-form {
+  padding: 22px 24px;
+  display: grid;
+  gap: 16px;
+  background: #ffffff;
+}
+
+.admin-bulk-grid-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.admin-bulk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-bulk-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.admin-bulk-field input,
+.admin-bulk-field select {
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+}
+
+.admin-bulk-field input:focus,
+.admin-bulk-field select:focus {
+  border-color: #0b7cff;
+  box-shadow: 0 0 0 3px rgba(11, 124, 255, 0.12);
+}
+
+.admin-bulk-action-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.admin-bulk-selected-summary {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.admin-bulk-selected-summary strong {
+  color: #0b7cff;
+}
+
+/* Bulk Table Toolbar */
+.admin-bulk-filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #ffffff;
+  padding: 16px 20px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.admin-bulk-search-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 280px;
+  flex-wrap: wrap;
+}
+
+.admin-bulk-search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.admin-bulk-filter-select {
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #ffffff;
+}
+
+.admin-bulk-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Courses Data Table */
+.admin-bulk-table-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(15, 52, 92, 0.04);
+}
+
+.admin-bulk-table-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-bulk-table-container {
+  overflow-x: auto;
+  max-height: 720px;
+}
+
+.admin-bulk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.admin-bulk-table th {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+  padding: 12px 14px;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.admin-bulk-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.admin-bulk-table tr:hover td {
+  background: #f8fafc;
+}
+
+.admin-bulk-table tr.is-selected td {
+  background: #f0f7ff;
+}
+
+.admin-bulk-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #e2e8f0;
+}
+
+.admin-bulk-title-col {
+  max-width: 320px;
+}
+
+.admin-bulk-title-text {
+  font-weight: 700;
+  color: #0f172a;
+  display: block;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-bulk-subtitle-text {
+  font-size: 11px;
+  color: #64748b;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-badge-type {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.admin-badge-type.business-plans {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.admin-badge-type.business-tools {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.admin-badge-type.business-in-the-box {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.admin-badge-cat {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.admin-badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-badge-status.is-published {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.admin-badge-status.is-draft {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.admin-bulk-row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-bulk-quick-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 5px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.admin-bulk-quick-btn:hover {
+  background: #f1f5f9;
+  color: #0b7cff;
+  border-color: #0b7cff;
+}
+
+.admin-danger-btn {
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.admin-danger-btn:hover {
+  background: #dc2626;
+}
+
+.admin-danger-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .admin-nav-tabs {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .admin-tab-btn {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .admin-bulk-pills {
+    width: 100%;
+  }
+  .admin-bulk-pill-btn {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  .admin-bulk-grid-fields {
+    grid-template-columns: 1fr;
+  }
+  .admin-bulk-filter-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-bulk-search-group {
+    flex-direction: column;
+    min-width: unset;
+  }
+  .admin-bulk-btn-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Multi-Field Bulk Studio Styles */
+.admin-bulk-sections-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-bulk-section-card {
+  background: #fbfcfe;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+
+.admin-bulk-section-title {
+  margin: 0 0 14px 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-bulk-field {
+  transition: all 0.15s ease;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.admin-bulk-field.is-enabled {
+  background: #f0f7ff;
+  border-color: #bfdbfe;
+}
+
+.admin-bulk-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.admin-bulk-field-toggle {
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  color: #64748b;
+}
+
+.admin-bulk-field.is-enabled .admin-bulk-field-toggle {
+  color: #0b7cff;
+}
+
+.admin-bulk-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.admin-bulk-active-tag {
+  background: #0b7cff;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-bulk-active-tag button {
+  background: none;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.admin-bulk-sticky-action {
+  background: #ffffff;
+  border: 2px solid #0b7cff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 10px 25px -5px rgba(11, 124, 255, 0.15);
+}
