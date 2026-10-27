@@ -113,7 +113,6 @@ async function uploadDbJson() {
       imageUrl: item.imageUrl?.trim() || defaultImage,
       subtitle: item.subtitle || '',
       editionNote: item.editionNote || '',
-      language: item.language || 'English',
       isPublished: true,
       description: Array.isArray(item.description) ? item.description : (item.description ? [item.description] : [item.title]),
       includes: Array.isArray(item.includes) ? item.includes : [],

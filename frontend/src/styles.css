@@ -2433,7 +2433,7 @@ img {
   grid-template-columns: minmax(0, 1fr) 420px;
   grid-template-areas:
     "header gallery"
-    "details purchase";
+    "header purchase";
   column-gap: 36px;
   row-gap: 28px;
   padding: 36px;
@@ -3904,8 +3904,7 @@ img {
     grid-template-areas:
       "gallery"
       "header"
-      "purchase"
-      "details";
+      "purchase";
     gap: 24px;
   }
 
@@ -3931,8 +3930,7 @@ img {
     grid-template-areas:
       "gallery"
       "header"
-      "purchase"
-      "details";
+      "purchase";
     padding: 8px 6px 20px;
     border-radius: 18px;
     gap: 16px;

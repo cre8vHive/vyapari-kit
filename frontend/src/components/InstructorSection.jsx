@@ -17,10 +17,12 @@ const InstructorSection = ({ instructor }) => {
           <span>Rating</span>
           <strong>{instructor.rating} ★</strong>
         </div>
-        <div>
-          <span>Entrepreneurs</span>
-          <strong>{instructor.students}</strong>
-        </div>
+        {instructor.students ? (
+          <div>
+            <span>Entrepreneurs</span>
+            <strong>{instructor.students}</strong>
+          </div>
+        ) : null}
         <div>
           <span>Solutions</span>
           <strong>{instructor.courses}</strong>
