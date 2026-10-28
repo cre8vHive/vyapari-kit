@@ -8,8 +8,6 @@ interface CourseDetailPageProps {
 
 type CourseDetailViewModel = Record<string, any>;
 
-const DEFAULT_LANGUAGE = 'English';
-const DEFAULT_STUDENTS = 'Available now';
 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NiZDVlMSI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg==';
 
 function formatCurrency(value: number | undefined) {
@@ -164,9 +162,7 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
     packageType: course.packageType || (isBusinessInABox ? 'business-in-the-box' : undefined),
     isBusinessInABox,
     rating: Number(course.rating || 0),
-    students: course.students ? course.students.toLocaleString('en-IN') : DEFAULT_STUDENTS,
     instructorName,
-    language: course.language || DEFAULT_LANGUAGE,
     lastUpdated: formatUpdatedDate(course.updatedAt || course.createdAt),
     difficulty: course.difficulty || 'Beginner',
     price: {
@@ -229,7 +225,7 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
       bio: course.instructor?.bio || `${instructorName} is the author for ${course.title}.`,
       experience: course.instructor?.title || category,
       courses: course.instructor?.courses ?? 1,
-      students: course.instructor?.students?.toLocaleString('en-IN') || DEFAULT_STUDENTS,
+      students: course.instructor?.students ? course.instructor.students.toLocaleString('en-IN') : undefined,
       rating: Number(course.instructor?.rating ?? course.rating ?? 0),
       avatar: course.instructor?.image || DEFAULT_AVATAR,
     },

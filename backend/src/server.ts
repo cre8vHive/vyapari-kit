@@ -120,13 +120,6 @@ function publicCourse(course: any) {
     description: course.description,
     thumbnail: course.thumbnail || course.imageUrl,
     bannerImage: course.bannerImage,
-    duration: course.duration,
-    lessons: course.lessons,
-    language: course.language,
-    certificate: course.certificate,
-    students: course.students,
-    totalReviews: course.totalReviews,
-    instructor: course.instructor,
     requirements: course.requirements,
     learningOutcomes: course.learningOutcomes,
     keyPoints: course.keyPoints,
@@ -181,7 +174,6 @@ function courseInput(body: any) {
     isPublished: body.isPublished !== false,
     subtitle: typeof body.subtitle === 'string' ? body.subtitle.trim() : undefined,
     editionNote: typeof body.editionNote === 'string' ? body.editionNote.trim() : '',
-    language: typeof body.language === 'string' ? body.language.trim() : undefined,
     includes: Array.isArray(body.includes) ? body.includes : undefined,
     learningHighlights: Array.isArray(body.learningHighlights) ? body.learningHighlights : undefined,
     description: Array.isArray(body.description) ? body.description : undefined,
@@ -1114,7 +1106,6 @@ app.post('/api/v1/admin/courses/bulk', requireAuth, requireActiveSession, requir
         imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=80',
         isPublished: item.isPublished !== undefined ? Boolean(item.isPublished) : (isPublished !== undefined ? Boolean(isPublished) : true),
         subtitle: item.subtitle || '',
-        language: item.language || 'English',
         includes: Array.isArray(item.includes) ? item.includes : [],
         learningHighlights: Array.isArray(item.learningHighlights) ? item.learningHighlights : [],
         description: Array.isArray(item.description) ? item.description : (item.description ? [item.description] : [item.title]),
@@ -1268,14 +1259,6 @@ app.put('/api/v1/admin/courses/bulk-update', requireAuth, requireActiveSession, 
 
       if (typeof updates.editionNote === 'string') {
         updateOps.$set.editionNote = updates.editionNote.trim();
-      }
-
-      if (typeof updates.language === 'string' && updates.language.trim()) {
-        updateOps.$set.language = updates.language.trim();
-      }
-
-      if (typeof updates.duration === 'string') {
-        updateOps.$set.duration = updates.duration.trim();
       }
 
       if (typeof updates.imageUrl === 'string' && updates.imageUrl.trim()) {

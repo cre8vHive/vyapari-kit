@@ -20,7 +20,6 @@ export interface ICourse extends Document, IAudit {
   isPopular?: boolean;
   popularOrder?: number;
   subtitle?: string;
-  language?: string;
   includes?: string[];
   learningHighlights?: string[];
   description?: string[];
@@ -118,12 +117,6 @@ const CourseSchema = new Schema<any>({
   thumbnail: { type: String, trim: true },
   bannerImage: { type: String, trim: true },
   editionNote: { type: String, trim: true, default: '' },
-  duration: { type: String, trim: true },
-  lessons: { type: Number, min: 0 },
-  language: { type: String, trim: true },
-  certificate: { type: Boolean, default: false },
-  students: { type: Number, min: 0, default: 0 },
-  totalReviews: { type: Number, min: 0, default: 0 },
   instructor: { type: InstructorSchema },
   requirements: { type: [String], default: [] },
   learningOutcomes: { type: [String], default: [] },

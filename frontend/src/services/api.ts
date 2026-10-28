@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const apiUrl = import.meta.env.VITE_API_URL;
 const isProduction = import.meta.env.PROD;
+const apiUrl = import.meta.env.VITE_API_URL || (!isProduction ? 'http://localhost:5000/api/v1' : undefined);
 
 if (!apiUrl) {
   throw new Error('VITE_API_URL is required');
@@ -136,11 +136,6 @@ export interface CourseSummary {
   thumbnail?: string;
   bannerImage?: string;
   editionNote?: string;
-  duration?: string;
-  lessons?: number;
-  certificate?: boolean;
-  students?: number;
-  totalReviews?: number;
   includes?: string[];
   learningHighlights?: string[];
   whatYouWillLearn?: string[];

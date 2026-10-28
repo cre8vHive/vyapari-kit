@@ -419,40 +419,6 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
         </div>
       </div>
 
-      {/* 3. Details Block: Trust Bullets, Rating & Stats, Specs */}
-      <div className="hero-details-block">
-
-        <div className="hero-cards">
-          <article className="hero-card">
-            <span>Rating</span>
-            <strong>{course.rating} ★</strong>
-          </article>
-          <article className="hero-card">
-            <span>Entrepreneurs</span>
-            <strong>{course.students}</strong>
-          </article>
-          <article className="hero-card">
-            <span>Instructor</span>
-            <strong>{course.instructorName}</strong>
-          </article>
-        </div>
-
-        <div className="hero-details-grid">
-          <article className="hero-detail">
-            <span>Language</span>
-            <strong>{course.language}</strong>
-          </article>
-          <article className="hero-detail">
-            <span>Last updated</span>
-            <strong>{course.lastUpdated}</strong>
-          </article>
-          <article className="hero-detail">
-            <span>Category</span>
-            <strong>{course.category}</strong>
-          </article>
-        </div>
-      </div>
-
       {/* 4. Purchase Block: Pricing, CTA buttons, Kit includes */}
       <div className="hero-purchase-block">
         <div className={`hero-purchase-card${isBusinessInABox ? ' is-business-in-box' : ''}`}>
