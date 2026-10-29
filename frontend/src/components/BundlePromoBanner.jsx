@@ -30,48 +30,48 @@ const BundlePromoBanner = ({ course, basePlanSlug, className = '' }) => {
     <div className={`bib-banner-card${className ? ` ${className}` : ''}`} role="region" aria-label="Business in a Box Complete Bundle Offer">
       {/* 1. Left: 3D Blue Box Illustration */}
       <div className="bib-box-col" aria-hidden="true">
-        <svg viewBox="0 0 130 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="bib-box-svg">
+        <svg viewBox="0 0 150 140" fill="none" xmlns="http://www.w3.org/2000/svg" className="bib-box-svg">
           {/* Ground shadow */}
-          <ellipse cx="62" cy="106" rx="44" ry="9" fill="#1d4ed8" fillOpacity="0.14" />
+          <ellipse cx="76" cy="122" rx="58" ry="11" fill="#1d4ed8" fillOpacity="0.15" />
 
           {/* Yellow accent burst marks above box */}
-          <line x1="20" y1="24" x2="12" y2="14" stroke="#f59e0b" strokeWidth="3.5" strokeLinecap="round" />
-          <line x1="12" y1="34" x2="3" y2="31" stroke="#f59e0b" strokeWidth="3.5" strokeLinecap="round" />
+          <line x1="18" y1="26" x2="10" y2="14" stroke="#f59e0b" strokeWidth="4.2" strokeLinecap="round" />
+          <line x1="9" y1="38" x2="2" y2="35" stroke="#f59e0b" strokeWidth="4.2" strokeLinecap="round" />
 
           {/* Left face (Darker shade for 3D depth) */}
-          <path d="M22 46 L45 59 V103 L22 89 Z" fill="#1646b8" />
+          <path d="M20 48 L48 62 V122 L20 108 Z" fill="#1646b8" />
 
           {/* Front face (Vivid royal blue) */}
-          <path d="M45 59 L106 38 V81 L45 103 Z" fill="#2262ee" />
+          <path d="M48 62 L138 38 V98 L48 122 Z" fill="#2262ee" />
 
           {/* Top face (Lighter blue with perspective) */}
-          <path d="M22 46 L82 27 L106 38 L45 59 Z" fill="#3b7cf8" />
+          <path d="M20 48 L98 24 L138 38 L48 62 Z" fill="#3b7cf8" />
 
           {/* Top seam / crease line */}
-          <path d="M51 36 L75 48" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M59 36 L93 50" stroke="#1d4ed8" strokeWidth="2.2" strokeLinecap="round" />
 
-          {/* Front Face: White "Vyapaar Kit" Brand Badge */}
-          <g transform="translate(58, 51) rotate(-18.5)">
-            <rect x="0" y="0" width="42" height="16" rx="3.5" fill="#ffffff" />
+          {/* Front Face: White "VyapaarKit" Brand Badge */}
+          <g transform="translate(68, 63) rotate(-14.9)">
+            <rect x="0" y="0" width="58" height="22" rx="4.5" fill="#ffffff" />
             <text
-              x="21"
-              y="11.2"
-              fontSize="6.8"
+              x="29"
+              y="15.2"
+              fontSize="10"
               fontFamily="Inter, system-ui, -apple-system, sans-serif"
-              fontWeight="800"
+              fontWeight="900"
               fill="#1e3a8a"
               textAnchor="middle"
               letterSpacing="-0.2"
             >
-              Vyapaar Kit
+              VyapaarKit
             </text>
           </g>
 
           {/* Front Face: White Business-Growth Chart Bars */}
-          <g transform="translate(71, 69) rotate(-18.5)">
-            <rect x="0" y="7" width="3.5" height="5" rx="0.8" fill="#ffffff" />
-            <rect x="5.5" y="3.5" width="3.5" height="8.5" rx="0.8" fill="#ffffff" />
-            <rect x="11" y="0" width="3.5" height="12" rx="0.8" fill="#ffffff" />
+          <g transform="translate(86, 91) rotate(-14.9)">
+            <rect x="0" y="8" width="4.8" height="7" rx="1.2" fill="#ffffff" />
+            <rect x="7" y="4" width="4.8" height="11" rx="1.2" fill="#ffffff" />
+            <rect x="14" y="0" width="4.8" height="15" rx="1.2" fill="#ffffff" />
           </g>
         </svg>
       </div>

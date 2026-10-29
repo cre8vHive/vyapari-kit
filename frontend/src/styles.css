@@ -3517,7 +3517,7 @@ img {
   max-width: 100%;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 125px 1fr auto;
+  grid-template-columns: 140px 1fr auto;
   grid-template-rows: auto auto auto auto;
   grid-template-areas:
     "box badge price"
@@ -3525,7 +3525,7 @@ img {
     "box contents contents"
     "cta cta cta";
   column-gap: 22px;
-  row-gap: 4px;
+  row-gap: 5px;
   align-items: center;
   margin: 22px 0 14px 0;
   overflow: hidden;
@@ -3533,8 +3533,8 @@ img {
 
 .bib-box-col {
   grid-area: box;
-  width: 125px;
-  height: 110px;
+  width: 140px;
+  height: 132px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3554,15 +3554,20 @@ img {
 .bib-pill-badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 11px;
+  justify-content: center;
+  width: 168px;
+  height: 35px;
+  padding: 0 16px;
   background: #e0ecfd;
   color: #2563eb;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
   border-radius: 9999px;
-  line-height: 1.2;
+  line-height: 1;
   text-transform: uppercase;
+  white-space: nowrap;
+  box-sizing: border-box;
   margin-bottom: 2px;
 }
 
@@ -3572,7 +3577,7 @@ img {
   font-weight: 800;
   color: #0b1329;
   line-height: 1.15;
-  margin: 2px 0 6px 0;
+  margin: 3px 0 6px 0;
   letter-spacing: -0.6px;
 }
 
@@ -3684,15 +3689,15 @@ img {
 
 @media (max-width: 768px) {
   .bib-banner-card {
-    grid-template-columns: 74px 1fr;
+    grid-template-columns: 96px 1fr;
     grid-template-rows: auto auto auto auto;
     grid-template-areas:
       "badge price"
       "box title"
       "contents contents"
       "cta cta";
-    column-gap: 12px;
-    row-gap: 8px;
+    column-gap: 14px;
+    row-gap: 10px;
     padding: 16px 14px;
     border-radius: 20px;
     margin: 16px 0 10px 0;
@@ -3700,8 +3705,8 @@ img {
 
   .bib-box-col {
     grid-area: box;
-    width: 74px;
-    height: 70px;
+    width: 96px;
+    height: 90px;
   }
 
   .bib-badge-row {
@@ -3711,16 +3716,21 @@ img {
   }
 
   .bib-pill-badge {
-    font-size: 10px;
-    padding: 3px 8px;
+    width: auto;
+    min-width: 145px;
+    height: 32px;
+    padding: 0 14px;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
   }
 
   .bib-price-badge {
     grid-area: price;
     justify-self: end;
     align-self: center;
-    padding: 6px 11px;
-    border-radius: 11px;
+    padding: 6px 12px;
+    border-radius: 12px;
     gap: 6px;
   }
 
@@ -3735,12 +3745,12 @@ img {
   }
 
   .bib-price-amount {
-    font-size: 18px;
+    font-size: 19px;
   }
 
   .bib-heading {
     grid-area: title;
-    font-size: 20px;
+    font-size: 21px;
     margin: 0;
     letter-spacing: -0.4px;
     line-height: 1.2;
@@ -3753,14 +3763,14 @@ img {
     justify-content: flex-start;
     align-items: center;
     gap: 8px;
-    font-size: 12px;
-    padding-top: 4px;
+    font-size: 12.5px;
+    padding-top: 6px;
     border-top: 1px dashed #e2e8f0;
     flex-wrap: wrap;
   }
 
   .bib-content-item {
-    gap: 4px;
+    gap: 5px;
     white-space: normal;
   }
 
@@ -3770,7 +3780,7 @@ img {
     font-size: 16px;
     border-radius: 14px;
     gap: 10px;
-    margin-top: 4px;
+    margin-top: 6px;
   }
 }
 
