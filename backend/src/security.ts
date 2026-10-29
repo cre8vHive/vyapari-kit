@@ -38,6 +38,26 @@ export const corsOptions: CorsOptions = {
       callback(null, true);
       return;
     }
+
+    // In development mode, allow LAN/private network origins (e.g., testing via mobile on local Wi-Fi)
+    if (!config.isProduction) {
+      try {
+        const parsed = new URL(origin);
+        if (
+          parsed.hostname === 'localhost' ||
+          parsed.hostname === '127.0.0.1' ||
+          parsed.hostname.startsWith('192.168.') ||
+          parsed.hostname.startsWith('10.') ||
+          /^172\.(1[6-9]|2\d|3[01])\./.test(parsed.hostname)
+        ) {
+          callback(null, true);
+          return;
+        }
+      } catch {
+        // Invalid origin URL format
+      }
+    }
+
     callback(null, false);
   },
   credentials: true,

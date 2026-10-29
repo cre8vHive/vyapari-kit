@@ -114,6 +114,7 @@ function publicCourse(course: any) {
     isPublished: course.isPublished ?? true,
     isPopular: Boolean(course.isPopular),
     popularOrder: typeof course.popularOrder === 'number' ? course.popularOrder : 0,
+    badge: course.badge || '',
     hasPdf: Boolean(course.pdfAsset),
     shortDescription: course.shortDescription,
     subtitle: course.subtitle || '',
@@ -183,6 +184,7 @@ function courseInput(body: any) {
     faqs: Array.isArray(body.faqs) ? body.faqs : undefined,
     isPopular: typeof body.isPopular === 'boolean' ? body.isPopular : undefined,
     popularOrder: typeof body.popularOrder === 'number' ? body.popularOrder : undefined,
+    badge: typeof body.badge === 'string' ? body.badge.trim() : (body.badge === null ? '' : undefined),
   };
 }
 
@@ -1255,6 +1257,14 @@ app.put('/api/v1/admin/courses/bulk-update', requireAuth, requireActiveSession, 
 
       if (typeof updates.subtitle === 'string') {
         updateOps.$set.subtitle = updates.subtitle.trim();
+      }
+
+      if (updates.badge !== undefined) {
+        if (updates.badge === '' || updates.badge === null || updates.badge === 'none') {
+          updateOps.$set.badge = '';
+        } else if (typeof updates.badge === 'string') {
+          updateOps.$set.badge = updates.badge.trim();
+        }
       }
 
       if (typeof updates.editionNote === 'string') {
@@ -3219,8 +3229,8 @@ async function start() {
     }
   }
 
-  app.listen(port, () => {
-    console.log(`API server running at http://localhost:${port}`);
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`API server running at http://0.0.0.0:${port} (LAN & localhost accessible)`);
   });
 }
 

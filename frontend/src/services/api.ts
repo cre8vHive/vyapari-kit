@@ -1,15 +1,30 @@
 import axios from 'axios';
 
 const isProduction = import.meta.env.PROD;
-const apiUrl = import.meta.env.VITE_API_URL || (!isProduction ? 'http://localhost:5000/api/v1' : undefined);
 
-if (!apiUrl) {
-  throw new Error('VITE_API_URL is required');
+function resolveApiUrl(): string {
+  if (isProduction) {
+    const prodUrl = import.meta.env.VITE_API_URL;
+    if (!prodUrl) {
+      throw new Error('VITE_API_URL is required in production');
+    }
+    if (!prodUrl.startsWith('https://')) {
+      throw new Error('VITE_API_URL must use HTTPS in production');
+    }
+    return prodUrl;
+  }
+
+  // In development, use relative path '/api/v1' in the browser so requests
+  // are routed through Vite's dev proxy on port 5173. This ensures zero CORS
+  // issues and zero firewall/port blocking when testing from mobile devices over LAN.
+  if (typeof window !== 'undefined') {
+    return '/api/v1';
+  }
+
+  return import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 }
 
-if (isProduction && !apiUrl.startsWith('https://')) {
-  throw new Error('VITE_API_URL must use HTTPS in production');
-}
+const apiUrl = resolveApiUrl();
 
 // Create central Axios instance
 const apiClient = axios.create({
@@ -129,6 +144,7 @@ export interface CourseSummary {
   isPublished: boolean;
   isPopular?: boolean;
   popularOrder?: number;
+  badge?: 'Trending' | 'Bestseller' | '' | string;
   hasPdf: boolean;
   language?: string;
   shortDescription?: string;
@@ -226,6 +242,7 @@ export interface CourseSavePayload {
   rating: number;
   imageUrl: string;
   isPublished: boolean;
+  badge?: 'Trending' | 'Bestseller' | '' | string;
   subtitle?: string;
   editionNote?: string;
   language?: string;

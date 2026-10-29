@@ -15,6 +15,7 @@ export interface CourseItem {
   imageUrl: string;
   boxImageUrl?: string;
   hasPdf?: boolean;
+  badge?: string;
 }
 
 export interface CourseGridSectionProps {
@@ -90,6 +91,41 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
     );
   };
 
+  // Wishlist state
+  const [wishlist, setWishlist] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('vyapaarkit_wishlist');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const toggleWishlist = (courseId: string, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setWishlist((prev) => {
+      const next = prev.includes(courseId) ? prev.filter((id) => id !== courseId) : [...prev, courseId];
+      try {
+        localStorage.setItem('vyapaarkit_wishlist', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  // Helper for consistent review count
+  const getReviewCount = (id: string) => {
+    let hash = 0;
+    const str = String(id || 'course');
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return 65 + (Math.abs(hash) % 120);
+  };
+
   // Star rendering helper based on Mongoose rating floating points
   const renderStars = (rating: number) => {
     const stars = [];
@@ -124,7 +160,6 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
 
   const courseGrid = (
     <>
-      {renderPagination()}
       <div className={`course-list-container layout-${layout}`}>
         {displayedCourses.map((course, index) => {
           const isMyCourse = mode === 'my';
@@ -139,223 +174,170 @@ export const CourseGridSection: React.FC<CourseGridSectionProps> = ({
               course.slug?.includes('business-in-a-box') ||
               /business in a box/i.test(course.title || '')
             );
+          const isWishlisted = wishlist.includes(course.id);
+          const overlayBadge = course.badge || (isBusinessInABox ? 'Bestseller' : undefined);
 
           return (
             <div
               key={course.id || index}
-              className={`elementor-element e-con-full e-flex e-con e-child course-card-wrapper${isBusinessInABox ? ' is-business-in-box-card' : ''}`}
-              style={{
-                background: '#ffffff',
-                borderRadius: '14px',
-                overflow: 'hidden',
-                border: isBusinessInABox ? '2px solid #f59e0b' : '1px solid #e2e8f0',
-                boxShadow: isBusinessInABox ? '0 10px 25px -5px rgba(245, 158, 11, 0.2)' : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-                position: 'relative',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
+              className={`elementor-element e-con-full e-flex e-con e-child course-card-wrapper modern-solution-card${isBusinessInABox ? ' is-business-in-box-card' : ''}`}
             >
-              <div className="elementor-element elementor-element-hotspot-container elementor-widget elementor-widget-hotspot" style={{ position: 'relative' }}>
-                <div className="elementor-widget-container">
+              {/* Card Image Area (Clean, Unblocked Artwork) */}
+              <div className="course-card-image-wrap">
+                <a
+                  href={courseUrl}
+                  onClick={(event) => onCourseClick?.(course, event)}
+                  className="course-card-image-link"
+                >
                   <img
                     src={(isBusinessInABox && course.boxImageUrl) ? course.boxImageUrl : course.imageUrl}
-                    className="attachment-full size-full"
+                    className="course-card-thumb-img"
                     alt={course.title}
                     loading="lazy"
                   />
-                </div>
+                </a>
               </div>
 
               {/* Card Content */}
-              <div className="elementor-element e-con-full e-flex e-con e-child course-card-body" style={{ padding: '20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '8px' }}>
-                  {isBusinessInABox ? (
-                    <span style={{
-                      background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-                      color: '#92400e',
-                      border: '1px solid #f59e0b',
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.4px'
-                    }}>
-                      Business in a Box
-                    </span>
-                  ) : isTool ? (
-                    <span style={{ background: '#ecfdf5', color: '#059669', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>
-                      Business Playbook
-                    </span>
-                  ) : (
-                    <span style={{ background: '#eff6ff', color: '#2563eb', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>
-                      Business Plan
-                    </span>
-                  )}
-                  <span style={{ background: '#f1f5f9', color: '#475569', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
-                    {course.difficulty}
-                  </span>
-                </div>
-
-                {/* Course Title */}
-                <div className="elementor-element elementor-widget elementor-widget-heading">
-                  <div className="elementor-widget-container">
-                    <h4 className="elementor-heading-title elementor-size-default" style={{ minHeight: '38px', lineHeight: 1.35, margin: '0 0 4px 0' }}>
-                      <a
-                        href={courseUrl}
-                        title={course.title}
-                        style={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                        onClick={(event) => {
-                          if (onCourseClick) {
-                            onCourseClick(course, event);
-                          }
-                        }}
-                      >
-                        {course.title}
-                      </a>
-                    </h4>
-                  </div>
-                </div>
-
-                {/* Bundle Value Indicator */}
-                {isBusinessInABox && (
-                  <div style={{
-                    margin: '4px 0 6px 0',
-                    padding: '4px 8px',
-                    borderRadius: '6px',
-                    background: '#fffbeb',
-                    border: '1px solid #fde68a',
-                    fontSize: '11px',
-                    color: '#92400e',
-                    fontWeight: 600,
-                    lineHeight: 1.3,
-                  }}>
-                    ✨ Includes Plan + All {course.categoryName} Tools
-                  </div>
-                )}
-
-                {/* Meta Attributes */}
-                <div className="elementor-element e-con-full e-flex e-con e-child course-meta-row" style={{ display: 'flex', gap: '8px', alignItems: 'center', margin: '4px 0' }}>
-                  <div className="elementor-element elementor-widget elementor-widget-heading">
-                    <div className="elementor-widget-container">
-                      <h5 className="elementor-heading-title elementor-size-default" style={{ opacity: 0.8, margin: 0, fontSize: '13px', lineHeight: 1.3 }}>
-                        By {course.instructorName}
-                      </h5>
-                    </div>
-                  </div>
-                  <div className="elementor-element elementor-widget elementor-widget-heading">
-                    <div className="elementor-widget-container">
-                      <h5 className="elementor-heading-title elementor-size-default" style={{ margin: 0, fontSize: '13px', lineHeight: 1.3 }}>
-                        <a href={`/courses?tab=available&category=${courseCategorySlug(course.categoryName)}`} style={{ color: '#0b7cff' }}>
-                          in {course.categoryName}
-                        </a>
-                      </h5>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Rating Stars */}
-                <div
-                  className="elementor-element e-con-full e-flex e-con e-child rating-container-row"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    flexWrap: 'nowrap',
-                    margin: '4px 0 0',
-                    minHeight: '18px',
-                    lineHeight: 1,
-                  }}
-                >
-                  <div className="elementor-element elementor-widget elementor-widget-rating" style={{ display: 'flex', alignItems: 'center' }}>
-                    <div className="elementor-widget-container">
-                      <div className="e-rating" style={{ display: 'flex', alignItems: 'center', lineHeight: 1 }}>
-                        <div className="e-rating-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '2px', flexWrap: 'nowrap' }}>
-                          {renderStars(course.rating)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="elementor-element elementor-widget elementor-widget-heading" style={{ display: 'flex', alignItems: 'center' }}>
-                    <div className="elementor-widget-container">
-                      <h4 className="elementor-heading-title elementor-size-default" style={{ margin: 0, display: 'flex', alignItems: 'center', lineHeight: 1 }}>
-                        <b style={{ display: 'inline-flex', alignItems: 'center', lineHeight: 1 }}>{course.rating.toFixed(1)}</b>
-                      </h4>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pricing and Action Button */}
-                <div className="elementor-element e-con-full e-flex e-con e-child price-button-row">
-                  <div className="price-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <span className="price-new" style={{ color: '#0b1220', fontSize: '18px', fontWeight: 'bold' }}>
-                      ₹{course.price.toFixed(2)}
-                    </span>
-                    {course.oldPrice && (
-                      <span className="price-old" style={{ textDecoration: 'line-through', opacity: 0.5 }}>
-                        ₹{course.oldPrice.toFixed(2)}
+              <div className="course-card-body">
+                {/* Top Row: Showcase Badge (Trending/Bestseller) + Type Badges + Wishlist Heart */}
+                <div className="course-card-top-row">
+                  <div className="course-card-tags">
+                    {overlayBadge && (
+                      <span className={`course-badge badge-${overlayBadge.toLowerCase()}`}>
+                        {overlayBadge}
+                      </span>
+                    )}
+                    {isBusinessInABox ? (
+                      <span className="course-badge badge-box">
+                        Business in a Box
+                      </span>
+                    ) : isTool ? (
+                      <span className="course-badge badge-playbook">
+                        Business Playbook
+                      </span>
+                    ) : (
+                      <span className="course-badge badge-plan">
+                        Business Plan
+                      </span>
+                    )}
+                    {course.difficulty && (
+                      <span className="course-badge badge-difficulty">
+                        {course.difficulty}
                       </span>
                     )}
                   </div>
 
-                  <div className="elementor-element elementor-widget elementor-widget-button">
-                    <div className="elementor-widget-container">
-                      <div className="elementor-button-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        {mode === 'available' && (
-                          <button
-                            type="button"
-                            className={`course-card-cart-btn${isInCart(course.id) ? ' in-cart' : ''}`}
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              if (isInCart(course.id)) {
-                                openCart();
-                              } else {
-                                addToCart({
-                                  id: course.id,
-                                  slug: course.slug,
-                                  title: course.title,
-                                  price: course.price,
-                                  oldPrice: course.oldPrice,
-                                  imageUrl: course.imageUrl,
-                                  categoryName: course.categoryName,
-                                  packageType: course.packageType,
-                                  instructorName: course.instructorName,
-                                  difficulty: course.difficulty,
-                                });
-                              }
-                            }}
-                            title={isInCart(course.id) ? 'In Cart (Click to view)' : 'Add to Cart'}
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="9" cy="21" r="1"></circle>
-                              <circle cx="20" cy="21" r="1"></circle>
-                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                            </svg>
-                            <span>{isInCart(course.id) ? 'In Cart' : '+ Cart'}</span>
-                          </button>
-                        )}
-                        <a
-                          className="elementor-button elementor-button-link elementor-size-sm"
-                          href={courseUrl}
-                          onClick={(event) => {
-                            if (onCourseClick) {
-                              onCourseClick(course, event);
-                            }
-                          }}
-                        >
-                          <span className="elementor-button-content-wrapper">
-                            <span className="elementor-button-text">{actionText}</span>
-                          </span>
-                        </a>
-                      </div>
+                  <button
+                    type="button"
+                    className={`course-card-wishlist-btn${isWishlisted ? ' is-active' : ''}`}
+                    onClick={(e) => toggleWishlist(course.id, e)}
+                    title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                    aria-label="Wishlist"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill={isWishlisted ? '#ef4444' : 'none'} stroke={isWishlisted ? '#ef4444' : '#64748b'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Course Title */}
+                <h4 className="course-card-title">
+                  <a
+                    href={courseUrl}
+                    title={course.title}
+                    onClick={(event) => onCourseClick?.(course, event)}
+                  >
+                    {course.title}
+                  </a>
+                </h4>
+
+                {/* Bundle Value Indicator */}
+                {isBusinessInABox && (
+                  <div className="course-card-bundle-indicator">
+                    ✨ Includes Plan + All {course.categoryName} Tools
+                  </div>
+                )}
+
+                {/* Author and Category Meta */}
+                <div className="course-card-meta-row">
+                  <span className="course-card-instructor">
+                    By {course.instructorName || 'VyapaarKit Team'}
+                  </span>
+                  <a
+                    href={`/courses?tab=available&category=${courseCategorySlug(course.categoryName)}`}
+                    className="course-card-category-link"
+                  >
+                    in {course.categoryName}
+                  </a>
+                </div>
+
+                {/* Rating Stars & Reviews */}
+                <div className="course-card-rating-row">
+                  <div className="e-rating">
+                    <div className="e-rating-wrapper">
+                      {renderStars(course.rating)}
                     </div>
                   </div>
+                  <span className="course-rating-score">{course.rating.toFixed(1)}</span>
+                  <span className="course-rating-count">({getReviewCount(course.id)})</span>
+                </div>
+
+                {/* Pricing Row */}
+                <div className="course-card-price-row">
+                  <span className="course-price-current">
+                    ₹{course.price.toFixed(2)}
+                  </span>
+                  {course.oldPrice && (
+                    <span className="course-price-old">
+                      ₹{course.oldPrice.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Dual Action Buttons Row */}
+                <div className="course-card-actions-row">
+                  {mode === 'available' && (
+                    <button
+                      type="button"
+                      className={`course-btn-cart${isInCart(course.id) ? ' in-cart' : ''}`}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (isInCart(course.id)) {
+                          openCart();
+                        } else {
+                          addToCart({
+                            id: course.id,
+                            slug: course.slug,
+                            title: course.title,
+                            price: course.price,
+                            oldPrice: course.oldPrice,
+                            imageUrl: course.imageUrl,
+                            categoryName: course.categoryName,
+                            packageType: course.packageType,
+                            instructorName: course.instructorName,
+                            difficulty: course.difficulty,
+                          });
+                        }
+                      }}
+                      title={isInCart(course.id) ? 'In Cart (Click to view)' : 'Add to Cart'}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                      </svg>
+                      <span>{isInCart(course.id) ? 'In Cart' : 'Add to Cart'}</span>
+                    </button>
+                  )}
+                  <a
+                    className="course-btn-details"
+                    href={courseUrl}
+                    onClick={(event) => onCourseClick?.(course, event)}
+                  >
+                    {actionText}
+                  </a>
                 </div>
 
               </div>

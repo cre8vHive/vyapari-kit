@@ -11,6 +11,7 @@ interface CourseFormState {
   categoryName: string;
   packageType: 'business-plans' | 'business-tools' | 'business-in-the-box' | string;
   difficulty: string;
+  badge: 'Trending' | 'Bestseller' | '' | string;
   price: string;
   oldPrice: string;
   rating: string;
@@ -37,6 +38,7 @@ const emptyCourseForm: CourseFormState = {
   categoryName: '',
   packageType: 'business-plans',
   difficulty: 'Beginner',
+  badge: '',
   price: '0',
   oldPrice: '',
   rating: '0',
@@ -73,6 +75,7 @@ function courseToForm(course: AdminCourse): CourseFormState {
     categoryName: course.categoryName,
     packageType: course.packageType || 'business-plans',
     difficulty: course.difficulty,
+    badge: course.badge || '',
     price: String(course.price),
     oldPrice: course.oldPrice === undefined ? '' : String(course.oldPrice),
     rating: String(course.rating),
@@ -132,6 +135,25 @@ const BulkCourseRow = React.memo<BulkCourseRowProps>(({ course, isSelected, onTo
         <span className="admin-bulk-title-text" title={course.title}>
           {course.title}
         </span>
+        {course.badge && (
+          <span
+            style={{
+              display: 'inline-block',
+              marginLeft: '6px',
+              padding: '2px 8px',
+              borderRadius: '999px',
+              fontSize: '10px',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '0.3px',
+              background: course.badge === 'Trending' ? '#ffedd5' : '#dcfce7',
+              color: course.badge === 'Trending' ? '#c2410c' : '#15803d',
+              border: `1px solid ${course.badge === 'Trending' ? '#fdba74' : '#86efac'}`,
+            }}
+          >
+            {course.badge}
+          </span>
+        )}
         {course.subtitle && (
           <span className="admin-bulk-subtitle-text" title={course.subtitle}>
             {course.subtitle}
@@ -242,6 +264,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     clearOldPrice: false,
     rating: '4.9',
     difficulty: 'Beginner',
+    badge: '',
     instructorName: '',
     isPublished: true,
     language: '',
@@ -269,6 +292,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     oldPrice: false,
     rating: false,
     difficulty: false,
+    badge: false,
     instructorName: false,
     isPublished: false,
     language: false,
@@ -452,6 +476,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       categoryName: form.categoryName,
       packageType: form.packageType || 'business-plans',
       difficulty: form.difficulty,
+      badge: form.badge || '',
       price: Number(form.price || 0),
       oldPrice: form.oldPrice === '' ? '' : Number(form.oldPrice),
       rating: Number(form.rating || 0),
@@ -834,6 +859,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       }
 
       if (bulkEnabled.difficulty && bulkFields.difficulty) updates.difficulty = bulkFields.difficulty;
+      if (bulkEnabled.badge !== undefined && bulkEnabled.badge) updates.badge = bulkFields.badge;
       if (bulkEnabled.instructorName && bulkFields.instructorName.trim()) updates.instructorName = bulkFields.instructorName.trim();
       if (bulkEnabled.isPublished) updates.isPublished = bulkFields.isPublished;
       if (bulkEnabled.language && bulkFields.language.trim()) updates.language = bulkFields.language.trim();
@@ -1229,6 +1255,24 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
                           <option value="Beginner">Beginner</option>
                           <option value="Intermediate">Intermediate</option>
                           <option value="Advanced">Advanced</option>
+                        </select>
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.badge ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Showcase Badge</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('badge')}>
+                            <input type="checkbox" checked={bulkEnabled.badge} onChange={() => toggleBulkFieldEnabled('badge')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <select
+                          value={bulkFields.badge}
+                          onChange={(e) => updateBulkField('badge', e.target.value)}
+                        >
+                          <option value="">None (Clear Badge)</option>
+                          <option value="Trending">🔥 Trending (Orange)</option>
+                          <option value="Bestseller">⭐ Bestseller (Green)</option>
                         </select>
                       </div>
 
@@ -2128,6 +2172,14 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
                 <option>Beginner</option>
                 <option>Intermediate</option>
                 <option>Advanced</option>
+              </select>
+            </label>
+            <label>
+              Showcase Badge
+              <select value={form.badge || ''} onChange={(event) => updateForm('badge', event.target.value)}>
+                <option value="">None (Standard)</option>
+                <option value="Trending">🔥 Trending (Orange)</option>
+                <option value="Bestseller">⭐ Bestseller (Green)</option>
               </select>
             </label>
             <label>
