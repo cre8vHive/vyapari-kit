@@ -19,6 +19,7 @@ export interface ICourse extends Document, IAudit {
   isPublished: boolean;
   isPopular?: boolean;
   popularOrder?: number;
+  badge?: 'Trending' | 'Bestseller' | '' | string;
   subtitle?: string;
   includes?: string[];
   learningHighlights?: string[];
@@ -169,6 +170,12 @@ const CourseSchema = new Schema<any>({
   popularOrder: {
     type: Number,
     default: 0,
+  },
+  badge: {
+    type: String,
+    enum: ['Trending', 'Bestseller', '', null],
+    default: '',
+    trim: true,
   },
   isDeleted: AuditSchema.path('isDeleted'),
   deletedAt: AuditSchema.path('deletedAt'),
