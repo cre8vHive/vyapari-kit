@@ -109,8 +109,10 @@ function withAllCategory(categories: CategoryItem[], activeCategorySlug?: string
 export const CourseListing: React.FC = () => {
   const [listingState, setListingState] = useState<CourseListingState>(() => readCourseListingState());
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [showAllSolutions, setShowAllSolutions] = useState(false);
   const listingStateRef = useRef(listingState);
   const [availableCourses, setAvailableCourses] = useState<CourseItem[]>([]);
+  const [popularCourses, setPopularCourses] = useState<CourseItem[]>([]);
   const [myCourses, setMyCourses] = useState<CourseItem[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>(MOCK_CATEGORIES);
   const [loading, setLoading] = useState(true);
@@ -166,6 +168,26 @@ export const CourseListing: React.FC = () => {
     },
     [activeCourses, listingState.tab, listingState.type, listingState.category, listingState.searchQuery, listingState.sortBy]
   );
+
+  // Trending courses sourced from popular business solutions on the landing page
+  const trendingCourses = useMemo(() => {
+    const list: CourseItem[] = [];
+    const seenIds = new Set<string>();
+
+    const addCourse = (c: CourseItem) => {
+      if (!c || !c.id || seenIds.has(c.id)) return;
+      seenIds.add(c.id);
+      list.push(c);
+    };
+
+    popularCourses.forEach(addCourse);
+    availableCourses.filter((c: any) => c.badge === 'Trending' || c.badge === 'Bestseller').forEach(addCourse);
+    availableCourses.filter((c: any) => c.isPopular).forEach(addCourse);
+    availableCourses.forEach(addCourse);
+
+    return list.slice(0, 6);
+  }, [popularCourses, availableCourses]);
+
   const activeTabLabel = listingState.tab === 'my' ? 'My Business Solutions' : 'Available Business Solutions';
 
   const updateListingState = useCallback((nextState: Partial<CourseListingState>, replace = false) => {
@@ -194,15 +216,11 @@ export const CourseListing: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setLoading(true);
         const catsData = await cmsApi.getCategories();
-
         setCategories(withAllCategory(catsData, listingStateRef.current.category));
       } catch (err) {
-        console.warn('Unable to load categories from the API.');
+        console.warn('Unable to load categories from the API:', err);
         setCategories(withAllCategory(MOCK_CATEGORIES, listingStateRef.current.category));
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -210,18 +228,33 @@ export const CourseListing: React.FC = () => {
       try {
         const myCoursesData = await courseApi.getMyCourses();
         setMyCourses(myCoursesData);
-      } catch {
+      } catch (err) {
+        console.warn('Unable to load my courses:', err);
         setMyCourses([]);
       } finally {
         setMyCoursesLoaded(true);
       }
     };
 
+    const fetchPopular = async () => {
+      try {
+        const popularData = await cmsApi.getPopularCourses();
+        if (Array.isArray(popularData) && popularData.length > 0) {
+          setPopularCourses(popularData as any);
+        }
+      } catch (err) {
+        console.warn('Unable to load popular courses from API:', err);
+      }
+    };
+
     fetchCategories();
     fetchMyCourses();
+    fetchPopular();
   }, []);
 
   useEffect(() => {
+    let isCancelled = false;
+
     const fetchFilteredCourses = async () => {
       try {
         setLoading(true);
@@ -238,16 +271,26 @@ export const CourseListing: React.FC = () => {
         }
 
         const coursesData = await cmsApi.getCourses(params);
-        setAvailableCourses(coursesData);
+        if (!isCancelled) {
+          setAvailableCourses(coursesData);
+        }
       } catch (err) {
-        console.warn('Unable to load courses from the API.');
-        setAvailableCourses([]);
+        console.error('Failed to load courses from API:', err);
+        if (!isCancelled) {
+          setAvailableCourses([]);
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchFilteredCourses();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [listingState.type, listingState.category, listingState.searchQuery]);
 
   const availableCategoryOptions = useMemo(() => {
@@ -279,40 +322,163 @@ export const CourseListing: React.FC = () => {
     return count;
   }, [listingState.type, selectedCategoryValue, listingState.sortBy]);
 
+  // Quick category circles matching Screenshot reference
+  const quickCategories = useMemo(() => [
+    {
+      id: 'f-and-b',
+      name: 'Food & Beverage',
+      slug: 'f-and-b',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 2v6a3 3 0 0 1-3 3 3 3 0 0 1-3-3V2"></path>
+          <path d="M15 2v18"></path>
+          <path d="M7 2v7a2.5 2.5 0 0 0 5 0V2"></path>
+          <path d="M9.5 9v11"></path>
+        </svg>
+      ),
+    },
+    {
+      id: 'commerce',
+      name: 'Retail & E-commerce',
+      slug: 'commerce',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l1-5h16l1 5"></path>
+          <path d="M3 9c0 1.66 1.34 3 3 3s3-1.34 3-3c0 1.66 1.34 3 3 3s3-1.34 3-3c0 1.66 1.34 3 3 3s3-1.34 3-3"></path>
+          <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path>
+          <line x1="9" y1="21" x2="9" y2="15"></line>
+          <line x1="15" y1="21" x2="15" y2="15"></line>
+        </svg>
+      ),
+    },
+    {
+      id: 'manufacturing',
+      name: 'Manufacturing',
+      slug: 'manufacturing',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4H2z"></path>
+          <line x1="17" y1="18" x2="18" y2="18"></line>
+          <line x1="12" y1="18" x2="13" y2="18"></line>
+          <line x1="7" y1="18" x2="8" y2="18"></line>
+        </svg>
+      ),
+    },
+    {
+      id: 'services',
+      name: 'Services',
+      slug: 'services',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      ),
+    },
+    {
+      id: 'digital',
+      name: 'Digital & Tech',
+      slug: 'digital',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+      ),
+    },
+    {
+      id: 'more',
+      name: 'More',
+      slug: 'more',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="12" r="2.2"></circle>
+          <circle cx="19" cy="12" r="2.2"></circle>
+          <circle cx="5" cy="12" r="2.2"></circle>
+        </svg>
+      ),
+    },
+  ], []);
+
+  const isFiltered = Boolean(
+    listingState.searchQuery ||
+    (selectedCategoryValue && selectedCategoryValue !== ALL_CATEGORY) ||
+    listingState.type ||
+    showAllSolutions
+  );
+
   return (
     <div className="page-renderer course-listing-template">
-      <section className="course-hub-section">
-        <div className="course-hub-card">
-          <div className="course-hub-toolbar">
-            <div className="course-hub-toolbar-row">
-              <div className="course-hub-search-wrapper">
+      {/* 1. Full-width seamless hero section */}
+      <section className="solutions-hero-header">
+        <div className="solutions-hero-header-inner">
+          <div className="solutions-hero-grid">
+              <div className="solutions-hero-left">
+                <span className="solutions-hero-tag">Digital Business Solutions</span>
+                <h1 className="solutions-hero-title">
+                  Turn Ideas Into <span className="title-accent">Real Businesses.</span>
+                </h1>
+                <p className="solutions-hero-subtitle">
+                  Business plans, tools and complete kits to help you start, run and grow.
+                </p>
+              </div>
+              <div className="solutions-hero-graphic">
+                <div className="solutions-hero-graphic-bundle">
+                  <div className="bundle-badge badge-plan">
+                    <div className="badge-icon-wrap">💡</div>
+                    <span className="badge-text">Plan</span>
+                  </div>
+                  <div className="bundle-badge badge-build">
+                    <div className="badge-icon-wrap">⚙️</div>
+                    <span className="badge-text">Build</span>
+                  </div>
+                  <div className="bundle-box-wrapper">
+                    <img
+                      src="https://pub-eaf43b6e4e2a484d829c060e1d1b651a.r2.dev/images/products/vyapaarkit-bundle-hero.jpg"
+                      alt="VyapaarKit 3D Box"
+                      className="bundle-box-img"
+                      loading="eager"
+                    />
+                  </div>
+                  <div className="bundle-badge badge-grow">
+                    <div className="badge-icon-wrap">📊</div>
+                    <span className="badge-text">Grow</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Search & Filters Bar */}
+            <div className="solutions-search-row">
+              <div className="solutions-search-input-wrap">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="2.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="course-hub-search-icon"
+                  className="solutions-search-icon"
                 >
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
                 <input
                   type="search"
-                  placeholder="Search business solutions by title, author, or category..."
+                  placeholder="Search business ideas..."
                   value={listingState.searchQuery}
                   onChange={(e) => updateListingState({ searchQuery: e.target.value })}
-                  className="course-hub-search-field"
+                  className="solutions-search-input"
                 />
               </div>
 
               <button
                 type="button"
-                className={`course-hub-filter-toggle-btn${isFiltersOpen ? ' is-open' : ''}${activeFilterCount > 0 ? ' has-active' : ''}`}
+                className={`solutions-filter-btn${isFiltersOpen ? ' is-active' : ''}${activeFilterCount > 0 ? ' has-active' : ''}`}
                 onClick={() => setIsFiltersOpen((prev) => !prev)}
                 aria-expanded={isFiltersOpen}
                 aria-label="Toggle filters"
@@ -320,26 +486,14 @@ export const CourseListing: React.FC = () => {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                 </svg>
-                <span className="filter-toggle-text">Filters</span>
+                <span>Filters</span>
                 {activeFilterCount > 0 && (
-                  <span className="course-hub-filter-badge">{activeFilterCount}</span>
+                  <span className="solutions-filter-count-badge">{activeFilterCount}</span>
                 )}
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="course-hub-filter-chevron"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
               </button>
             </div>
 
+            {/* Collapsible Advanced Filters Drawer */}
             {isFiltersOpen && (
               <div className="course-hub-filters-collapse">
                 <div className="course-hub-filters-inner">
@@ -406,64 +560,173 @@ export const CourseListing: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
 
-          <div className="course-hub-content" role="tabpanel" aria-label={activeTabLabel}>
-            <div className="course-hub-heading">
-              <div>
-                <span className="course-hub-kicker">{activeTabLabel}</span>
-                <h2>{activeTabLabel}</h2>
-              </div>
-              <span className="course-hub-count">
-                {filteredCourses.length} {filteredCourses.length === 1 ? 'solution' : 'solutions'}
-              </span>
+            {/* 3. Circular Quick Category Bar matching Screenshot 1 */}
+            <div className="solutions-categories-strip">
+              {quickCategories.map((cat) => {
+                const isSelected = selectedCategoryValue === cat.slug;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className={`solution-cat-btn${isSelected ? ' is-selected' : ''}`}
+                    onClick={() => {
+                      if (cat.slug === 'more') {
+                        setIsFiltersOpen((prev) => !prev);
+                      } else if (isSelected) {
+                        updateListingState({ category: ALL_CATEGORY });
+                      } else {
+                        updateListingState({ category: cat.slug });
+                      }
+                    }}
+                    title={cat.name}
+                  >
+                    <div className="solution-cat-circle">
+                      {cat.icon}
+                    </div>
+                    <span className="solution-cat-label">{cat.name}</span>
+                  </button>
+                );
+              })}
             </div>
+        </div>
+      </section>
 
-            {(listingState.type === 'business-in-the-box' || listingState.type === 'business-in-a-box') && (
-              <div className="course-hub-box-banner">
-                <div className="course-hub-box-banner-icon">📦</div>
-                <div className="course-hub-box-banner-content">
-                  <h3 className="course-hub-box-banner-title">
-                    Viewing Business in a Box Bundles
-                  </h3>
-                  <p className="course-hub-box-banner-desc">
-                    Each <strong>Business in a Box</strong> is an all-in-one package. When you purchase any bundle, you get the complete <strong>Business Plan</strong> plus <strong>ALL</strong> business playbooks in that category automatically!
-                  </p>
-                </div>
+      <section className="course-hub-section">
+        <div className="course-hub-card">
+          {/* 4. Business in a Box banner if active */}
+          {(listingState.type === 'business-in-the-box' || listingState.type === 'business-in-a-box') && (
+            <div className="course-hub-box-banner">
+              <div className="course-hub-box-banner-icon">📦</div>
+              <div className="course-hub-box-banner-content">
+                <h3 className="course-hub-box-banner-title">
+                  Viewing Business in a Box Bundles
+                </h3>
+                <p className="course-hub-box-banner-desc">
+                  Each <strong>Business in a Box</strong> is an all-in-one package. When you purchase any bundle, you get the complete <strong>Business Plan</strong> plus <strong>ALL</strong> business playbooks in that category automatically!
+                </p>
               </div>
-            )}
+            </div>
+          )}
 
+          {/* 5. Content Section */}
+          <div className="course-hub-content" role="tabpanel" aria-label={activeTabLabel}>
             {loading || (listingState.tab === 'my' && !myCoursesLoaded) ? (
               <div className="course-hub-status">Loading business solutions...</div>
-            ) : filteredCourses.length > 0 ? (
-              <CourseGridSection
-                key={`${listingState.tab}:${listingState.category}`}
-                sectionTitle=""
-                courses={filteredCourses}
-                layout="grid"
-                embedded
-                mode={listingState.tab}
-              />
-            ) : (
-              <div className="course-empty-state">
-                <h3>No business solutions available</h3>
-                <p>
-                  {listingState.tab === 'my'
-                    ? 'Your purchased business solutions will appear here once they match this category.'
-                    : 'No business solutions available for this category yet.'}
-                </p>
-                {listingState.tab === 'my' && (
+            ) : listingState.tab === 'my' ? (
+              // User's Purchased Courses
+              <div>
+                <div className="trending-header-row">
+                  <h2 className="trending-title">My Purchased Solutions</h2>
+                  <span className="course-hub-count">{filteredCourses.length} solutions</span>
+                </div>
+                {filteredCourses.length > 0 ? (
+                  <CourseGridSection
+                    key="my-courses-grid"
+                    sectionTitle=""
+                    courses={filteredCourses}
+                    layout="grid"
+                    embedded
+                    mode="my"
+                  />
+                ) : (
+                  <div className="course-empty-state">
+                    <h3>No purchased solutions yet</h3>
+                    <p>Your purchased business solutions will appear here.</p>
+                    <button
+                      className="course-empty-cta"
+                      type="button"
+                      onClick={() => updateListingState({ tab: 'available' })}
+                    >
+                      Browse Solutions
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : !isFiltered ? (
+              // Default view matching Screenshot 1: Trending Business Solutions powered by Popular courses from Home
+              <div>
+                <div className="trending-header-row">
+                  <h2 className="trending-title">
+                    <span>🔥</span> Trending Business Solutions
+                  </h2>
                   <button
-                    className="course-empty-cta"
                     type="button"
-                    onClick={() => updateListingState({ tab: 'available' })}
+                    className="trending-view-all-btn"
+                    onClick={() => setShowAllSolutions(true)}
                   >
-                    Browse More Solutions
+                    View All →
                   </button>
+                </div>
+
+                {trendingCourses.length > 0 ? (
+                  <CourseGridSection
+                    key="trending-courses-grid"
+                    sectionTitle=""
+                    courses={trendingCourses}
+                    layout="grid"
+                    embedded
+                    mode="available"
+                  />
+                ) : (
+                  <div className="course-empty-state">
+                    <h3>No solutions available right now</h3>
+                    <p>Business solutions will appear here shortly.</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Filtered / All Solutions View
+              <div>
+                <div className="trending-header-row">
+                  <h2 className="trending-title">
+                    {listingState.searchQuery
+                      ? `Search: "${listingState.searchQuery}"`
+                      : selectedCategoryValue && selectedCategoryValue !== ALL_CATEGORY
+                      ? `${quickCategories.find((c) => c.slug === selectedCategoryValue)?.name || 'Filtered'} Solutions`
+                      : 'All Business Solutions'}
+                  </h2>
+                  <button
+                    type="button"
+                    className="trending-view-all-btn"
+                    onClick={() => {
+                      setShowAllSolutions(false);
+                      updateListingState({ category: ALL_CATEGORY, searchQuery: '', type: '' });
+                    }}
+                  >
+                    ← Back to Trending
+                  </button>
+                </div>
+
+                {filteredCourses.length > 0 ? (
+                  <CourseGridSection
+                    key={`${listingState.tab}:${listingState.category}:${listingState.searchQuery}`}
+                    sectionTitle=""
+                    courses={filteredCourses}
+                    layout="grid"
+                    embedded
+                    mode="available"
+                  />
+                ) : (
+                  <div className="course-empty-state">
+                    <h3>No business solutions available</h3>
+                    <p>No solutions match your current filter criteria.</p>
+                    <button
+                      className="course-empty-cta"
+                      type="button"
+                      onClick={() => {
+                        setShowAllSolutions(false);
+                        updateListingState({ category: ALL_CATEGORY, searchQuery: '', type: '' });
+                      }}
+                    >
+                      Reset Filters & View Trending
+                    </button>
+                  </div>
                 )}
               </div>
             )}
           </div>
+
         </div>
       </section>
     </div>
