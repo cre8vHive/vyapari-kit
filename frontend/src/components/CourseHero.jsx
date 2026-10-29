@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import KitIncludesList from './KitIncludesList';
+import BundlePromoBanner from './BundlePromoBanner';
 
 const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -329,25 +330,10 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
         )}
 
         {!isBusinessInABox && course.packageType === 'business-plans' && (
-          <div className="hero-box-callout-banner is-upsell">
-            <div className="hero-box-callout-content">
-              <div className="hero-box-callout-icon">📦</div>
-              <div className="hero-box-callout-text">
-                <div className="hero-box-callout-title">
-                  Looking for the complete Business in a Box Bundle?
-                </div>
-                <p className="hero-box-callout-desc">
-                  Get this Business Plan + <strong>ALL {course.category} Business Playbooks</strong> bundled together for only ₹899.
-                </p>
-              </div>
-            </div>
-            <a
-              href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses/${basePlanSlug || course.slug}-business-in-a-box`}
-              className="hero-box-callout-btn"
-            >
-              View Business in a Box →
-            </a>
-          </div>
+          <BundlePromoBanner
+            course={course}
+            basePlanSlug={basePlanSlug}
+          />
         )}
       </div>
 
