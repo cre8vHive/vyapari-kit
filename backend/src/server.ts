@@ -133,6 +133,7 @@ function publicCourse(course: any) {
     editionNote: course.editionNote || '',
     gallery: course.gallery || [],
     boxImageUrl: course.boxImageUrl || null,
+    boxImage2Url: course.boxImage2Url || null,
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
   };
@@ -1287,6 +1288,10 @@ app.put('/api/v1/admin/courses/bulk-update', requireAuth, requireActiveSession, 
         updateOps.$set.boxImageUrl = updates.boxImageUrl.trim();
       }
 
+      if (typeof updates.boxImage2Url === 'string') {
+        updateOps.$set.boxImage2Url = updates.boxImage2Url.trim();
+      }
+
       if (Array.isArray(updates.includes)) {
         updateOps.$set.includes = updates.includes.map((s: any) => String(s).trim()).filter(Boolean);
       }
@@ -2243,6 +2248,8 @@ app.get('/api/v1/courses', async (req, res) => {
           imageUrl: c.boxImageUrl || pub.imageUrl,
           thumbnail: c.boxImageUrl || pub.thumbnail,
           bannerImage: c.boxImageUrl || pub.bannerImage,
+          boxImageUrl: c.boxImageUrl || pub.imageUrl,
+          boxImage2Url: c.boxImage2Url || null,
         };
       }
       return pub;
@@ -2340,23 +2347,36 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
 
       let responseCourse = publicCourse(course);
       if (isBoxRequest) {
-        const boxCover = course.boxImageUrl
-          ? [{
-              id: `${course.slug}-bib-cover`,
-              url: course.boxImageUrl,
-              label: `${course.title} - Business in a Box Cover`,
-              caption: `${course.title} Business in a Box Cover`,
-              alt: `${course.title} Business in a Box Cover`,
-            }]
-          : (course.gallery && course.gallery.length > 0)
-            ? [course.gallery[0]]
-            : [{
-                id: `${course.slug}-cover`,
-                url: course.thumbnail || course.imageUrl,
-                label: `${course.title} - Cover`,
-                caption: `${course.title} Cover`,
-                alt: `${course.title} Cover`,
-              }];
+        const boxCover: any[] = [];
+        if (course.boxImageUrl) {
+          boxCover.push({
+            id: `${course.slug}-bib-cover`,
+            url: course.boxImageUrl,
+            label: `${course.title} - Business in a Box Cover`,
+            caption: `${course.title} Business in a Box Cover`,
+            alt: `${course.title} Business in a Box Cover`,
+          });
+        } else if (course.gallery && course.gallery.length > 0) {
+          boxCover.push(course.gallery[0]);
+        } else {
+          boxCover.push({
+            id: `${course.slug}-cover`,
+            url: course.thumbnail || course.imageUrl,
+            label: `${course.title} - Cover`,
+            caption: `${course.title} Cover`,
+            alt: `${course.title} Cover`,
+          });
+        }
+
+        if (course.boxImage2Url) {
+          boxCover.push({
+            id: `${course.slug}-bib-breakdown`,
+            url: course.boxImage2Url,
+            label: `${course.title} - Playbooks Overview`,
+            caption: `${course.title} Playbooks Overview`,
+            alt: `${course.title} Playbooks Overview`,
+          });
+        }
 
         const toolsGallery = bundledTools
           .filter((t) => t.imageUrl || t.thumbnail)
@@ -2384,6 +2404,7 @@ app.get('/api/v1/courses/:slug', async (req, res) => {
           thumbnail: course.boxImageUrl || responseCourse.thumbnail,
           bannerImage: course.boxImageUrl || responseCourse.bannerImage,
           boxImageUrl: course.boxImageUrl || responseCourse.imageUrl,
+          boxImage2Url: course.boxImage2Url || null,
           gallery: [...boxCover, ...toolsGallery],
         };
       }

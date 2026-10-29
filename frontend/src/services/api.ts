@@ -141,6 +141,7 @@ export interface CourseSummary {
   rating: number;
   imageUrl: string;
   boxImageUrl?: string;
+  boxImage2Url?: string;
   isPublished: boolean;
   isPopular?: boolean;
   popularOrder?: number;
@@ -465,6 +466,7 @@ export const adminApi = {
     thumbnail?: string;
     bannerImage?: string;
     boxImageUrl?: string;
+    boxImage2Url?: string;
     includes?: string[];
     learningHighlights?: string[];
     skills?: string[];

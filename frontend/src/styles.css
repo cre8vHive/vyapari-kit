@@ -9798,3 +9798,117 @@ img {
   flex-wrap: wrap;
   box-shadow: 0 10px 25px -5px rgba(11, 124, 255, 0.15);
 }
+
+/* ==========================================================================
+   Mobile Accordion Collapse / Expand (Course Detail Sales Page)
+   ========================================================================== */
+
+.mobile-accordion-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: default;
+}
+
+.mobile-collapse-chevron {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  color: #475569;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-collapse-chevron svg {
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-collapse-chevron.open {
+  background: #eff6ff;
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #2563eb;
+}
+
+.mobile-collapse-chevron.open svg {
+  transform: rotate(180deg);
+}
+
+.mobile-accordion-body {
+  display: block;
+}
+
+/* DESKTOP VIEW: Guarantee desktop is 100% UNTOUCHED */
+@media (min-width: 769px) {
+  .mobile-accordion-toggle {
+    cursor: default !important;
+    pointer-events: none !important;
+  }
+
+  .mobile-collapse-chevron {
+    display: none !important;
+  }
+
+  .mobile-accordion-body {
+    display: block !important;
+    max-height: none !important;
+    opacity: 1 !important;
+    overflow: visible !important;
+  }
+}
+
+/* MOBILE VIEW (< 768px): Interactive Accordion */
+@media (max-width: 768px) {
+  .mobile-accordion-toggle {
+    cursor: pointer;
+    pointer-events: auto;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-accordion-toggle:active .mobile-collapse-chevron {
+    transform: scale(0.92);
+  }
+
+  .mobile-collapse-chevron {
+    display: inline-flex;
+  }
+
+  .overview-section-card:not(:last-child) {
+    margin-bottom: 24px;
+  }
+
+  .mobile-accordion-body {
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease;
+  }
+
+  .mobile-accordion-body.open {
+    max-height: 4000px;
+    opacity: 1;
+  }
+
+  .mobile-accordion-body.collapsed {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+    margin: 0;
+    padding: 0;
+  }
+}

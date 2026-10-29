@@ -273,6 +273,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     thumbnail: '',
     bannerImage: '',
     boxImageUrl: '',
+    boxImage2Url: '',
     syncThumbnailFromGallery: false,
     includes: '',
     learningHighlights: '',
@@ -301,6 +302,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
     thumbnail: false,
     bannerImage: false,
     boxImageUrl: false,
+    boxImage2Url: false,
     syncThumbnailFromGallery: false,
     includes: false,
     learningHighlights: false,
@@ -868,6 +870,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
       if (bulkEnabled.thumbnail) updates.thumbnail = bulkFields.thumbnail.trim();
       if (bulkEnabled.bannerImage) updates.bannerImage = bulkFields.bannerImage.trim();
       if (bulkEnabled.boxImageUrl) updates.boxImageUrl = bulkFields.boxImageUrl.trim();
+      if (bulkEnabled.boxImage2Url) updates.boxImage2Url = bulkFields.boxImage2Url.trim();
       if (bulkEnabled.syncThumbnailFromGallery) updates.syncThumbnailFromGallery = bulkFields.syncThumbnailFromGallery;
 
       if (bulkEnabled.includes) {
@@ -1451,7 +1454,7 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
 
                       <div className={`admin-bulk-field ${bulkEnabled.boxImageUrl ? 'is-enabled' : ''}`}>
                         <div className="admin-bulk-field-header">
-                          <label>Box Bundle Image URL</label>
+                          <label>Box Bundle Image URL (Slide 1)</label>
                           <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('boxImageUrl')}>
                             <input type="checkbox" checked={bulkEnabled.boxImageUrl} onChange={() => toggleBulkFieldEnabled('boxImageUrl')} />
                             <span>Update</span>
@@ -1462,6 +1465,22 @@ export const AdminCourseManagement: React.FC<AdminCourseManagementProps> = ({ us
                           placeholder="https://..."
                           value={bulkFields.boxImageUrl}
                           onChange={(e) => updateBulkField('boxImageUrl', e.target.value)}
+                        />
+                      </div>
+
+                      <div className={`admin-bulk-field ${bulkEnabled.boxImage2Url ? 'is-enabled' : ''}`}>
+                        <div className="admin-bulk-field-header">
+                          <label>Box Bundle Image URL (Slide 2)</label>
+                          <span className="admin-bulk-field-toggle" onClick={() => toggleBulkFieldEnabled('boxImage2Url')}>
+                            <input type="checkbox" checked={bulkEnabled.boxImage2Url} onChange={() => toggleBulkFieldEnabled('boxImage2Url')} />
+                            <span>Update</span>
+                          </span>
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="https://..."
+                          value={bulkFields.boxImage2Url}
+                          onChange={(e) => updateBulkField('boxImage2Url', e.target.value)}
                         />
                       </div>
 
