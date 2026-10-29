@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import CourseHero from './CourseHero';
 import CourseOverview from './CourseOverview';
 import CourseCurriculum from './CourseCurriculum';
-import InstructorSection from './InstructorSection';
-import ReviewSection from './ReviewSection';
 import FAQSection from './FAQSection';
 import RelatedCourses from './RelatedCourses';
 import StickyPurchaseCard from './StickyPurchaseCard';
@@ -312,8 +310,6 @@ const CourseDetails = ({ course, onBack }) => {
                 </ul>
               </section>
             </div>
-            <InstructorSection instructor={course.instructor} />
-            <ReviewSection reviews={course.reviews} rating={course.rating} />
             <FAQSection faqs={course.faqs} />
             <RelatedCourses courses={course.relatedCourses} />
           </main>
