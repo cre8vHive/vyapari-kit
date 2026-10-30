@@ -317,16 +317,55 @@ export const CourseListing: React.FC = () => {
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (listingState.type) count += 1;
-    if (selectedCategoryValue && selectedCategoryValue !== ALL_CATEGORY) count += 1;
+
     if (listingState.sortBy && listingState.sortBy !== 'newest') count += 1;
     return count;
-  }, [listingState.type, selectedCategoryValue, listingState.sortBy]);
+  }, [listingState.type, listingState.sortBy]);
 
   // Quick category circles matching Screenshot reference
   const quickCategories = useMemo(() => [
     {
+      id: 'agriculture',
+      name: 'Agriculture',
+      slug: 'agriculture',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 20h10" />
+          <path d="M12 20v-8" />
+          <path d="M12 12c-3.5 0-6-2.5-6-6 3.5 0 6 2.5 6 6z" />
+          <path d="M12 8c3.5 0 6-2.5 6-6-3.5 0-6 2.5-6 6z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'commerce',
+      name: 'Commerce',
+      slug: 'commerce',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9l1-5h16l1 5"></path>
+          <path d="M3 9c0 1.66 1.34 3 3 3s3-1.34 3-3c0 1.66 1.34 3 3 3s3-1.34 3-3"></path>
+          <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path>
+          <line x1="9" y1="21" x2="9" y2="15"></line>
+          <line x1="15" y1="21" x2="15" y2="15"></line>
+        </svg>
+      ),
+    },
+    {
+      id: 'digital',
+      name: 'Digital',
+      slug: 'digital',
+      icon: (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+      ),
+    },
+    {
       id: 'f-and-b',
-      name: 'Food & Beverage',
+      name: 'F&B',
       slug: 'f-and-b',
       icon: (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -334,20 +373,6 @@ export const CourseListing: React.FC = () => {
           <path d="M15 2v18"></path>
           <path d="M7 2v7a2.5 2.5 0 0 0 5 0V2"></path>
           <path d="M9.5 9v11"></path>
-        </svg>
-      ),
-    },
-    {
-      id: 'commerce',
-      name: 'Retail & E-commerce',
-      slug: 'commerce',
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 9l1-5h16l1 5"></path>
-          <path d="M3 9c0 1.66 1.34 3 3 3s3-1.34 3-3c0 1.66 1.34 3 3 3s3-1.34 3-3c0 1.66 1.34 3 3 3s3-1.34 3-3"></path>
-          <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"></path>
-          <line x1="9" y1="21" x2="9" y2="15"></line>
-          <line x1="15" y1="21" x2="15" y2="15"></line>
         </svg>
       ),
     },
@@ -372,30 +397,6 @@ export const CourseListing: React.FC = () => {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-      ),
-    },
-    {
-      id: 'digital',
-      name: 'Digital & Tech',
-      slug: 'digital',
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-          <line x1="8" y1="21" x2="16" y2="21"></line>
-          <line x1="12" y1="17" x2="12" y2="21"></line>
-        </svg>
-      ),
-    },
-    {
-      id: 'more',
-      name: 'More',
-      slug: 'more',
-      icon: (
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="12" r="2.2"></circle>
-          <circle cx="19" cy="12" r="2.2"></circle>
-          <circle cx="5" cy="12" r="2.2"></circle>
         </svg>
       ),
     },
@@ -502,27 +503,12 @@ export const CourseListing: React.FC = () => {
                     <select
                       id="filter-type"
                       value={listingState.type}
-                      onChange={(e) => updateListingState({ type: e.target.value, category: ALL_CATEGORY })}
+                      onChange={(e) => updateListingState({ type: e.target.value })}
                     >
                       <option value="">All Types</option>
                       <option value="business-plans">Business Plans</option>
                       <option value="business-tools">Business Playbooks</option>
                       <option value="business-in-the-box">Business in a Box</option>
-                    </select>
-                  </div>
-
-                  <div className="course-hub-filter-field">
-                    <label htmlFor="filter-category">Category:</label>
-                    <select
-                      id="filter-category"
-                      value={selectedCategoryValue}
-                      onChange={(e) => updateListingState({ category: e.target.value })}
-                    >
-                      {availableCategoryOptions.map((cat) => (
-                        <option key={cat.id || cat.slug || cat.name} value={cat.slug || 'all'}>
-                          {cat.name}
-                        </option>
-                      ))}
                     </select>
                   </div>
 
@@ -548,7 +534,6 @@ export const CourseListing: React.FC = () => {
                         onClick={() => {
                           updateListingState({
                             type: '',
-                            category: ALL_CATEGORY,
                             sortBy: 'newest',
                           });
                         }}
@@ -571,9 +556,7 @@ export const CourseListing: React.FC = () => {
                     type="button"
                     className={`solution-cat-btn${isSelected ? ' is-selected' : ''}`}
                     onClick={() => {
-                      if (cat.slug === 'more') {
-                        setIsFiltersOpen((prev) => !prev);
-                      } else if (isSelected) {
+                      if (isSelected) {
                         updateListingState({ category: ALL_CATEGORY });
                       } else {
                         updateListingState({ category: cat.slug });

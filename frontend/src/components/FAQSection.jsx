@@ -14,7 +14,7 @@ const FAQSection = ({ faqs = [] }) => {
         onClick={() => setIsOpenMobile((prev) => !prev)}
         aria-expanded={isOpenMobile}
       >
-        <h2 className="text-2xl font-semibold text-slate-900">Frequently asked questions</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">Frequently Asked Questions</h2>
         <span className={`mobile-collapse-chevron ${isOpenMobile ? 'open' : ''}`} aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="6 9 12 15 18 9" />

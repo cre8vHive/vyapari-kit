@@ -48,7 +48,7 @@ const StickyPurchaseCard = ({ course, onPurchase, onAddToCart, isInCart }) => {
         </div>
 
         <p className="purchase-card-label">
-          {isBusinessInABox ? 'All-In-One Box Bundle Access' : 'Instant Toolkit Access'}
+          Instant Toolkit Access
         </p>
 
         {isBusinessInABox && (
