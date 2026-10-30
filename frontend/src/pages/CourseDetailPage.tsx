@@ -192,6 +192,15 @@ function toCourseDetailViewModel(course: CourseSummary): CourseDetailViewModel {
                   caption: `${course.title} Cover`,
                   alt: `${course.title} Cover`,
                 },
+          ...(course.boxImage2Url
+            ? [{
+                id: `${course.slug}-bib-breakdown`,
+                url: course.boxImage2Url,
+                label: `${course.title} - Playbooks Overview`,
+                caption: `${course.title} Playbooks Overview`,
+                alt: `${course.title} Playbooks Overview`,
+              }]
+            : []),
           ...(course.bundledTools || [])
             .filter((t: any) => t.imageUrl || t.thumbnail)
             .map((t: any, idx: number) => ({

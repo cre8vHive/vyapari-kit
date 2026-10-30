@@ -594,21 +594,6 @@ export const CourseListing: React.FC = () => {
 
       <section className="course-hub-section">
         <div className="course-hub-card">
-          {/* 4. Business in a Box banner if active */}
-          {(listingState.type === 'business-in-the-box' || listingState.type === 'business-in-a-box') && (
-            <div className="course-hub-box-banner">
-              <div className="course-hub-box-banner-icon">📦</div>
-              <div className="course-hub-box-banner-content">
-                <h3 className="course-hub-box-banner-title">
-                  Viewing Business in a Box Bundles
-                </h3>
-                <p className="course-hub-box-banner-desc">
-                  Each <strong>Business in a Box</strong> is an all-in-one package. When you purchase any bundle, you get the complete <strong>Business Plan</strong> plus <strong>ALL</strong> business playbooks in that category automatically!
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* 5. Content Section */}
           <div className="course-hub-content" role="tabpanel" aria-label={activeTabLabel}>
             {loading || (listingState.tab === 'my' && !myCoursesLoaded) ? (

@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import CourseHero from './CourseHero';
 import CourseOverview from './CourseOverview';
 import CourseCurriculum from './CourseCurriculum';
-import InstructorSection from './InstructorSection';
-import ReviewSection from './ReviewSection';
 import FAQSection from './FAQSection';
 import RelatedCourses from './RelatedCourses';
 import StickyPurchaseCard from './StickyPurchaseCard';
@@ -87,6 +85,8 @@ const CourseDetails = ({ course, onBack }) => {
   const [guestLoading, setGuestLoading] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [purchaseAccessUrl, setPurchaseAccessUrl] = useState('');
+  const [openReq, setOpenReq] = useState(true);
+  const [openAudience, setOpenAudience] = useState(true);
 
   const { addToCart, isInCart, openCart } = useCart();
 
@@ -296,24 +296,50 @@ const CourseDetails = ({ course, onBack }) => {
             <CourseCurriculum curriculum={course.curriculum} />
             <div className="details-grid-two">
               <section className="info-panel">
-                <h2>Requirements</h2>
-                <ul>
-                  {course.requirements.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
+                <button
+                  type="button"
+                  className="mobile-accordion-toggle"
+                  onClick={() => setOpenReq((prev) => !prev)}
+                  aria-expanded={openReq}
+                >
+                  <h2>Requirements</h2>
+                  <span className={`mobile-collapse-chevron ${openReq ? 'open' : ''}`} aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </span>
+                </button>
+                <div className={`mobile-accordion-body ${openReq ? 'open' : 'collapsed'}`}>
+                  <ul>
+                    {course.requirements.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
               </section>
               <section className="info-panel">
-                <h2>Who this business solution is for</h2>
-                <ul>
-                  {course.audience.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
+                <button
+                  type="button"
+                  className="mobile-accordion-toggle"
+                  onClick={() => setOpenAudience((prev) => !prev)}
+                  aria-expanded={openAudience}
+                >
+                  <h2>Who this business solution is for</h2>
+                  <span className={`mobile-collapse-chevron ${openAudience ? 'open' : ''}`} aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </span>
+                </button>
+                <div className={`mobile-accordion-body ${openAudience ? 'open' : 'collapsed'}`}>
+                  <ul>
+                    {course.audience.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
               </section>
             </div>
-            <InstructorSection instructor={course.instructor} />
-            <ReviewSection reviews={course.reviews} rating={course.rating} />
             <FAQSection faqs={course.faqs} />
             <RelatedCourses courses={course.relatedCourses} />
           </main>
