@@ -2047,8 +2047,8 @@ img {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 3px;
-  min-width: 54px;
+  padding: 3px 4px;
+  min-width: 60px;
   flex: 1;
   text-align: center;
   transition: transform 0.2s ease;
@@ -2090,11 +2090,8 @@ img {
   color: #334155;
   line-height: 1.2;
   text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  max-width: 60px;
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .solution-cat-btn.is-selected .solution-cat-label {
@@ -2518,12 +2515,13 @@ img {
   .solutions-categories-strip {
     padding: 2px 0 4px;
     margin-bottom: 4px;
-    gap: 4px;
+    gap: 6px;
   }
   .solution-cat-btn {
-    min-width: 44px;
-    padding: 1px;
+    min-width: 52px;
+    padding: 1px 2px;
     gap: 3px;
+    flex: 1 0 auto;
   }
   .solution-cat-circle {
     width: 35px;
@@ -2536,7 +2534,8 @@ img {
   .solution-cat-label {
     font-size: 8.5px;
     line-height: 1.15;
-    max-width: 48px;
+    white-space: nowrap;
+    overflow: visible;
   }
   .trending-header-row {
     margin: 2px 0 6px;
