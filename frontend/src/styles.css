@@ -2162,9 +2162,9 @@ img {
 .course-card-image-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 3 / 2;
   overflow: hidden;
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 
 .course-card-image-link {
@@ -2176,13 +2176,14 @@ img {
 .course-card-thumb-img {
   width: 100%;
   height: 100%;
-  object-fit: cover !important;
+  object-fit: contain !important;
+  object-position: center !important;
   display: block;
   transition: transform 0.3s ease;
 }
 
 .modern-solution-card:hover .course-card-thumb-img {
-  transform: scale(1.03);
+  transform: none;
 }
 
 .course-card-overlay-badge {
@@ -2562,14 +2563,15 @@ img {
   }
   .course-card-image-wrap {
     width: 100% !important;
-    aspect-ratio: 16 / 9 !important;
+    aspect-ratio: 3 / 2 !important;
     height: auto !important;
     overflow: hidden;
+    background: #f8fafc;
   }
   .course-card-thumb-img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover !important;
+    object-fit: contain !important;
     object-position: center !important;
   }
   .course-card-overlay-badge {
@@ -8879,6 +8881,20 @@ img {
   transform: translateY(-4px);
   border-color: #d97706 !important;
   box-shadow: 0 16px 32px -6px rgba(245, 158, 11, 0.3) !important;
+}
+
+.course-card-wrapper.is-business-in-box-card .course-card-image-wrap {
+  aspect-ratio: 3 / 2 !important;
+  background: #f8fafc;
+}
+
+.course-card-wrapper.is-business-in-box-card .course-card-thumb-img {
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+.course-card-wrapper.is-business-in-box-card:hover .course-card-thumb-img {
+  transform: none !important;
 }
 
 .cart-item.is-box-bundle {
