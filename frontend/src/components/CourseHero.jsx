@@ -305,30 +305,6 @@ const CourseHero = ({ course, onPurchase, onAddToCart, isInCart }) => {
         <h1 className="hero-title">{course.title}</h1>
         <p className="hero-copy">{course.subtitle}</p>
 
-        {isBusinessInABox && (
-          <div className="hero-box-callout-banner is-all-in-one">
-            <div className="hero-box-callout-content">
-              <div className="hero-box-callout-icon">🎁</div>
-              <div className="hero-box-callout-text">
-                <div className="hero-box-callout-title">
-                  All-In-One Box Bundle
-                </div>
-                <div className="hero-box-callout-desc">
-                  Includes this full <strong>Business Plan</strong> + ALL <strong>Business Playbooks</strong> in {course.category}!
-                </div>
-              </div>
-            </div>
-            {basePlanSlug && (
-              <a
-                href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/courses/${basePlanSlug}`}
-                className="hero-box-callout-link"
-              >
-                View Single Business Plan (₹399) →
-              </a>
-            )}
-          </div>
-        )}
-
         {!isBusinessInABox && course.packageType === 'business-plans' && (
           <BundlePromoBanner
             course={course}
